@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
 import EnvironmentBadge from '@/components/environment-badge';
 import { Analytics } from '@/analytics';
 import { SITE_URL } from '@/utils/env';
+import { Providers } from '@/providers';
+import './globals.css';
+import { MainLayout } from '@/components/layout';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -67,11 +69,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fontClasses = `${geistSans.variable} ${geistMono.variable}`;
+
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={fontClasses} suppressHydrationWarning>
       <body className="antialiased">
-        {children}
+        <Providers>
+          <MainLayout>{children}</MainLayout>
+        </Providers>
+        {/* TODO: remove this when we have a production environment */}
         <EnvironmentBadge />
+        {/* Analytics webpage */}
         <Analytics />
       </body>
     </html>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCounterSelector } from '@/store/selectors/counter.selector';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/common/button';
 
 export const Counter: React.FC = () => {
   const { count, increment, decrement, reset, incrementBy } = useCounterSelector();

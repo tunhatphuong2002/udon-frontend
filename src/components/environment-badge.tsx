@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { getCurrentEnvironment, APP_NAME } from '@/utils/env';
 
 type BadgeColors = {
@@ -9,7 +11,20 @@ type BadgeColors = {
 };
 
 export const EnvironmentBadge: React.FC = () => {
-  const env = getCurrentEnvironment();
+  // Add client-side only state
+  const [mounted, setMounted] = useState(false);
+  const [environment, setEnvironment] = useState<string>('');
+  
+  // Only run this effect on the client
+  useEffect(() => {
+    setMounted(true);
+    setEnvironment(getCurrentEnvironment());
+  }, []);
+
+  // Don't render anything on server or before mounting
+  if (!mounted) {
+    return null;
+  }
 
   const colors: BadgeColors = {
     development: {
@@ -23,19 +38,19 @@ export const EnvironmentBadge: React.FC = () => {
   };
 
   // Hide in production
-  if (env === 'production') {
+  if (environment === 'production') {
     return null;
   }
 
-  const { bg, text } = colors[env] || colors.development;
+  const { bg, text } = colors[environment] || colors.development;
 
   return (
     <div
       className={`fixed bottom-2 right-2 ${bg} ${text} px-3 py-1 rounded-full text-xs font-medium shadow-md z-50`}
     >
-      {APP_NAME} - {env.toUpperCase()}
+      {APP_NAME} - {environment.toUpperCase()}
     </div>
   );
 };
 
-export default EnvironmentBadge;
+export default EnvironmentBadge; 
