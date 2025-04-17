@@ -1,8 +1,8 @@
 // Import necessary functions and configurations from `connectkit` and `wagmi`
 // `connectkit` is used to manage wallet connection, while `wagmi` handles Ethereum-related operations
-import { getDefaultConfig } from "connectkit"; // Get the default configuration for WalletConnect
-import { createConfig, http } from "wagmi"; // `createConfig` for creating wagmi config and `http` for API transport
-import { mainnet, sepolia } from "wagmi/chains"; // Import network chains: mainnet and sepolia for different environments
+import { getDefaultConfig } from 'connectkit'; // Get the default configuration for WalletConnect
+import { createConfig, http } from 'wagmi'; // `createConfig` for creating wagmi config and `http` for API transport
+import { mainnet, sepolia } from 'wagmi/chains'; // Import network chains: mainnet and sepolia for different environments
 
 // Create the wagmi config, which sets up Ethereum networks and wallet connection settings
 export const wagmiConfig = createConfig(
@@ -20,7 +20,7 @@ export const wagmiConfig = createConfig(
     walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!, // WalletConnect project ID from environment variables
 
     // Set the application name for this configuration
-    appName: "Udon", // The name of the app as it will appear in WalletConnect and related services
+    appName: 'Udon', // The name of the app as it will appear in WalletConnect and related services
   })
 );
 
@@ -58,4 +58,3 @@ export const wagmiConfig = createConfig(
  *    Why is this helpful?
  *    - It ensures that users are aware of which application is requesting their wallet connection, improving trust and security.
  */
-

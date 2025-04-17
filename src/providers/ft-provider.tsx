@@ -5,7 +5,7 @@ import { FtProvider as FtProviderChromia } from '@chromia/react';
 import { useAccount } from 'wagmi';
 
 import { useEthereumProvider } from '@/hooks/use-ethereum-provider';
-import { generateClientConfig } from '@/utils/config/client';
+import { generateClientConfig } from '@/configs/client';
 
 const config = generateClientConfig();
 

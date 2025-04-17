@@ -6,14 +6,14 @@ import { ConnectKitProvider } from 'connectkit';
 import { WagmiProvider } from 'wagmi';
 import { ThemeProvider } from 'next-themes';
 import { FtProvider } from './ft-provider';
-import { wagmiConfig } from '@/utils/config/wagmi';
-import ClientStyles from './styles-provider';
+import { wagmiConfig } from '@/configs/wagmi';
+// import ClientStyles from './styles-provider';
 
 const queryClient = new QueryClient();
 
 export function Providers(props: PropsWithChildren) {
   return (
-    <ClientStyles>
+    // <ClientStyles>
     <ThemeProvider attribute="class" defaultTheme="dark">
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
@@ -23,6 +23,6 @@ export function Providers(props: PropsWithChildren) {
         </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
-    </ClientStyles>
+    // </ClientStyles>
   );
 }

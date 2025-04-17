@@ -50,3 +50,78 @@ next-env.d.ts
 
 # Keep examples and templates
 !.env.example
+
+# Dependencies
+node_modules/
+**/node_modules/
+lib/
+**/lib/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment files
+.env
+**/.env
+.env.local
+**/.env.local
+.env.*.local
+**/.env.*.local
+
+# IDE and editor files
+.idea/
+.vscode/
+**/.idea/
+**/.vscode/
+*.swp
+*.swo
+**/*.swp
+**/*.swo
+
+# Logs
+logs/
+**/logs/
+*.log
+**/*.log
+npm-debug.log*
+**/npm-debug.log*
+
+# Cache directories
+.cache/
+**/.cache/
+.npm/
+**/.npm/
+
+# Chromia specific
+.chromia/
+**/.chromia/
+*.keypair
+**/*.keypair
+
+# OS specific
+.DS_Store
+**/.DS_Store
+Thumbs.db
+**/Thumbs.db
+
+# Package manager files
+yarn.lock
+**/yarn.lock
+package-lock.json
+**/package-lock.json
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+
+# Test coverage
+coverage/
+**/coverage/
+
+# Temporary files
+tmp/
+**/tmp/
+temp/
+**/temp/
+EOL

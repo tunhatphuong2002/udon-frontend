@@ -1,21 +1,21 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 // Import Chromia FT4 functionality for account management and authentication
 import {
   createSingleSigAuthDescriptorRegistration,
   registerAccount,
   registrationStrategy,
-} from "@chromia/ft4";
+} from '@chromia/ft4';
 // Import Chromia React hooks and utilities
 import {
   createChromiaHooks,
   useEvmKeyStore,
   useFtAccounts,
   usePostchainClient,
-} from "@chromia/react";
-import { IClient } from "postchain-client";
-import { useAccount } from "wagmi";
-import { publicClientConfig } from "@/utils/config/client";
+} from '@chromia/react';
+import { IClient } from 'postchain-client';
+import { useAccount } from 'wagmi';
+import { publicClientConfig } from '@/configs/client';
 
 // Import the public client configuration
 
@@ -52,7 +52,7 @@ export const useChromiaAccount = ({
    * Registers the account on the blockchain after authentication.
    */
   const createAccount = useCallback(async () => {
-    console.log("createAccount");
+    console.log('createAccount');
     try {
       setIsLoading(true); // Set loading state to true during the account creation process
 
@@ -61,7 +61,7 @@ export const useChromiaAccount = ({
 
       // Create the authentication descriptor for account and transfer permissions
       const authDescriptor = createSingleSigAuthDescriptorRegistration(
-        ["A", "T"],
+        ['A', 'T'],
         keyStore.id,
         null
       );
@@ -78,7 +78,7 @@ export const useChromiaAccount = ({
 
       // Execute the optional callback if provided
       onAccountCreated?.();
-      console.log("createAccount success");
+      console.log('createAccount success');
     } catch (error) {
       console.error(error); // Log any error that occurs during account creation
     } finally {
@@ -89,9 +89,9 @@ export const useChromiaAccount = ({
 
   // Return an interface with account management functions and status
   return {
-    createAccount,     // Function to create a new account
-    isLoading,         // Indicates if the account creation process is in progress
-    tried,             // Indicates if the user has tried creating an account
+    createAccount, // Function to create a new account
+    isLoading, // Indicates if the account creation process is in progress
+    tried, // Indicates if the user has tried creating an account
     account: ftAccounts?.[0], // The first account in the list (if available)
     hasAccount: !!ftAccounts?.length, // Boolean indicating whether the user has an account
   };
