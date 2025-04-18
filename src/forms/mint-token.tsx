@@ -9,9 +9,9 @@ import * as z from 'zod';
 import Button from '@/components/chromia-ui-kit/button';
 import { Chr, LoaderCubes, Plus } from '@/components/chromia-ui-kit/icons';
 import Input from '@/components/chromia-ui-kit/input';
-import { useMintToken } from '@/hooks/token-hooks';
 import { useMintedSuccessModal } from '@/components/custom/modals/minted-success-modal';
 import { useTransactionFailedModal } from '@/components/custom/modals/transaction-failed-modal';
+import { useMintToken } from '@/hooks/token-hooks';
 
 const mintTokenSchema = z.object({
   ticker: z.string().min(1, { message: 'Ticker is required' }),

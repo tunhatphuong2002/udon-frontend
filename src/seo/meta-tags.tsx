@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Script from 'next/script';
-import { SITE_URL } from '@/utils/env';
+import { SITE_URL } from '@/types/utils/env';
 
 interface MetaTagsProps {
   title?: string;

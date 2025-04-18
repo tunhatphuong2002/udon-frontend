@@ -17,6 +17,7 @@ import { publicClientConfig as clientConfig } from '@/configs/client';
 
 export default function TokenPage() {
   const { data: ftAccounts } = useFtAccounts({ clientConfig });
+  console.log('ftAccounts', ftAccounts);
 
   const {
     flatData: balances,
@@ -34,6 +35,9 @@ export default function TokenPage() {
         }
       : null
   );
+  console.log('balances', balances);
+  console.log('isLoading', isLoading);
+  console.log('mutate', mutate);
 
   const hasBalances = !!balances?.length;
 

@@ -1,18 +1,17 @@
 import type { Metadata } from 'next';
-import EnvironmentBadge from '@/components/environment-badge';
-import { Analytics } from '@/analytics';
-import { SITE_URL } from '@/utils/env';
+// import EnvironmentBadge from '@/components/environment-badge';
+// import { Analytics } from '@/analytics';
+import { SITE_URL } from '@/types/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
 // import { MainLayout } from '@/components/layout';
 import localFont from 'next/font/local';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
-import Image from 'next/image';
-import bg from '@/assets/bg.jpeg';
+// import Header from '@/components/layout/header';
+// import Footer from '@/components/layout/footer';
+// import Image from 'next/image';
 
 const BattlefinFont = localFont({
-  src: '../assets/fonts/Battlefin-Black.woff2',
+  src: '../../public/fonts/Battlefin-Black.woff2',
   variable: '--font-battlefin',
   weight: '900',
 });
@@ -21,15 +20,15 @@ const NBInternationalFont = localFont({
   variable: '--font-nb-international',
   src: [
     {
-      path: '../assets/fonts/NBInternationalLightWebfont.woff2',
+      path: '../../public/fonts/NBInternationalLightWebfont.woff2',
       weight: '300',
     },
     {
-      path: '../assets/fonts/NBInternationalRegularWebfont.woff2',
+      path: '../../public/fonts/NBInternationalRegularWebfont.woff2',
       weight: '400',
     },
     {
-      path: '../assets/fonts/NBInternationalBoldWebfont.woff2',
+      path: '../../public/fonts/NBInternationalBoldWebfont.woff2',
       weight: '700',
     },
   ],
@@ -90,18 +89,18 @@ export default function RootLayout({
   const fontClasses = `${BattlefinFont.variable} ${NBInternationalFont.variable}`;
 
   return (
-    <html lang="en" className={fontClasses} suppressHydrationWarning>
-      <body className="antialiased">
+    <html lang="en" className={`${fontClasses} light`} suppressHydrationWarning>
+      <body className="antialiased bg-background text-foreground">
         <Providers>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <div className="container flex flex-1 flex-col border-0 border-l border-r border-border/20 sm:border-solid">
-              {children}
-            </div>
-            <Footer />
-          </div>
+          {/* <div className="flex min-h-screen flex-col"> */}
+          {/* <Header /> */}
+          {/* <div className="container flex flex-1 flex-col border-0 border-l border-r border-border/20 sm:border-solid"> */}
+          {children}
+          {/* </div> */}
+          {/* <Footer /> */}
+          {/* </div> */}
         </Providers>
-        <div className="fixed inset-0 -z-50">
+        {/* <div className="fixed inset-0 -z-50">
           <Image
             fill
             priority
@@ -111,16 +110,13 @@ export default function RootLayout({
             layout="fixed"
             objectFit="cover"
             objectPosition="center"
-            src={bg}
+            src="/bg.jpeg"
           />
-        </div>
-        {/* <Providers>
-          <MainLayout>{children}</MainLayout>
-        </Providers> */}
+        </div> */}
         {/* TODO: remove this when we have a production environment */}
-        <EnvironmentBadge />
+        {/* <EnvironmentBadge /> */}
         {/* Analytics webpage */}
-        <Analytics />
+        {/* <Analytics /> */}
       </body>
     </html>
   );

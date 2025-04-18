@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { useState } from "react";
+import type React from 'react';
+import { useState } from 'react';
 
-import { useServerInsertedHTML } from "next/navigation";
+import { useServerInsertedHTML } from 'next/navigation';
 
-import { getCssText, resetStyle } from "@chromia/ui-kit";
+import { getCssText, resetStyle } from '@chromia/ui-kit';
 
 const ClientStyles = ({ children }: { children: React.ReactNode }) => {
   const [isRendered, setIsRendered] = useState(false);
@@ -15,14 +15,8 @@ const ClientStyles = ({ children }: { children: React.ReactNode }) => {
       setIsRendered(true);
       return (
         <>
-          <style
-            dangerouslySetInnerHTML={{ __html: resetStyle }}
-            id="stitches-reset"
-          />
-          <style
-            dangerouslySetInnerHTML={{ __html: getCssText() }}
-            id="stitches"
-          />
+          <style dangerouslySetInnerHTML={{ __html: resetStyle }} id="stitches-reset" />
+          <style dangerouslySetInnerHTML={{ __html: getCssText() }} id="stitches" />
         </>
       );
     }

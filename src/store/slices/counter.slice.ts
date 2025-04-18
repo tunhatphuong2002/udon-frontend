@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { CounterSlice, CounterState } from '@/store/types/counter.type';
-import { OmitProperties } from '@/utils/type-factory';
+import { OmitProperties } from '@/types/utils/type-factory';
 
 type SetState = (fn: (state: CounterSlice) => CounterSlice) => void;
 

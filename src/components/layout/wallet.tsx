@@ -6,8 +6,15 @@ import { ChevronDown } from 'lucide-react';
 import Button from '@/components/chromia-ui-kit/button';
 import { Logout, Metamask } from '@/components/chromia-ui-kit/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/popover';
+import { useFtAccounts, useFtSession } from '@chromia/react';
+import { publicClientConfig as clientConfig } from '@/configs/client';
 
 export function ConnectWallet() {
+  const { data: ftAccounts } = useFtAccounts({ clientConfig });
+  const { data: session } = useFtSession(
+    ftAccounts?.length ? { clientConfig, account: ftAccounts[0] } : null
+  );
+
   return (
     <ConnectKitButton.Custom>
       {({ show, isConnected, isConnecting, truncatedAddress }) => {
@@ -21,6 +28,9 @@ export function ConnectWallet() {
                 </span>
                 <span className="block font-bold leading-none">
                   {truncatedAddress?.replaceAll('•', '.')}
+                </span>
+                <span className="block font-bold leading-none">
+                  {session?.account.id.toString('hex')}
                 </span>
               </div>
               <button className="ml-auto cursor-pointer p-1" type="button" onClick={show}>

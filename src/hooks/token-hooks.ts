@@ -11,7 +11,7 @@ import {
 import { useAccount } from 'wagmi';
 
 import { publicClientConfig as clientConfig } from '@/configs/client';
-import { ensureBuffer } from '@/utils/ensure-buffer';
+import { ensureBuffer } from '@/types/utils/ensure-buffer';
 
 interface MintTokenParams {
   ticker: string;

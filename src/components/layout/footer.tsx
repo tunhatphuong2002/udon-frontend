@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { cn } from '@/utils/tailwind';
+import { cn } from '@/types/utils/tailwind';
 
 import LinkIconButton from '../chromia-ui-kit/link-icon-button';
 import DiscordIcon from '../icons/discord';

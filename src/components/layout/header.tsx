@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import logo from '../../assets/logo.svg';
+import logo from '@public/logo.svg';
 import { ConnectWallet } from './wallet';
-import { cn } from '@/utils/tailwind';
+import { cn } from '@/types/utils/tailwind';
 
 const Header = () => {
   const classNameLeftCube = cn(

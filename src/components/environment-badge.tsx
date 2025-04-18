@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getCurrentEnvironment, APP_NAME } from '@/utils/env';
+import { getCurrentEnvironment, APP_NAME } from '@/types/utils/env';
 
 type BadgeColors = {
   [key: string]: {
@@ -14,7 +14,7 @@ export const EnvironmentBadge: React.FC = () => {
   // Add client-side only state
   const [mounted, setMounted] = useState(false);
   const [environment, setEnvironment] = useState<string>('');
-  
+
   // Only run this effect on the client
   useEffect(() => {
     setMounted(true);
@@ -53,4 +53,4 @@ export const EnvironmentBadge: React.FC = () => {
   );
 };
 
-export default EnvironmentBadge; 
+export default EnvironmentBadge;

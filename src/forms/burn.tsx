@@ -10,9 +10,9 @@ import * as z from 'zod';
 import Button from '@/components/chromia-ui-kit/button';
 import { Chr, LoaderCubes } from '@/components/chromia-ui-kit/icons';
 import Input from '@/components/chromia-ui-kit/input';
-import { useBurnTokens } from '@/hooks/token-hooks';
 import { useBurnedSuccessModal } from '@/components/custom/modals/burned-success-modal';
 import { useTransactionFailedModal } from '@/components/custom/modals/transaction-failed-modal';
+import { useBurnTokens } from '@/hooks/token-hooks';
 
 const burnTokenSchema = z.object({
   amount: z
