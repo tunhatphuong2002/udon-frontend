@@ -125,3 +125,6 @@ tmp/
 temp/
 **/temp/
 EOL
+
+# Images
+**/images/landing/hero/cube-rotate.gif
