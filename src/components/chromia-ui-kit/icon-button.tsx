@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { IconButton } from "@chromia/ui-kit";
+import { IconButton } from '@chromia/ui-kit';
 
 export default IconButton as React.FC<
   React.ComponentProps<typeof IconButton> & {

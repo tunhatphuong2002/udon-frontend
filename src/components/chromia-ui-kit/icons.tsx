@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Icons } from "@chromia/ui-kit";
+import { Icons } from '@chromia/ui-kit';
 
 export const { LoaderCubes } = Icons;
 export const { Chr } = Icons;

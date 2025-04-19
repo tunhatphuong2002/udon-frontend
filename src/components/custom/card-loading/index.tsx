@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react';
 
-import { LoaderCubes } from "@/components/chromia-ui-kit/icons";
-import { Card, CardTitle } from "@/components/common/card";
+import { LoaderCubes } from '@/components/chromia-ui-kit/icons';
+import { Card, CardTitle } from '@/components/common/card';
 
 export const CardLoading = () => (
   <Card className="min-w-52 p-6 text-center">
