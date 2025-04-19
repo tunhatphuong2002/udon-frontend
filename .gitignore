@@ -128,3 +128,6 @@ EOL
 
 # Images
 **/images/landing/hero/cube-rotate.gif
+
+# Large media files
+public/images/landing/hero/cube-rotate.gif
