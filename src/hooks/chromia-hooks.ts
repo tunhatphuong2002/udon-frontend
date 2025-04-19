@@ -58,6 +58,10 @@ export const useChromiaAccount = ({
 
       // Ensure necessary data (Ethereum address, key store, client) is available before proceeding
       if (!ethAddress || !keyStore || !client) return;
+      console.log('ethAddress', ethAddress);
+      console.log('keyStore', keyStore);
+      console.log('client', client);
+      console.log('passing check ethAddress, keyStore, client');
 
       // Create the authentication descriptor for account and transfer permissions
       const authDescriptor = createSingleSigAuthDescriptorRegistration(
@@ -75,7 +79,7 @@ export const useChromiaAccount = ({
 
       // Refresh the list of FT4 accounts after registration
       await mutate();
-
+      console.log('Refresh the list of FT4 accounts after registration with mutate()');
       // Execute the optional callback if provided
       onAccountCreated?.();
       console.log('createAccount success');

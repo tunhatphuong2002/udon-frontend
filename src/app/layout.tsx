@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-// import EnvironmentBadge from '@/components/environment-badge';
-// import { Analytics } from '@/analytics';
+import EnvironmentBadge from '@/components/environment-badge';
+import { Analytics } from '@/analytics';
 import { SITE_URL } from '@/types/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
@@ -114,9 +114,9 @@ export default function RootLayout({
           />
         </div> */}
         {/* TODO: remove this when we have a production environment */}
-        {/* <EnvironmentBadge /> */}
+        <EnvironmentBadge />
         {/* Analytics webpage */}
-        {/* <Analytics /> */}
+        <Analytics />
       </body>
     </html>
   );

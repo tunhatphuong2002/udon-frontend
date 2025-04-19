@@ -37,7 +37,10 @@ export default function TokenPage() {
   );
   console.log('balances', balances);
   console.log('isLoading', isLoading);
-  console.log('mutate', mutate);
+
+  React.useEffect(() => {
+    setTimeout(() => {}, 10_000);
+  }, []);
 
   const hasBalances = !!balances?.length;
 

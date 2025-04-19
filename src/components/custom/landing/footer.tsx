@@ -1,20 +1,17 @@
 import React from 'react';
+import Image from 'next/image';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full overflow-hidden max-md:max-w-full">
-      <div className="flex flex-col relative w-full pt-[34px] px-14 max-md:max-w-full max-md:px-5">
-        {/* <img
-          src="https://cdn.builder.io/api/v1/image/assets/a49eb3d9dab54612b6a60c9b4c26d13d/5679d5ca9dddbb83de50286a8ae7f2b0e5a1440a?placeholderIfAbsent=true"
-          className="absolute h-full w-full object-cover inset-0"
-          alt="Footer background"
-        /> */}
+    <footer className="w-full max-md:max-w-full h-[400px]">
+      <div className="flex flex-col relative w-full pt-[35px] px-14 max-md:max-w-full max-md:px-5 h-full">
+        {/* background */}
         <div className="absolute top-0 left-0 w-full h-full flex flex-row z-0">
           <div className="bg-black h-full flex-1 rounded-tr-[40px] border-white border-2"></div>
           <div className="bg-black h-full w-[20vw] rounded-tl-[40px] border-white border-2"></div>
         </div>
 
-        <div className="relative w-[664px] max-w-full z-10">
+        <div className="relative w-[50vw] max-w-full z-10">
           <div className="gap-5 flex max-md:flex-col max-md:items-stretch">
             <div className="w-[33%] max-md:w-full max-md:ml-0">
               <div className="relative text-[15px] text-[rgba(206,206,206,1)] font-medium max-md:mt-10">
@@ -49,15 +46,20 @@ export const Footer: React.FC = () => {
               </div>
             </nav>
           </div>
+
+          <div className="relative text-[rgba(206,206,206,1)] text-[13px] font-medium mt-4 max-md:mt-10">
+            Deposit and start earning
+          </div>
         </div>
-        <div className="relative text-[rgba(206,206,206,1)] text-[13px] font-medium mt-[73px] max-md:mt-10">
-          Deposit and start earning
+
+        <div className="absolute bottom-[-150px] left-0 w-full h-[320px]">
+          <Image
+            src="/images/landing/footer/udon-text.png"
+            className="object-contain"
+            alt="Footer decoration"
+            fill
+          />
         </div>
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets/a49eb3d9dab54612b6a60c9b4c26d13d/6091e0d1dee04eb685d8faa199a069a9abb871fd?placeholderIfAbsent=true"
-          className="aspect-[6.58] object-contain w-full self-stretch mt-[47px] max-md:max-w-full max-md:mt-10 z-10"
-          alt="Footer decoration"
-        />
       </div>
     </footer>
   );

@@ -3,16 +3,19 @@ import React from 'react';
 import { StatCard } from './stat-card';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
-
+import Image from 'next/image';
 export default function Hero() {
   return (
     <div className="min-h-screen bg-background relative">
       {/* Background Image */}
-      <img
-        className="absolute w-full max-w-[300px] md:max-w-[800px] aspect-square right-[0px] -top-5 opacity-30 md:opacity-100"
-        src="https://s3-alpha-sig.figma.com/img/d1dd/89f1/40b19c1259800133d18b0f0a6983894d?Expires=1745798400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=OWd-jHMBRf1LQobP0mic3S0xqpc3A3oIXsmqZPwufh6fUaklaX44GyFLMjh3MoC4QW2sEDaZ2Idcz4vh8mp4PE7UbZ4vnAazLffpFwIoox2z9EH2sDYyoibZQNnBKCt~lsk062fiyTo6wHs2SkokfiUqkCVfgXBQlTplAS3wYeqmmw9eh4ozzHYxyfZ5-iD-8NBreqnaUwAIJOl0LFRuh3ywyEGkUd3obzbuJhfOcnNeh1xOT1k8L~VBLhBZmmpLxtIsxNplg9bjEURKECvnsRppWlSCVXtDzGIUi7LP1TBf2GgIZ~N9GYzEAU1vD4wwexe02yIKKLrmRmR46eiT-Q__"
-        alt="Hero background"
-      />
+      <div className="absolute w-full max-w-[300px] md:max-w-[800px] aspect-square right-[0px] -top-5 opacity-30 md:opacity-100">
+        <Image
+          src="/images/landing/hero/cube-rotate.gif"
+          alt="Hero background"
+          fill
+          className="object-contain"
+        />
+      </div>
 
       <div className="container mx-auto h-full flex flex-col justify-center pt-[20vh]">
         {/* Main Content Section */}

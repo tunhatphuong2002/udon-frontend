@@ -10,6 +10,7 @@ import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardDescription, CardTitle } from '@/components/common/card';
 import { useChromiaAccount } from '@/hooks/chromia-hooks';
 import { useAccountCreatedModal } from '@/components/custom/modals/account-created-modal';
+import { LayoutProvider } from '@/providers/layout.provider';
 
 const Layout = ({
   children,
@@ -24,30 +25,32 @@ const Layout = ({
 
   if (isConnected) {
     if (hasAccount) {
-      return children;
+      return <LayoutProvider>{children}</LayoutProvider>;
     }
 
     return (
-      <div className="flex flex-1 items-center justify-center">
-        {isLoading ? (
-          <CardLoading />
-        ) : (
-          <Card className="min-w-52 p-6 text-center">
-            <CardTitle>Account not found</CardTitle>
-            <CardDescription className="mt-2">
-              You need to create an chromia account first to mint own token.
-            </CardDescription>
-            <Button onClick={createAccount} className="mx-auto mt-4 min-w-44">
-              {tried ? 'Retry creating account' : 'Create account'}
-            </Button>
-          </Card>
-        )}
-      </div>
+      <LayoutProvider>
+        <div className="flex flex-1 items-center justify-center">
+          {isLoading ? (
+            <CardLoading />
+          ) : (
+            <Card className="min-w-52 p-6 text-center">
+              <CardTitle>Account not found</CardTitle>
+              <CardDescription className="mt-2">
+                You need to create an chromia account first to mint own token.
+              </CardDescription>
+              <Button onClick={createAccount} className="mx-auto mt-4 min-w-44">
+                {tried ? 'Retry creating account' : 'Create account'}
+              </Button>
+            </Card>
+          )}
+        </div>
+      </LayoutProvider>
     );
   }
 
   return (
-    <>
+    <LayoutProvider>
       <div className="flex flex-1 items-center justify-center">
         <ConnectKitButton.Custom>
           {({ show, isConnecting }) => {
@@ -69,7 +72,7 @@ const Layout = ({
           }}
         </ConnectKitButton.Custom>
       </div>
-    </>
+    </LayoutProvider>
   );
 };
 

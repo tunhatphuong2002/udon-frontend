@@ -5,16 +5,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectKitProvider } from 'connectkit';
 import { WagmiProvider } from 'wagmi';
 import { ThemeProvider } from 'next-themes';
-import { FtProvider } from './ft-provider';
+import { FtProvider } from './ft.provider';
 import { wagmiConfig } from '@/configs/wagmi';
-import ClientStyles from './styles-provider';
+import ClientStyles from './styles.provider';
 import NiceModal from '@ebay/nice-modal-react';
 
 const queryClient = new QueryClient();
 
 export function Providers(props: PropsWithChildren) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="light">
       <ClientStyles>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
