@@ -10,10 +10,10 @@ export const Counter: React.FC = () => {
       <h2 className="text-xl font-bold">Counter: {count}</h2>
 
       <div className="flex space-x-2">
-        <Button onClick={decrement} variant="outline" size="small">
+        <Button onClick={decrement} variant="outline" size="sm">
           -
         </Button>
-        <Button onClick={increment} variant="primary" size="small">
+        <Button onClick={increment} variant="default" size="sm">
           +
         </Button>
       </div>

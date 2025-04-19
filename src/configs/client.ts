@@ -7,6 +7,7 @@ const defaultClientConfig: ClientConfig = {
     attemptsPerEndpoint: 1,
     strategy: FailoverStrategy.SingleEndpoint,
   },
+  // @ts-expect-error - TODO: fix this
   stickyNodeDiscovery: true,
 };
 
