@@ -1,45 +1,24 @@
 'use client';
 
-import React, { useCallback } from 'react';
-
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-import { useFtAccounts, useGetBalances } from '@chromia/react';
 import { ArrowLeft } from 'lucide-react';
 
 import LinkIconButton from '@/components/chromia-ui-kit/link-icon-button';
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardTitle } from '@/components/common/card';
 import TransferTokenForm from '@/forms/transfer';
-import { publicClientConfig as clientConfig } from '@/configs/client';
+import { useTokenBalance } from '@/hooks/use-token-balance';
 
-export default function BurnToken() {
-  const { data: ftAccounts } = useFtAccounts({ clientConfig });
-
-  const {
-    flatData: balances,
-    isLoading,
-    mutate,
-  } = useGetBalances(
-    ftAccounts?.length
-      ? {
-          clientConfig,
-          account: ftAccounts[0],
-          params: [10],
-          swrInfiniteConfiguration: {
-            refreshInterval: 20_000,
-          },
-        }
-      : null
-  );
-
+export default function TransferToken() {
   const router = useRouter();
+  const { balances, isLoading, refreshBalance } = useTokenBalance();
 
-  const handleSuccess = useCallback(async () => {
-    await mutate();
+  const handleSuccess = async () => {
+    await refreshBalance();
     router.push('/token');
-  }, [mutate, router]);
+  };
 
   if (isLoading || !balances?.length) {
     return (

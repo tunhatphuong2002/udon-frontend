@@ -1,8 +1,9 @@
+import { env } from '@/types/utils/env';
 import type { ClientConfig } from '@chromia/react';
 import { FailoverStrategy } from 'postchain-client';
 
 const defaultClientConfig: ClientConfig = {
-  nodeUrlPool: process.env.NEXT_PUBLIC_NODE_URL,
+  nodeUrlPool: env.nodeUrlPool,
   failOverConfig: {
     attemptsPerEndpoint: 1,
     strategy: FailoverStrategy.SingleEndpoint,

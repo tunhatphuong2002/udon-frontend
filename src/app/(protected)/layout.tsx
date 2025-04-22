@@ -10,8 +10,7 @@ import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardDescription, CardTitle } from '@/components/common/card';
 import { useChromiaAccount } from '@/hooks/chromia-hooks';
 import { useAccountCreatedModal } from '@/components/custom/modals/account-created-modal';
-import { LayoutProvider } from '@/providers/layout.provider';
-
+import { MainLayout } from '@/components/layout';
 const Layout = ({
   children,
 }: Readonly<{
@@ -25,11 +24,11 @@ const Layout = ({
 
   if (isConnected) {
     if (hasAccount) {
-      return <LayoutProvider>{children}</LayoutProvider>;
+      return <MainLayout>{children}</MainLayout>;
     }
 
     return (
-      <LayoutProvider>
+      <MainLayout>
         <div className="flex flex-1 items-center justify-center">
           {isLoading ? (
             <CardLoading />
@@ -45,12 +44,12 @@ const Layout = ({
             </Card>
           )}
         </div>
-      </LayoutProvider>
+      </MainLayout>
     );
   }
 
   return (
-    <LayoutProvider>
+    <MainLayout>
       <div className="flex flex-1 items-center justify-center">
         <ConnectKitButton.Custom>
           {({ show, isConnecting }) => {
@@ -72,7 +71,7 @@ const Layout = ({
           }}
         </ConnectKitButton.Custom>
       </div>
-    </LayoutProvider>
+    </MainLayout>
   );
 };
 

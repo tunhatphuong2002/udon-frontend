@@ -1,68 +1,73 @@
 import React from 'react';
+import Image from 'next/image';
 
-import { cn } from '@/types/utils/tailwind';
-
-import LinkIconButton from '../chromia-ui-kit/link-icon-button';
-import DiscordIcon from '../icons/discord';
-import GlobeIcon from '../icons/globe';
-import TelegramIcon from '../icons/telegram';
-import XIcon from '../icons/x';
-
-const Footer = () => {
-  const classNameLeftCube = cn(
-    'before:cube before:left-[-4px] before:top-[-4px] before:hidden sm:before:block'
-  );
-  const classNameRightCube = cn(
-    'after:cube after:right-[-4px] after:top-[-4px] after:hidden sm:after:block'
-  );
-
+export const Footer: React.FC = () => {
   return (
-    <div className="mt-auto border-0 border-t border-solid border-border/20 bg-popover/10 backdrop-blur-md">
-      <div
-        className={cn(
-          'container relative h-full space-y-4 border-0 border-l border-r border-border/20 py-6 text-sm text-foreground/80 sm:border-solid',
-          classNameLeftCube,
-          classNameRightCube
-        )}
-      >
-        <div className="flex items-center justify-center gap-2">
-          <LinkIconButton
-            href="https://chromia.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="l"
-            variant="ghost"
-            Icon={<GlobeIcon className="text-2xl" />}
-          />
-          <LinkIconButton
-            href="https://discord.com/invite/chromia"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="l"
-            variant="ghost"
-            Icon={<DiscordIcon className="text-2xl" />}
-          />
-          <LinkIconButton
-            href="https://t.me/hellochromia"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="l"
-            variant="ghost"
-            Icon={<TelegramIcon className="text-2xl" />}
-          />
-          <LinkIconButton
-            href="https://x.com/Chromia"
-            size="l"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="ghost"
-            Icon={<XIcon className="text-2xl" />}
+    <footer className="w-full max-md:max-w-full h-[400px] overflow-hidden">
+      <div className="flex flex-col relative w-full pt-[35px] px-14 max-md:max-w-full max-md:px-5 h-full">
+        {/* background */}
+        <div className="absolute top-0 left-0 w-full h-full flex flex-row z-0">
+          <div className="bg-black h-full flex-1 rounded-tr-[40px] border-white border-2"></div>
+          <div className="bg-black h-full w-[20vw] rounded-tl-[40px] border-white border-2"></div>
+        </div>
+
+        <div className="relative w-[50vw] max-w-full z-10">
+          <div className="gap-5 flex max-md:flex-col max-md:items-stretch">
+            <div className="w-[33%] max-md:w-full max-md:ml-0">
+              <div className="relative text-[15px] text-[rgba(206,206,206,1)] font-medium max-md:mt-10">
+                <div className="flex min-h-8 w-[156px] max-w-full">
+                  <Image
+                    src="/logo/logo-fulltext.png"
+                    className="object-contain"
+                    alt="Footer decoration"
+                    fill
+                  />
+                </div>
+                <div className="mt-8">Deposit and start earning</div>
+              </div>
+            </div>
+            <nav className="w-[67%] ml-5 max-md:w-full max-md:ml-0">
+              <div className="relative flex grow gap-6 text-base whitespace-nowrap mt-3 max-md:mt-10">
+                <div className="flex-1 shrink basis-[0%] rounded-xl">
+                  <h4 className="text-[rgba(251,253,255,1)] font-semibold">Resources</h4>
+                  <div className="w-full text-[rgba(206,206,206,1)] font-normal mt-6">
+                    <a href="#" className="block">
+                      Documentation
+                    </a>
+                    <a href="#" className="block mt-3">
+                      Github
+                    </a>
+                  </div>
+                </div>
+                <div className="flex-1 shrink basis-[0%] rounded-xl">
+                  <h4 className="text-[rgba(251,253,255,1)] font-semibold">Community</h4>
+                  <div className="w-full text-[rgba(206,206,206,1)] font-normal mt-6">
+                    <a href="#" className="block">
+                      Twitter
+                    </a>
+                    <a href="#" className="block mt-3">
+                      Telegram
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </nav>
+          </div>
+
+          {/* <div className="relative text-[rgba(206,206,206,1)] text-[13px] font-medium mt-4 max-md:mt-10">
+            Deposit and start earning
+          </div> */}
+        </div>
+
+        <div className="absolute bottom-[-150px] left-0 w-full h-[320px]">
+          <Image
+            src="/images/landing/footer/udon-text.png"
+            className="object-contain"
+            alt="Footer decoration"
+            fill
           />
         </div>
-        <p className="text-center text-xs md:text-base">© 2024, All Rights Reserved</p>
       </div>
-    </div>
+    </footer>
   );
 };
-
-export default Footer;

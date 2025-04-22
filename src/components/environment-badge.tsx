@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getCurrentEnvironment, APP_NAME } from '@/types/utils/env';
+import { APP_NAME, getNetwork, Network } from '@/types/utils/env';
 
 type BadgeColors = {
   [key: string]: {
@@ -13,12 +13,12 @@ type BadgeColors = {
 export const EnvironmentBadge: React.FC = () => {
   // Add client-side only state
   const [mounted, setMounted] = useState(false);
-  const [environment, setEnvironment] = useState<string>('');
+  const [environment, setEnvironment] = useState<Network>('local');
 
   // Only run this effect on the client
   useEffect(() => {
     setMounted(true);
-    setEnvironment(getCurrentEnvironment());
+    setEnvironment(getNetwork() as Network);
   }, []);
 
   // Don't render anything on server or before mounting
@@ -38,7 +38,7 @@ export const EnvironmentBadge: React.FC = () => {
   };
 
   // Hide in production
-  if (environment === 'production') {
+  if (environment === 'mainnet') {
     return null;
   }
 

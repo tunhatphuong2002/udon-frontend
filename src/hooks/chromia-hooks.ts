@@ -21,10 +21,7 @@ import { publicClientConfig } from '@/configs/client';
 
 // Initialize Chromia hooks with default blockchain configuration
 const { useChromiaQuery, useChromiaImmutableQuery } = createChromiaHooks({
-  defaultClientConfig: {
-    blockchainRid: process.env.NEXT_PUBLIC_BRID,
-    directoryNodeUrlPool: process.env.NEXT_PUBLIC_NODE_URL,
-  },
+  defaultClientConfig: publicClientConfig,
 });
 
 export { useChromiaImmutableQuery, useChromiaQuery };

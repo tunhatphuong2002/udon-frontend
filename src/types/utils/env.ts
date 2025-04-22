@@ -3,6 +3,7 @@
  */
 
 export type Environment = 'development' | 'production';
+export type Network = 'local' | 'testnet' | 'mainnet';
 
 // Safely access environment variables with defaults
 export const getEnv = (key: string, defaultValue: string = ''): string => {
@@ -14,32 +15,82 @@ export const getEnv = (key: string, defaultValue: string = ''): string => {
     }
   }
 
-  return process.env[key] || defaultValue;
+  // Access process.env directly with the specific key
+  switch (key) {
+    case 'NEXT_PUBLIC_NODE_URL_POOL':
+      return process.env.NEXT_PUBLIC_NODE_URL_POOL || defaultValue;
+    case 'NEXT_PUBLIC_BRID':
+      return process.env.NEXT_PUBLIC_BRID || defaultValue;
+    case 'NEXT_PUBLIC_APP_NAME':
+      return process.env.NEXT_PUBLIC_APP_NAME || defaultValue;
+    case 'NEXT_PUBLIC_SITE_URL':
+      return process.env.NEXT_PUBLIC_SITE_URL || defaultValue;
+    case 'NEXT_PUBLIC_GA_TRACKING_ID':
+      return process.env.NEXT_PUBLIC_GA_TRACKING_ID || defaultValue;
+    default:
+      return defaultValue;
+  }
 };
 
-// Current environment
-export const getCurrentEnvironment = (): Environment => {
-  const env = getEnv('NEXT_PUBLIC_ENV', 'development') as Environment;
-  return env;
+// Detect network from node URL
+const detectNetwork = (nodeUrl: string): Network => {
+  if (nodeUrl.includes('localhost') || nodeUrl.includes('127.0.0.1')) {
+    return 'local';
+  }
+  if (nodeUrl.includes('testnet')) {
+    return 'testnet';
+  }
+  if (nodeUrl.includes('mainnet')) {
+    return 'mainnet';
+  }
+  return 'local'; // default to local if can't detect
 };
 
-// API configuration
-export const API_URL = getEnv('NEXT_PUBLIC_API_URL', 'http://localhost:3001/api');
+// Convert comma-separated string to array of URLs or single URL string
+export const getNodeUrlPool = (): string | string[] => {
+  const defaultNodes = [
+    'https://node0.testnet.chromia.com:7740',
+    'https://node1.testnet.chromia.com:7740',
+    'https://node2.testnet.chromia.com:7740',
+    'https://node3.testnet.chromia.com:7740',
+  ].join(',');
 
-// Authentication configuration
-export const AUTH_DOMAIN = getEnv('NEXT_PUBLIC_AUTH_DOMAIN', 'auth.example.com');
-export const CLIENT_ID = getEnv('NEXT_PUBLIC_CLIENT_ID', 'default_client_id');
+  const nodeUrls = getEnv('NEXT_PUBLIC_NODE_URL_POOL', defaultNodes);
+  const nodes = nodeUrls
+    .split(',')
+    .map(url => url.trim())
+    .filter(Boolean);
 
-// Feature flags
-export const isFeatureXEnabled = getEnv('NEXT_PUBLIC_ENABLE_FEATURE_X', 'false') === 'true';
-export const isAnalyticsEnabled = getEnv('NEXT_PUBLIC_ENABLE_ANALYTICS', 'false') === 'true';
+  return nodes.length === 1 ? nodes[0] : nodes;
+};
 
-// App information
+// Get network from node URL pool
+export const getNetwork = (): Network => {
+  const nodePool = getNodeUrlPool();
+  const firstNode = Array.isArray(nodePool) ? nodePool[0] : nodePool;
+  return detectNetwork(firstNode);
+};
+
+// Network specific checks
+export const isLocal = getNetwork() === 'local';
+export const isTestnet = getNetwork() === 'testnet';
+export const isMainnet = getNetwork() === 'mainnet';
+
+// App configuration
 export const APP_NAME = getEnv('NEXT_PUBLIC_APP_NAME', 'Udon Frontend');
-
-// SEO configuration
 export const SITE_URL = getEnv('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000');
+export const GA_TRACKING_ID = getEnv('NEXT_PUBLIC_GA_TRACKING_ID', '');
+export const BRID = getEnv('NEXT_PUBLIC_BRID', '');
 
-// Environment specific checks
-export const isDevelopment = getCurrentEnvironment() === 'development';
-export const isProduction = getCurrentEnvironment() === 'production';
+// Export all environment variables in a single object
+export const env = {
+  nodeUrlPool: getNodeUrlPool(),
+  network: getNetwork(),
+  isLocal,
+  isTestnet,
+  isMainnet,
+  appName: APP_NAME,
+  siteUrl: SITE_URL,
+  gaTrackingId: GA_TRACKING_ID,
+  brid: BRID,
+} as const;

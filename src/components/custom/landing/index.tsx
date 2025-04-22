@@ -4,8 +4,8 @@ import Hero from '@/components/custom/landing/hero';
 import React, { useEffect, useState, useRef } from 'react';
 import { BackedBySection } from '@/components/custom/landing/backed-by';
 import { UpcomingFeatures } from '@/components/custom/landing/upcoming-features';
-import { Footer } from '@/components/custom/landing/footer';
-import { Header } from '@/components/custom/landing/header';
+import { Footer } from '@/components/layout/footer';
+// import { Header } from '@/components/custom/landing/header';
 import { InfrastructureSection } from '@/components/custom/landing/infrastructure';
 
 export const Landing = () => {
@@ -29,19 +29,19 @@ export const Landing = () => {
   };
 
   // Function to scroll to section
-  const scrollToSection = (sectionId: string) => {
-    const section = sectionRefs[sectionId as keyof typeof sectionRefs]?.current;
-    if (section) {
-      const headerOffset = 100; // Adjust this value based on your header height
-      const elementPosition = section.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  // const scrollToSection = (sectionId: string) => {
+  //   const section = sectionRefs[sectionId as keyof typeof sectionRefs]?.current;
+  //   if (section) {
+  //     const headerOffset = 100; // Adjust this value based on your header height
+  //     const elementPosition = section.getBoundingClientRect().top;
+  //     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      });
-    }
-  };
+  //     window.scrollTo({
+  //       top: offsetPosition,
+  //       behavior: 'smooth',
+  //     });
+  //   }
+  // };
 
   // Add intersection observer to handle section animations on scroll
   useEffect(() => {
@@ -86,7 +86,7 @@ export const Landing = () => {
     <div className="flex flex-col min-h-screen bg-background text-foreground relative overflow-hidden">
       {/* Content */}
       <div className="relative flex flex-col min-h-screen">
-        <Header onSectionClick={scrollToSection} />
+        {/* <Header onSectionClick={scrollToSection} /> */}
 
         <div ref={sectionRefs.hero} className={getSectionAnimationClass('hero')}>
           <Hero />

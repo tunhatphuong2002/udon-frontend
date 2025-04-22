@@ -1,34 +1,36 @@
-import Image from 'next/image';
+import React from 'react';
+import { Typography } from '@/components/common/typography';
 import Link from 'next/link';
 
-import logo from '@public/logo.svg';
-import { ConnectWallet } from './wallet';
-import { cn } from '@/types/utils/tailwind';
+type HeaderProps = {
+  onSectionClick: (section: string) => void;
+};
 
-const Header = () => {
-  const classNameLeftCube = cn(
-    'before:cube before:bottom-[-4px] before:left-[-4px] before:hidden sm:before:block'
-  );
-  const classNameRightCube = cn(
-    'after:cube after:bottom-[-4px] after:right-[-4px] after:hidden sm:after:block'
-  );
+export const Header: React.FC<HeaderProps> = ({ onSectionClick }) => {
+  const sections = [
+    { id: 'supply', label: 'Supply', url: '/supply' },
+    { id: 'borrow', label: 'Borrow', url: '/borrow' },
+  ];
 
   return (
-    <div className="sticky left-0 right-0 top-0 z-50 h-20 border-0 border-b border-solid border-border/20 bg-popover/10 backdrop-blur-md">
-      <div
-        className={cn(
-          'container relative flex h-full items-center justify-between border-0 border-l border-r border-border/20 sm:border-solid',
-          classNameLeftCube,
-          classNameRightCube
-        )}
-      >
-        <Link href="/">
-          <Image alt="logo" className="h-7 w-auto" src={logo} />
-        </Link>
-        <ConnectWallet />
+    <div className="fixed top-0 left-0 right-0 z-[20] flex justify-center items-center py-6">
+      <div className="px-3 md:px-5 py-2 md:py-3.5 bg-neutral-900 rounded-full flex items-center gap-4 md:gap-9">
+        {sections.map(({ id, label, url }) => (
+          <Link
+            key={id}
+            href={url}
+            onClick={() => onSectionClick(id)}
+            className="focus:outline-none"
+          >
+            <Typography
+              size="sm"
+              className="text-white md:text-base md:font-medium cursor-pointer hover:text-primary transition-colors"
+            >
+              {label}
+            </Typography>
+          </Link>
+        ))}
       </div>
     </div>
   );
 };
-
-export default Header;

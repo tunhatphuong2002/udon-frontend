@@ -1,17 +1,11 @@
 import { useCallback } from 'react';
 
 import { createAmount, op } from '@chromia/ft4';
-import {
-  useFtAccounts,
-  useFtSession,
-  useGetAllAssets,
-  useGetBalances,
-  usePostchainClient,
-} from '@chromia/react';
-import { useAccount } from 'wagmi';
-
-import { publicClientConfig as clientConfig } from '@/configs/client';
+import { useChromiaAccount } from '@/hooks/chromia-hooks';
 import { ensureBuffer } from '@/types/utils/ensure-buffer';
+import { publicClientConfig } from '@/configs/client';
+import { useFtSession } from '@chromia/react';
+import { useTokenBalance } from './use-token-balance';
 
 interface MintTokenParams {
   ticker: string;
@@ -26,22 +20,15 @@ export function useMintToken({
   onSuccess?: (token: MintTokenParams) => void;
   onError?: (token: MintTokenParams) => void;
 } = {}) {
-  const { address: ethAddress } = useAccount();
-  const { data: client } = usePostchainClient({ config: clientConfig });
-  const { mutate: mutateAllAssets } = useGetAllAssets({
-    clientConfig,
-    params: [],
-  });
-
-  const { data: ftAccounts } = useFtAccounts({ clientConfig });
-
+  const { account } = useChromiaAccount();
+  const { refreshBalance } = useTokenBalance();
   const { data: session } = useFtSession(
-    ftAccounts?.length ? { clientConfig, account: ftAccounts[0] } : null
+    account ? { clientConfig: publicClientConfig, account } : null
   );
 
   const registerAsset = useCallback(
     async (token: MintTokenParams) => {
-      if (!client || !ethAddress || !session) return;
+      if (!session) return;
 
       try {
         await session
@@ -58,16 +45,14 @@ export function useMintToken({
           )
           .buildAndSend();
 
-        await mutateAllAssets();
-
+        await refreshBalance();
         onSuccess?.(token);
       } catch (error) {
         console.error(error);
-
         onError?.(token);
       }
     },
-    [client, ethAddress, mutateAllAssets, onError, onSuccess, session]
+    [session, refreshBalance, onSuccess, onError]
   );
 
   return registerAsset;
@@ -80,47 +65,32 @@ export function useTransferTokens({
   onSuccess?: (token: MintTokenParams) => void;
   onError?: (token: MintTokenParams) => void;
 }) {
-  const { data: ftAccounts } = useFtAccounts({ clientConfig });
-
+  const { account } = useChromiaAccount();
+  const { balances, refreshBalance } = useTokenBalance();
   const { data: session } = useFtSession(
-    ftAccounts?.length ? { clientConfig, account: ftAccounts[0] } : null
-  );
-
-  const { flatData: balances } = useGetBalances(
-    ftAccounts?.length
-      ? {
-          clientConfig,
-          account: ftAccounts[0],
-          params: [10],
-          swrInfiniteConfiguration: {
-            refreshInterval: 20_000,
-          },
-        }
-      : null
+    account ? { clientConfig: publicClientConfig, account } : null
   );
 
   const transferTokens = useCallback(
     async (recipient: string, amount: number) => {
-      if (!balances?.length) {
-        return;
-      }
-      const asset = balances[0].asset;
-
       try {
+        if (!balances?.length) return;
+        const asset = balances[0].asset;
+
         await session?.account.transfer(
           ensureBuffer(recipient),
           ensureBuffer(asset.id),
           createAmount(amount)
         );
 
+        await refreshBalance();
         onSuccess?.({ ticker: asset.symbol, name: asset.name, amount });
       } catch (error) {
         console.error(error);
-
-        onError?.({ ticker: asset.symbol, name: asset.name, amount });
+        onError?.({ ticker: '', name: '', amount });
       }
     },
-    [balances, onError, onSuccess, session?.account]
+    [balances, session?.account, refreshBalance, onSuccess, onError]
   );
 
   return transferTokens;
@@ -133,43 +103,28 @@ export function useBurnTokens({
   onSuccess?: (token: MintTokenParams) => void;
   onError?: (token: MintTokenParams) => void;
 }) {
-  const { data: ftAccounts } = useFtAccounts({ clientConfig });
-
+  const { balances, refreshBalance } = useTokenBalance();
+  const { account } = useChromiaAccount();
   const { data: session } = useFtSession(
-    ftAccounts?.length ? { clientConfig, account: ftAccounts[0] } : null
-  );
-
-  const { flatData: balances } = useGetBalances(
-    ftAccounts?.length
-      ? {
-          clientConfig,
-          account: ftAccounts[0],
-          params: [10],
-          swrInfiniteConfiguration: {
-            refreshInterval: 20_000,
-          },
-        }
-      : null
+    account ? { clientConfig: publicClientConfig, account } : null
   );
 
   const burnTokens = useCallback(
     async (amount: number) => {
-      if (!balances?.length) {
-        return;
-      }
-      const asset = balances[0].asset;
-
       try {
+        if (!balances?.length) return;
+        const asset = balances[0].asset;
+
         await session?.account.burn(asset.id, createAmount(amount));
 
+        await refreshBalance();
         onSuccess?.({ ticker: asset.symbol, name: asset.name, amount });
       } catch (error) {
         console.error(error);
-
-        onError?.({ ticker: asset.symbol, name: asset.name, amount });
+        onError?.({ ticker: '', name: '', amount });
       }
     },
-    [balances, onError, onSuccess, session?.account]
+    [balances, session?.account, refreshBalance, onSuccess, onError]
   );
 
   return burnTokens;

@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-
 import Link from 'next/link';
-
-import { useFtAccounts, useGetBalances } from '@chromia/react';
 import { PaperPlaneIcon } from '@radix-ui/react-icons';
 import { FlameIcon } from 'lucide-react';
 
@@ -13,35 +10,10 @@ import LinkButton from '@/components/chromia-ui-kit/link-button';
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardTitle } from '@/components/common/card';
 import MintToken from '@/forms/mint-token';
-import { publicClientConfig as clientConfig } from '@/configs/client';
+import { useTokenBalance } from '@/hooks/use-token-balance';
 
 export default function TokenPage() {
-  const { data: ftAccounts } = useFtAccounts({ clientConfig });
-  console.log('ftAccounts', ftAccounts);
-
-  const {
-    flatData: balances,
-    isLoading,
-    mutate,
-  } = useGetBalances(
-    ftAccounts?.length
-      ? {
-          clientConfig,
-          account: ftAccounts[0],
-          params: [10],
-          swrInfiniteConfiguration: {
-            refreshInterval: 20_000,
-          },
-        }
-      : null
-  );
-  console.log('balances', balances);
-  console.log('isLoading', isLoading);
-
-  React.useEffect(() => {
-    setTimeout(() => {}, 10_000);
-  }, []);
-
+  const { balances, isLoading, refreshBalance } = useTokenBalance();
   const hasBalances = !!balances?.length;
 
   return (
@@ -51,7 +23,11 @@ export default function TokenPage() {
       ) : !hasBalances ? (
         <Card className="w-full max-w-lg p-6">
           <CardTitle className="mb-4 text-center text-xl">Mint your own token</CardTitle>
-          <MintToken onMinted={() => mutate()} />
+          <MintToken
+            onMinted={async () => {
+              await refreshBalance();
+            }}
+          />
         </Card>
       ) : (
         <Card className="w-full max-w-lg space-y-6 overflow-visible px-10 pb-6">
