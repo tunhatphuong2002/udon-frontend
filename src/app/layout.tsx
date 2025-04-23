@@ -89,7 +89,7 @@ export default function RootLayout({
   const fontClasses = `${BattlefinFont.variable} ${NBInternationalFont.variable}`;
 
   return (
-    <html lang="en" className={`${fontClasses} light`} suppressHydrationWarning>
+    <html lang="en" className={fontClasses} suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground">
         <Providers>{children}</Providers>
         {/* TODO: remove this when we have a production environment */}

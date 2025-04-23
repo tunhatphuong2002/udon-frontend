@@ -3,8 +3,10 @@ import React from 'react';
 import { StatCard } from './stat-card';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
+import { useRouter } from 'next/navigation';
 // import Image from 'next/image';
 export default function Hero() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-background relative">
       {/* Background Image */}
@@ -47,7 +49,12 @@ export default function Hero() {
               {/* Action Buttons */}
               <div className="flex flex-col md:flex-row items-center gap-3 pb-8 md:pb-16">
                 {/* Earn Button */}
-                <Button className="w-full md:w-auto">
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={() => {
+                    router.push('/supply');
+                  }}
+                >
                   <Typography size="base" weight="normal">
                     Earn
                   </Typography>
@@ -55,7 +62,13 @@ export default function Hero() {
                 </Button>
 
                 {/* Borrow Button */}
-                <Button className="w-full md:w-auto">
+                <Button
+                  variant="outline"
+                  className="w-full md:w-auto"
+                  onClick={() => {
+                    router.push('/borrow');
+                  }}
+                >
                   <Typography size="base" weight="normal">
                     Borrow
                   </Typography>
@@ -63,7 +76,13 @@ export default function Hero() {
                 </Button>
 
                 {/* Leveraged Yield Button */}
-                <Button className="w-full md:w-auto">
+                <Button
+                  badgeLabel="Coming Soon"
+                  badgePosition="top-right"
+                  badgeClassName="rotate-12 top-[-5px] right-[-10px]"
+                  variant="disabled"
+                  className="w-full md:w-auto"
+                >
                   <Typography size="base" weight="normal">
                     Leveraged Yield
                   </Typography>
@@ -78,8 +97,16 @@ export default function Hero() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-9 px-4 md:px-0">
-            <StatCard value="4,232,090,563" label="Total Deposits" />
-            <StatCard value="4,232,090,563" label="Total Borrows" />
+            <StatCard
+              value="4,232,090,563"
+              label="Total Deposits"
+              iconUrl="/images/landing/hero/coin-stack.gif"
+            />
+            <StatCard
+              value="4,232,090,563"
+              label="Total Borrows"
+              iconUrl="/images/landing/hero/saving-piggy.gif"
+            />
           </div>
         </div>
       </div>

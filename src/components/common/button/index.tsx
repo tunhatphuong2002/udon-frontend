@@ -12,13 +12,11 @@ const buttonVariants = cva(
         default: 'text-base bg-primary text-primary-foreground shadow hover:bg-primary/90 relative',
         destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
         outline:
-          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+          'border border-primary bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
         secondary: 'bg-secondary text-primary shadow-sm hover:bg-secondary/10',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-        none: 'text-muted-foreground',
-        third: 'bg-third text-third-foreground hover:border-ring text-primary',
-        ring: 'border border-ring/40 bg-background text-ring-foreground hover:bg-third/10',
+        third: 'bg-muted text-muted-foreground hover:border-ring',
+        disabled: 'bg-muted text-muted-foreground hover:border-ring !cursor-not-allowed',
       },
       size: {
         default: 'h-9 px-6 py-2',
@@ -49,13 +47,55 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   animationHover?: boolean;
+  badgeLabel?: string;
+  badgePosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  badgeClassName?: string;
 }
 
+const badgePositionClasses = {
+  'top-right': '-top-3 -right-2 translate-x-1/4',
+  'top-left': '-top-3 -left-2 -translate-x-1/4',
+  'bottom-right': '-bottom-3 -right-2 translate-x-1/4',
+  'bottom-left': '-bottom-3 -left-2 -translate-x-1/4',
+};
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      badgeLabel,
+      badgePosition = 'top-right',
+      badgeClassName,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : 'button';
+    const positionClasses = badgePositionClasses[badgePosition];
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <div className="relative">
+        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>
+          {children}
+        </Comp>
+
+        {badgeLabel && (
+          <div
+            className={cn(
+              'absolute z-10 px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap',
+              'bg-[#FEE7BE] text-black transform',
+              positionClasses,
+              badgeClassName
+            )}
+          >
+            {badgeLabel}
+          </div>
+        )}
+      </div>
     );
   }
 );

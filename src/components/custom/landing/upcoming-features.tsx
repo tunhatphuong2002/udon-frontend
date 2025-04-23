@@ -70,7 +70,7 @@ export const UpcomingFeatures: React.FC = () => {
           {notificationCards.map((card, index) => (
             <Card
               key={index}
-              className="w-[280px] h-[104px] absolute rounded-xl shadow-[0px_0px_1.7px_#00000040] backdrop-blur-[9.7px] z-20"
+              className="w-[280px] h-[104px] absolute rounded-xl shadow-[0px_0px_1.7px_#00000040] backdrop-blur-[9.7px] z-20 border border-border"
               style={
                 index === 0
                   ? { top: card.position.top, left: card.position.left }
@@ -104,18 +104,6 @@ export const UpcomingFeatures: React.FC = () => {
             {/* Left Strategy Card */}
             <Card className="md:col-span-7 rounded-3xl overflow-hidden border border-solid border-[#1f6ce82e] backdrop-blur-[10.35px] [background:radial-gradient(50%_50%_at_53%_53%,rgba(216,230,255,0.49)_0%,rgba(255,255,255,0.49)_100%)] shadow-lg">
               <CardContent className="p-6 flex flex-col items-center justify-center">
-                {/* 3X Display */}
-                {/* <div className="w-full max-w-[441px] aspect-[441/263] mx-auto bg-[#ffffff80] rounded-3xl border border-solid border-[#fffffffc] shadow-[0px_0px_18px_#fffffff2]">
-                  <div className="relative w-[81%] h-[81%] mx-auto mt-[9.5%] rounded-3xl border border-solid border-[#ffffff85] shadow-[0px_4px_12.7px_#1d56b263]">
-                    <div className="absolute w-[82%] h-[79%] top-[10%] left-[9%] rounded-[18px] shadow-[0px_4px_12.7px_#1d56b263] [background:linear-gradient(40deg,rgba(192,212,255,0.5)_0%,rgba(181,242,255,0.5)_100%)]" />
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-[18px]">
-                      <div className="[-webkit-text-stroke:1px_#ffffff] [background:linear-gradient(180deg,rgba(7,44,103,0.39)_0%,rgba(21,21,64,1)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] text-8xl font-bold">
-                        3X
-                      </div>
-                      <ArrowUpDown className="w-12 h-[70px]" />
-                    </div>
-                  </div>
-                </div> */}
                 {/* image */}
                 <div className="w-[441px] h-[263px] relative">
                   <Image

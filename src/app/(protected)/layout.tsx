@@ -1,16 +1,18 @@
 'use client';
 
 import type React from 'react';
-
+import { useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount } from 'wagmi';
+import { useTheme } from '@/contexts/theme-context';
 
-import Button from '@/components/chromia-ui-kit/button';
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardDescription, CardTitle } from '@/components/common/card';
 import { useChromiaAccount } from '@/hooks/chromia-hooks';
 import { useAccountCreatedModal } from '@/components/custom/modals/account-created-modal';
 import { MainLayout } from '@/components/layout';
+import { Button } from '@/components/common/button';
+
 const Layout = ({
   children,
 }: Readonly<{
@@ -21,6 +23,12 @@ const Layout = ({
   const { hasAccount, createAccount, isLoading, tried } = useChromiaAccount({
     onAccountCreated: show,
   });
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    // Set dark theme for app pages
+    setTheme('dark');
+  }, [setTheme]);
 
   if (isConnected) {
     if (hasAccount) {
@@ -29,13 +37,13 @@ const Layout = ({
 
     return (
       <MainLayout>
-        <div className="flex flex-1 items-center justify-center">
+        <div className="h-screen flex flex-1 items-center justify-center">
           {isLoading ? (
             <CardLoading />
           ) : (
             <Card className="min-w-52 p-6 text-center">
               <CardTitle>Account not found</CardTitle>
-              <CardDescription className="mt-2">
+              <CardDescription className="mt-2 max-w-2xl">
                 You need to create an chromia account first to mint own token.
               </CardDescription>
               <Button onClick={createAccount} className="mx-auto mt-4 min-w-44">
@@ -50,7 +58,7 @@ const Layout = ({
 
   return (
     <MainLayout>
-      <div className="flex flex-1 items-center justify-center">
+      <div className="h-screen flex flex-1 items-center justify-center">
         <ConnectKitButton.Custom>
           {({ show, isConnecting }) => {
             if (isConnecting) {

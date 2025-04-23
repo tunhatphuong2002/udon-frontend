@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full max-md:max-w-full h-[400px] overflow-hidden">
+    <footer className="relative w-full max-md:max-w-full h-[400px] overflow-hidden">
       <div className="flex flex-col relative w-full pt-[35px] px-14 max-md:max-w-full max-md:px-5 h-full">
         {/* background */}
         <div className="absolute top-0 left-0 w-full h-full flex flex-row z-0">

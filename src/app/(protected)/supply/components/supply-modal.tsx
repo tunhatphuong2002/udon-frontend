@@ -10,6 +10,7 @@ import {
   DialogClose,
 } from '@/components/common/dialog';
 import { Button } from '@/components/common/button';
+import { Typography } from '@/components/common/typography';
 import { Info } from 'lucide-react';
 
 interface SupplyModalProps {
@@ -38,35 +39,38 @@ export const SupplyModal: React.FC<SupplyModalProps> = ({ open, onOpenChange, as
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full mx-auto text-left rounded-2xl bg-[#1A1F2C] p-5 sm:p-7 border-[#33334a]">
+      <DialogContent className="max-w-md w-full mx-auto text-left rounded-2xl bg-card p-5 sm:p-7 border-border">
         <DialogHeader className="space-y-2">
-          <DialogTitle className="text-xl sm:text-2xl font-semibold text-white">
-            Supply {assetName}
+          <DialogTitle asChild>
+            <Typography variant="h3" weight="semibold" className="text-xl sm:text-2xl">
+              Supply {assetName}
+            </Typography>
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-md text-[#c3c3c3]">
-            To supply <span className="font-bold">{assetName}</span>, enter the amount and click
-            &apos;Confirm&apos;.
+          <DialogDescription asChild>
+            <Typography variant="small" color="submerged" className="text-sm sm:text-md">
+              To supply <span className="font-bold">{assetName}</span>, enter the amount and click
+              &apos;Confirm&apos;.
+            </Typography>
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-4 sm:mt-6">
           <div className="space-y-2">
-            <label
-              className="text-sm font-medium text-[#d9d9d9] flex items-center gap-2"
-              htmlFor="supply-amount"
-            >
-              Amount
+            <label className="flex items-center gap-2" htmlFor="supply-amount">
+              <Typography variant="small" weight="medium">
+                Amount
+              </Typography>
               <span
                 className="inline-flex items-center"
                 title="Enter the amount you want to supply"
               >
-                <Info className="h-4 w-4 text-[#9b87f5] cursor-help" />
+                <Info className="h-4 w-4 text-primary cursor-help" />
               </span>
             </label>
             <input
               id="supply-amount"
               type="number"
-              className="w-full rounded-xl border border-[#33334a] bg-[#23263c] py-2 px-3 text-base sm:text-lg text-white outline-none focus:ring-1 focus:ring-[#9b87f5] transition-all"
+              className="w-full rounded-xl border border-border bg-secondary py-2 px-3 text-base sm:text-lg text-foreground outline-none focus:ring-1 focus:ring-primary transition-all"
               placeholder="Enter amount"
               min={0}
               value={amount}
@@ -77,8 +81,9 @@ export const SupplyModal: React.FC<SupplyModalProps> = ({ open, onOpenChange, as
 
           <div className="flex flex-col sm:flex-row gap-3 mt-2">
             <Button
+              variant="default"
               onClick={handleConfirm}
-              className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white rounded-xl px-4 py-3 font-semibold text-sm sm:text-base order-1 sm:order-1"
+              className="w-full rounded-xl px-4 py-3 font-semibold text-sm sm:text-base order-1 sm:order-1"
               disabled={!amount}
               aria-label={`Confirm supplying ${amount} ${assetName}`}
             >
@@ -86,9 +91,9 @@ export const SupplyModal: React.FC<SupplyModalProps> = ({ open, onOpenChange, as
             </Button>
             <DialogClose asChild>
               <Button
-                onClick={handleCancel}
                 variant="outline"
-                className="w-full rounded-xl text-[#d9d9d9] border-[#33334a] hover:bg-[#33334a] hover:text-white order-2 sm:order-2"
+                onClick={handleCancel}
+                className="w-full rounded-xl text-muted-foreground border-border hover:bg-accent order-2 sm:order-2"
                 aria-label="Cancel supply operation"
               >
                 Cancel
