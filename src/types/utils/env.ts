@@ -77,7 +77,7 @@ export const isTestnet = getNetwork() === 'testnet';
 export const isMainnet = getNetwork() === 'mainnet';
 
 // App configuration
-export const APP_NAME = getEnv('NEXT_PUBLIC_APP_NAME', 'Udon Frontend');
+export const APP_NAME = getEnv('NEXT_PUBLIC_APP_NAME', 'Udon Finance');
 export const SITE_URL = getEnv('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000');
 export const GA_TRACKING_ID = getEnv('NEXT_PUBLIC_GA_TRACKING_ID', '');
 export const BRID = getEnv('NEXT_PUBLIC_BRID', '');

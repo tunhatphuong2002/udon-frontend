@@ -1,7 +1,7 @@
-# Udon Frontend
+# Udon Finance
 
 <div align="center">
-  <img src="https://via.placeholder.com/1200x400?text=Udon+Frontend+Banner" alt="Udon Frontend Banner" width="800"/>
+  <img src="https://via.placeholder.com/1200x400?text=Udon+Frontend+Banner" alt="Udon Finance Banner" width="800"/>
   <p><em>Modern frontend application built with Next.js, React, and TypeScript</em></p>
 
   <p>
@@ -49,7 +49,7 @@
 
 ## 🚀 Overview
 
-Udon Frontend is a modern web application powered by Next.js, React, and TypeScript. It provides a robust foundation for building scalable, maintainable, and high-performance web applications.
+Udon Finance is a modern web application powered by Next.js, React, and TypeScript. It provides a robust foundation for building scalable, maintainable, and high-performance web applications.
 
 ## ✨ Features
 

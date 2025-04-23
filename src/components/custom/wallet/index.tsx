@@ -57,6 +57,11 @@ export function ConnectWallet() {
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const { account } = useChromiaAccount({
+    onAccountCreated: () => {
+      setMounted(true);
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -82,69 +87,61 @@ export function ConnectWallet() {
     return <div className="h-9 w-44" />;
   }
 
-  return (
-    <ConnectKitButton.Custom>
-      {({ show, isConnected, isConnecting, ensName, address }) => {
-        if (isConnected) {
-          return (
-            <div className="relative" ref={popoverRef}>
-              {/* Mobile view */}
-              <div className="sm:hidden">
-                <ConnectedButton
-                  className="w-full"
-                  address={address}
-                  ensName={ensName}
-                  isOpen={isOpen}
-                  onClick={() => setIsOpen(!isOpen)}
-                  onMouseEnter={() => setIsOpen(true)}
-                />
-              </div>
-
-              {/* Desktop view */}
-              <div className="hidden sm:block">
-                <ConnectedButton
-                  className=""
-                  address={address}
-                  ensName={ensName}
-                  isOpen={isOpen}
-                  onClick={() => setIsOpen(!isOpen)}
-                  onMouseEnter={() => setIsOpen(true)}
-                />
-              </div>
-
-              {/* Popover Content */}
-              {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[340px] z-[9999] border rounded-xl shadow-lg">
-                  <div className="rounded-2xl bg-background/95 backdrop-blur-md shadow-lg border border-primary/10 p-5">
-                    <WalletActions />
-                  </div>
+  if (!account?.id) {
+    return <></>;
+  } else {
+    return (
+      <ConnectKitButton.Custom>
+        {({ show, isConnected, isConnecting, ensName, address }) => {
+          if (isConnected) {
+            return (
+              <div className="relative" ref={popoverRef}>
+                {/* Mobile view */}
+                <div className="sm:hidden">
+                  <ConnectedButton
+                    className="w-full"
+                    address={address}
+                    ensName={ensName}
+                    isOpen={isOpen}
+                    onClick={() => setIsOpen(!isOpen)}
+                    onMouseEnter={() => setIsOpen(true)}
+                  />
                 </div>
-              )}
-            </div>
-          );
-        }
 
-        return (
-          <Button
-            variant="default"
-            size="default"
-            onClick={show}
-            disabled={isConnecting}
-            className="group relative min-w-44 overflow-hidden bg-gradient-to-r from-primary via-primary to-primary hover:shadow-lg hover:shadow-primary/20 disabled:opacity-70"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform group-hover:translate-x-full"></div>
-            {isConnecting ? (
-              <span className="flex items-center gap-2">
-                <span className="font-medium tracking-tight">Connecting...</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-2 font-medium tracking-tight">
-                Connect Wallet
-              </span>
-            )}
-          </Button>
-        );
-      }}
-    </ConnectKitButton.Custom>
-  );
+                {/* Popover Content */}
+                {isOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-[340px] z-[9999] border rounded-xl shadow-lg">
+                    <div className="rounded-2xl bg-background/95 backdrop-blur-md shadow-lg border border-primary/10 p-5">
+                      <WalletActions />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <Button
+              variant="default"
+              size="default"
+              onClick={show}
+              disabled={isConnecting}
+              className="group relative min-w-44 overflow-hidden bg-gradient-to-r from-primary via-primary to-primary hover:shadow-lg hover:shadow-primary/20 disabled:opacity-70"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform group-hover:translate-x-full"></div>
+              {isConnecting ? (
+                <span className="flex items-center gap-2">
+                  <span className="font-medium tracking-tight">Connecting...</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-2 font-medium tracking-tight">
+                  Connect Wallet
+                </span>
+              )}
+            </Button>
+          );
+        }}
+      </ConnectKitButton.Custom>
+    );
+  }
 }

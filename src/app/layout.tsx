@@ -4,11 +4,7 @@ import { Analytics } from '@/analytics';
 import { SITE_URL } from '@/types/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
-// import { MainLayout } from '@/components/layout';
 import localFont from 'next/font/local';
-// import Header from '@/components/layout/header';
-// import Footer from '@/components/layout/footer';
-// import Image from 'next/image';
 
 const BattlefinFont = localFont({
   src: '../../public/fonts/Battlefin-Black.woff2',
@@ -36,10 +32,10 @@ const NBInternationalFont = localFont({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Udon Frontend',
-    default: 'Udon Frontend - Modern Web Application',
+    template: '%s | Udon Finance',
+    default: 'Udon Finance - Unlocking Liquidity Money Markets and Leverage on Chromia',
   },
-  description: 'A modern web application built with Next.js, React, and TypeScript',
+  description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
   keywords: ['next.js', 'react', 'typescript', 'web development'],
   authors: [{ name: 'Udon Team' }],
   creator: 'Udon Team',
@@ -47,17 +43,29 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  manifest: '/favicon/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: { url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    other: [
+      { url: '/favicon/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
   openGraph: {
-    title: 'Udon Frontend',
-    description: 'A modern web application built with Next.js, React, and TypeScript',
+    title: 'Udon Finance',
+    description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
     url: SITE_URL,
-    siteName: 'Udon Frontend',
+    siteName: 'Udon Finance',
     images: [
       {
-        url: '/images/og-image.jpg',
+        url: '/seo/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Udon Frontend',
+        alt: 'Udon Finance',
       },
     ],
     locale: 'en_US',
@@ -65,9 +73,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Udon Frontend',
-    description: 'A modern web application built with Next.js, React, and TypeScript',
-    images: ['/images/twitter-image.jpg'],
+    title: 'Udon Finance',
+    description: 'Unlocking Liquidity Money Markets and Leverage on Chromia',
+    images: ['/seo/twitter-image.png'],
   },
   robots: {
     index: true,

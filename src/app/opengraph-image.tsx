@@ -39,7 +39,7 @@ export default async function Image() {
             width: '100%',
           }}
         >
-          <div style={{ fontSize: 80, fontWeight: 'bold', marginBottom: 20 }}>Udon Frontend</div>
+          <div style={{ fontSize: 80, fontWeight: 'bold', marginBottom: 20 }}>Udon Finance</div>
           <div style={{ fontSize: 40, fontWeight: 'normal', opacity: 0.8 }}>
             A modern web application
           </div>
