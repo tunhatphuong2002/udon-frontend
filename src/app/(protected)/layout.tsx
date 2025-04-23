@@ -18,7 +18,7 @@ const Layout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const { isConnected } = useAccount();
+  const { isConnected, isReconnecting } = useAccount();
   const { show } = useAccountCreatedModal();
   const { hasAccount, createAccount, isLoading, tried } = useChromiaAccount({
     onAccountCreated: show,
@@ -38,7 +38,7 @@ const Layout = ({
     return (
       <MainLayout>
         <div className="h-screen flex flex-1 items-center justify-center">
-          {isLoading ? (
+          {isLoading || isReconnecting ? (
             <CardLoading />
           ) : (
             <Card className="min-w-52 p-6 text-center">
@@ -59,25 +59,29 @@ const Layout = ({
   return (
     <MainLayout>
       <div className="h-screen flex flex-1 items-center justify-center">
-        <ConnectKitButton.Custom>
-          {({ show, isConnecting }) => {
-            if (isConnecting) {
-              return <CardLoading />;
-            }
+        {isLoading || isReconnecting ? (
+          <CardLoading />
+        ) : (
+          <ConnectKitButton.Custom>
+            {({ show, isConnecting }) => {
+              if (isConnecting) {
+                return <CardLoading />;
+              }
 
-            return (
-              <Card className="min-w-52 p-6 text-center">
-                <CardTitle>Connect to your wallet</CardTitle>
-                <CardDescription className="mt-2">
-                  You need to connect your wallet to mint own token.
-                </CardDescription>
-                <Button onClick={show} className="mx-auto mt-4 w-44">
-                  Connect wallet
-                </Button>
-              </Card>
-            );
-          }}
-        </ConnectKitButton.Custom>
+              return (
+                <Card className="min-w-52 p-6 text-center">
+                  <CardTitle>Connect to your wallet</CardTitle>
+                  <CardDescription className="mt-2">
+                    You need to connect your wallet to mint own token.
+                  </CardDescription>
+                  <Button onClick={show} className="mx-auto mt-4 w-44">
+                    Connect wallet
+                  </Button>
+                </Card>
+              );
+            }}
+          </ConnectKitButton.Custom>
+        )}
       </div>
     </MainLayout>
   );

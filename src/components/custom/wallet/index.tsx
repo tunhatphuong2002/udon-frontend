@@ -5,7 +5,8 @@ import { ConnectKitButton, Avatar } from 'connectkit';
 import { ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/common/button';
-import { WalletActions } from './components/WalletActions';
+import { WalletActions } from './components/wallet-actions';
+import { useChromiaAccount } from '@/hooks/chromia-hooks';
 
 interface ConnectedButtonProps {
   className?: string;
@@ -18,13 +19,15 @@ interface ConnectedButtonProps {
 
 function ConnectedButton({
   className,
-  address,
   ensName,
   isOpen,
   onClick,
   onMouseEnter,
 }: ConnectedButtonProps) {
-  const truncatedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
+  const { account } = useChromiaAccount();
+  const truncatedAddress = account?.id.toString('hex')
+    ? `${account?.id.toString('hex').toUpperCase().slice(0, 6)}...${account?.id.toString('hex').toUpperCase().slice(-4)}`
+    : '';
 
   return (
     <Button
@@ -35,7 +38,11 @@ function ConnectedButton({
     >
       <div className="relative flex h-7 w-7 items-center justify-center">
         <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent ring-1 ring-primary/20">
-          <Avatar address={address} name={ensName || undefined} size={24} />
+          <Avatar
+            address={`${account?.id.toString('hex')}` as `0x${string}`}
+            name={ensName || undefined}
+            size={24}
+          />
         </div>
       </div>
       <span className="font-medium tracking-tight">{ensName || truncatedAddress}</span>
@@ -69,8 +76,8 @@ export function ConnectWallet() {
     };
   }, []);
 
-  // Không render nội dung thực sự cho đến khi đã mounted phía client
-  // Nhưng vẫn duy trì không gian trên UI để tránh layout shift
+  // Not render content until the client is mounted
+  // But still maintain the space on the UI to avoid layout shift
   if (!mounted) {
     return <div className="h-9 w-44" />;
   }
@@ -128,15 +135,10 @@ export function ConnectWallet() {
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform group-hover:translate-x-full"></div>
             {isConnecting ? (
               <span className="flex items-center gap-2">
-                <span className="relative flex h-4 w-4 items-center justify-center">
-                  <span className="absolute h-full w-full animate-ping rounded-full bg-primary-foreground/30"></span>
-                  <span className="relative h-3 w-3 rounded-full border-2 border-primary-foreground/90 border-t-transparent animate-spin"></span>
-                </span>
                 <span className="font-medium tracking-tight">Connecting...</span>
               </span>
             ) : (
               <span className="flex items-center gap-2 font-medium tracking-tight">
-                <Avatar size={16} />
                 Connect Wallet
               </span>
             )}

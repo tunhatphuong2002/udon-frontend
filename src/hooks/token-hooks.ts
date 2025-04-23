@@ -40,7 +40,7 @@ export function useMintToken({
               token.ticker,
               8,
               BigInt(token.amount),
-              'https://cdn-icons-png.flaticon.com/512/4863/4863873.png'
+              'https://res.cloudinary.com/dgjnyr47e/image/upload/v1745380825/icon_2_rxylmm.png'
             )
           )
           .buildAndSend();

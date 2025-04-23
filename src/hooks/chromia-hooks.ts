@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 // Import Chromia FT4 functionality for account management and authentication
 import {
@@ -36,13 +36,29 @@ export const useChromiaAccount = ({
 }: {
   onAccountCreated?: () => void;
 } = {}) => {
-  const [isLoading, setIsLoading] = useState(false); // Tracks if account creation is in progress
+  const [isLoading, setIsLoading] = useState(true); // Tracks if account creation is in progress
   const [tried, setTried] = useState(false); // Tracks if account creation has been attempted
 
   const { address: ethAddress } = useAccount(); // Retrieve the Ethereum address using wagmi hook
-  const { data: client } = usePostchainClient({ config: publicClientConfig }); // Initialize Postchain client
+  const { data: client, isLoading: isLoadingClient } = usePostchainClient({
+    config: publicClientConfig,
+  }); // Initialize Postchain client
   const { data: keyStore } = useEvmKeyStore(); // Get the Ethereum key store for authentication
-  const { mutate, data: ftAccounts } = useFtAccounts({ clientConfig: publicClientConfig }); // Manage FT4 accounts
+  const {
+    mutate,
+    data: ftAccounts,
+    isLoading: isLoadingFtAccounts,
+  } = useFtAccounts({
+    clientConfig: publicClientConfig,
+  }); // Manage FT4 accounts
+
+  React.useEffect(() => {
+    if (isLoadingClient || isLoadingFtAccounts) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  }, [isLoadingClient, isLoadingFtAccounts]);
 
   /**
    * Creates a new Chromia account with transfer capabilities.

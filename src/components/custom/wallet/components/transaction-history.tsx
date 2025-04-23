@@ -3,25 +3,18 @@
 import { ArrowUpRight, ArrowDownRight, Calendar, Clock } from 'lucide-react';
 import { useTransferHistory } from '@/hooks/use-tranfer-history';
 import { format } from 'date-fns';
+// import { convertToRawAmount } from '@chromia/ft4';
+// import Link from 'next/link';
+import { getTxLink } from '@/types/utils/get-tx-link';
 
 export function TransactionHistory() {
   const { transfers, isLoading } = useTransferHistory();
 
-  // Hàm rút gọn chuỗi (như hex address)
+  // Function to truncate string (like hex address)
   const truncateHash = (hash: string, startChars = 6, endChars = 3) => {
     if (!hash) return '';
     if (hash.length <= startChars + endChars) return hash;
-    return `x${hash.slice(0, startChars)}...${hash.slice(-endChars)}`;
-  };
-
-  // Format số lượng token với số lẻ thập phân
-  const formatAmount = (amount: unknown) => {
-    if (!amount) return '0';
-    try {
-      return String(amount);
-    } catch {
-      return '0';
-    }
+    return `${hash.slice(0, startChars)}...${hash.slice(-endChars)}`;
   };
 
   return (
@@ -39,31 +32,28 @@ export function TransactionHistory() {
           {transfers && transfers.length > 0 ? (
             <div className="space-y-3">
               {transfers.map((transfer, index) => {
-                // Tạo hash giả để hiển thị dựa trên index nếu không có transactionId
-                const transactionHash = transfer.transactionId
-                  ? transfer.transactionId.toString('hex')
-                  : `tx${Date.now()}${index}`;
-
                 const isReceived = transfer.isInput;
-                const amount = formatAmount(transfer.delta);
-                const symbol = transfer.asset?.symbol || 'TOKEN';
+                // const amount = convertToRawAmount(
+                //   transfer.delta,
+                //   transfer.asset?.decimals
+                // ).value.toString();
+                // const symbol = transfer.asset?.symbol;
+                const transactionHash = transfer?.transactionId?.toString('hex') || '';
 
                 return (
                   <div
                     key={index}
-                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/30 via-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm"
+                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/30 via-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm cursor-pointer"
+                    onClick={() => {
+                      window.open(getTxLink(transactionHash), '_blank');
+                    }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent"></div>
                     <div className="relative">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center">
                           <span className="text-sm font-medium">
-                            {truncateHash(transactionHash)}
-                          </span>
-                          <span
-                            className={`ml-2 text-xs ${isReceived ? 'text-green-500' : 'text-blue-500'}`}
-                          >
-                            {transfer.operationName || (isReceived ? 'Received' : 'Sent')}
+                            {truncateHash(transactionHash.toUpperCase())}
                           </span>
                         </div>
                         {isReceived ? (
@@ -74,6 +64,11 @@ export function TransactionHistory() {
                       </div>
 
                       <div className="flex justify-between items-center">
+                        <span
+                          className={`text-xs ${isReceived ? 'text-green-500' : 'text-blue-500'}`}
+                        >
+                          {transfer.operationName || (isReceived ? 'Received' : 'Sent')}
+                        </span>
                         <div className="flex items-center text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3 mr-1" />
                           <span>
@@ -88,10 +83,11 @@ export function TransactionHistory() {
                               : '-'}
                           </span>
                         </div>
-                        <span className="text-sm font-semibold">
+
+                        {/* <span className="text-sm font-semibold">
                           {isReceived ? '+' : '-'}
                           {amount} {symbol}
-                        </span>
+                        </span> */}
                       </div>
                     </div>
                   </div>

@@ -1,14 +1,10 @@
 'use client';
 
-import { Balance } from '@chromia/ft4';
+import { Balance, convertToRawAmount } from '@chromia/ft4';
 import { useTokenBalance } from '@/hooks/use-token-balance';
+import Image from 'next/image';
 
 // Extend the Balance type with additional properties
-interface TokenBalance extends Balance {
-  tokenId?: string;
-  tokenName?: string;
-  availableAmount?: string | number;
-}
 
 export function TokenList() {
   const { balances, isLoading: isLoadingBalances } = useTokenBalance();
@@ -28,7 +24,7 @@ export function TokenList() {
           {balances.length > 0 ? (
             <div className="space-y-3">
               {balances.map((balance, index) => {
-                const tokenBalance = balance as TokenBalance;
+                const tokenBalance = balance as Balance;
                 return (
                   <div
                     key={index}
@@ -38,16 +34,23 @@ export function TokenList() {
                     <div className="relative flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                          <span className="text-xs font-medium">
-                            {tokenBalance.tokenId?.substring(0, 2).toUpperCase() || 'TK'}
-                          </span>
+                          {/* <span className="text-xs font-medium">
+                            {tokenBalance.asset.symbol?.substring(0, 2).toUpperCase()}
+                          </span> */}
+                          <Image
+                            src={tokenBalance.asset.iconUrl}
+                            alt={tokenBalance.asset.symbol}
+                            width={32}
+                            height={32}
+                          />
                         </div>
-                        <span className="text-md font-medium">
-                          {tokenBalance.tokenName || `POL`}
-                        </span>
+                        <span className="text-md font-medium">{tokenBalance.asset.symbol}</span>
                       </div>
                       <span className="text-lg font-semibold">
-                        {tokenBalance.availableAmount || balance.amount.toString()}
+                        {convertToRawAmount(
+                          tokenBalance.amount.toString(),
+                          tokenBalance.asset.decimals
+                        ).value.toString()}
                       </span>
                     </div>
                   </div>

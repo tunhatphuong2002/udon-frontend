@@ -1,5 +1,5 @@
 blockchains:
-  asset_management:
+  udon_lending_fsn:
     module: main
     moduleArgs:
       main:
@@ -8,7 +8,7 @@ compile:
   rellVersion: 0.14.3
   source: src
 database:
-  schema: schema_asset_management_fsn
+  schema: schema_udon_lending_fsn
 test:
   modules:
     - test
@@ -24,3 +24,5 @@ deployments:
     brid: x"6F1B061C633A992BF195850BF5AA1B6F887AEE01BB3F51251C230930FB792A92" # Blockchain RID for Testnet Directory Chain
     url: https://node0.testnet.chromia.com:7740 # Target URL for one of the nodes in Testnet
     container: f605dfa5a0c11af98ae0aa978e34636ad6f673c207546667cf7e188c472e25fd # Replace with your container ID (Example - container: 15ddfcb25dcb43577ab311fe78aedab14fda25757c72a787420454728fb80304)
+    chains:
+      udon_lending_fsn: x"1A0F8951E73D53B142809D73AF8297746461204BAF6569F3DF2748F2ADA620FA"

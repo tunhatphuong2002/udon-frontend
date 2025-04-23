@@ -5,11 +5,11 @@ import { ArrowRightLeft, Wallet, LogOut, ArrowLeft } from 'lucide-react';
 import { useDisconnect } from 'wagmi';
 
 import { Button } from '@/components/common/button';
-import TransferForm from './TransferForm';
-import DepositForm from './DepositForm';
-import { ChromiaAccount } from './ChromiaAccount';
-import { TokenList } from './TokenList';
-import { TransactionHistory } from './TransactionHistory';
+import TransferForm from '../form/transfer-form';
+import DepositForm from '../form/deposit-form';
+import { ChromiaAccount } from './chromia-account';
+import { TokenList } from './token-list';
+import { TransactionHistory } from './transaction-history';
 
 export function WalletActions() {
   const [activeView, setActiveView] = useState<'account' | 'transfer' | 'deposit'>('account');

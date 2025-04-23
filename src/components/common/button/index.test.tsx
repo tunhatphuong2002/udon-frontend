@@ -18,7 +18,7 @@ describe('Button', () => {
   });
 
   it('applies variant styles correctly', () => {
-    const { rerender } = render(<Button variant="primary">Primary</Button>);
+    const { rerender } = render(<Button variant="default">Primary</Button>);
     expect(screen.getByRole('button')).toHaveClass('bg-blue-600');
 
     rerender(<Button variant="secondary">Secondary</Button>);
@@ -29,13 +29,13 @@ describe('Button', () => {
   });
 
   it('applies size styles correctly', () => {
-    const { rerender } = render(<Button size="small">Small</Button>);
+    const { rerender } = render(<Button size="sm">Small</Button>);
     expect(screen.getByRole('button')).toHaveClass('py-1 px-3 text-sm');
 
-    rerender(<Button size="medium">Medium</Button>);
+    rerender(<Button size="lg">Medium</Button>);
     expect(screen.getByRole('button')).toHaveClass('py-2 px-4');
 
-    rerender(<Button size="large">Large</Button>);
+    rerender(<Button size="lg">Large</Button>);
     expect(screen.getByRole('button')).toHaveClass('py-3 px-6 text-lg');
   });
 
