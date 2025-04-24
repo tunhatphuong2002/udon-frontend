@@ -1,6 +1,7 @@
 import { cn } from '@/types/utils/tailwind';
 import { Typography } from '@/components/common/typography';
 import React from 'react';
+import Image from 'next/image';
 
 interface StatCardProps {
   title: string;
@@ -20,29 +21,25 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       className={cn(
-        'relative flex flex-col justify-between flex-1 min-w-[180px] p-4 rounded-lg border bg-card',
+        'relative flex flex-row justify-between flex-1 p-4 rounded-lg border bg-card',
         className
       )}
     >
       {background && (
-        <img
-          src={background}
-          className="absolute h-full w-full object-cover inset-0 rounded-lg"
-          alt=""
-        />
+        <div className="absolute h-full w-full inset-0 rounded-lg">
+          <Image src={background} className="object-cover" alt="" fill />
+        </div>
       )}
-      <div className="relative">
-        <div className="text-xl font-medium">{value}</div>
+      <div className="flex flex-col">
+        <div className="text-2xl font-medium">{value}</div>
         <Typography size="sm" className="text-muted-foreground mt-1">
           {title}
         </Typography>
       </div>
       {icon && (
-        <img
-          src={icon}
-          className="aspect-square object-contain w-5 absolute top-3 right-3"
-          alt=""
-        />
+        <div className="w-5 h-5">
+          <Image src={icon} alt="" width={24} height={24} />
+        </div>
       )}
     </div>
   );

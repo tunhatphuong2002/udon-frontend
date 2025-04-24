@@ -19,13 +19,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('bg-[#232325] rounded-2xl p-5 md:p-6', className)}>
+    <div className={cn('bg-card border rounded-2xl p-5 md:p-6', className)}>
       <div className="flex justify-between items-start flex-wrap gap-4">
-        <div>
-          <div className="text-sm text-gray-300 mb-1">{title}</div>
-          <div className="text-[2.2rem] leading-tight font-semibold text-white">
+        <div className="flex flex-col gap-1">
+          <div className="text-sm mb-1">{title}</div>
+          <div className="text-3xl font-semibold">
             {value}
-            <span className="text-lg font-medium text-gray-400">{valueSuffix}</span>
+            <span className="text-3xl font-medium">{valueSuffix}</span>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">{filters}</div>

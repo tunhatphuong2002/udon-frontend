@@ -64,6 +64,8 @@ const config: Config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        embossed: 'hsl(var(--embossed))',
+        submerged: 'hsl(var(--submerged))',
       },
       borderRadius: {
         lg: 'var(--radius)',

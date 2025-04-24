@@ -89,11 +89,13 @@ export const InfrastructureSection: React.FC = () => {
     <section className="w-full">
       <div className="relative min-h-screen px-6 md:px-20 py-16 md:py-28 flex flex-col items-center">
         <div className="absolute h-full w-full inset-0 z-0">
-          <Image
-            src="/images/landing/infratructure/bg.gif"
-            className="object-cover"
-            alt="Background"
-            fill
+          <video
+            src="/images/landing/infratructure/bg.webm"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="object-cover w-full h-full"
           />
         </div>
 

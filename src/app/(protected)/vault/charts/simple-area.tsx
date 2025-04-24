@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -9,6 +8,7 @@ import {
   ReferenceDot,
   Area,
   ReferenceLine,
+  AreaChart,
 } from 'recharts';
 
 interface ChartProps {
@@ -28,24 +28,24 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
 }) => {
   return (
     <ResponsiveContainer width="100%" height="100%" className={className}>
-      <LineChart data={data} margin={{ left: 0, right: 0, top: 24, bottom: 0 }}>
+      <AreaChart data={data} margin={{ left: 0, right: 0, top: 24, bottom: 0 }}>
         <defs>
           <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.22} />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.04} />
+            <stop offset="0%" stopColor="#1F6DE9" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="#1F6DE9" stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis
           dataKey="date"
           tick={{ fill: '#A1A1AA', fontSize: 12 }}
-          axisLine={false}
-          tickLine={false}
+          axisLine={true}
+          tickLine={true}
         />
         <YAxis
           orientation="left"
           tick={{ fill: '#A1A1AA', fontSize: 10 }}
-          axisLine={false}
-          tickLine={false}
+          axisLine={true}
+          tickLine={true}
           tickFormatter={(value: number) => `${value}`}
         />
         <Tooltip
@@ -60,6 +60,8 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
           formatter={tooltipFormatter}
           labelFormatter={(v: number) => `Date: ${v}`}
         />
+
+        {/* <CartesianGrid vertical={false} stroke="#ffff" /> */}
         {showAvg && (
           <>
             <ReferenceDot
@@ -81,7 +83,7 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
             <ReferenceLine y={avgValue} stroke="#2d333b" strokeDasharray="3 3" />
           </>
         )}
-        <Area type="monotone" dataKey="value" stroke="none" fill="url(#areaGradient)" />
+        <Area type="monotone" dataKey="value" stroke="#1F6DE9" fill="url(#areaGradient)" />
         <Line
           type="monotone"
           dataKey="value"
@@ -90,7 +92,7 @@ export const SimpleAreaChart: React.FC<ChartProps> = ({
           dot={false}
           activeDot={{ r: 5, fill: 'hsl(var(--primary))' }}
         />
-      </LineChart>
+      </AreaChart>
     </ResponsiveContainer>
   );
 };

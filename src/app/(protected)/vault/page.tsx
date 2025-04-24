@@ -15,16 +15,16 @@ import {
 
 export default function VaultPage() {
   return (
-    <div className="fcol items-center py-12 px-4 md:px-10 lg:pt-[250px] lg:pb-[100px] lg:px-[40px]">
-      <div className="w-full max-w-[1200px]">
-        <div className="flex flex-col md:flex-row gap-5">
-          <main className="w-full md:w-[70%]">
+    <div className="fcol items-center py-12 px-4 md:px-10 lg:pt-[140px] lg:pb-[100px] lg:px-[40px]">
+      <div className="w-full">
+        <div className="grid grid-cols-12 gap-5">
+          <main className="col-span-12 md:col-span-8">
             <div className="grow">
               <VaultHeader />
 
               {/* Overview Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
+                <Typography variant="h3" weight="medium" className="mb-4">
                   Overview
                 </Typography>
                 <VaultOverview />
@@ -32,7 +32,7 @@ export default function VaultPage() {
 
               {/* Performance Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
+                <Typography variant="h3" weight="medium" className="mb-4">
                   Performance
                 </Typography>
                 <VaultPerformance />
@@ -40,7 +40,7 @@ export default function VaultPage() {
 
               {/* Risk Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
+                <Typography variant="h3" weight="medium" className="mb-4">
                   Risk
                 </Typography>
                 <VaultRisk />
@@ -48,15 +48,12 @@ export default function VaultPage() {
 
               {/* Disclosures Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
-                  Disclosures
-                </Typography>
                 <VaultDisclosures />
               </section>
 
               {/* Allocation History Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
+                <Typography variant="h3" weight="medium" className="mb-4">
                   Allocation History
                 </Typography>
                 <VaultAllocation />
@@ -64,7 +61,7 @@ export default function VaultPage() {
 
               {/* Depositors Section */}
               <section className="w-full mt-8 md:mt-10">
-                <Typography variant="h4" color="primary" weight="medium" className="mb-4">
+                <Typography variant="h3" weight="medium" className="mb-4">
                   Depositors
                 </Typography>
                 <VaultDepositors />
@@ -72,7 +69,7 @@ export default function VaultPage() {
             </div>
           </main>
 
-          <aside className="w-full md:w-[30%] mt-8 md:mt-0">
+          <aside className="col-span-12 md:col-span-4 md:sticky md:pt-48">
             <SidePanel />
           </aside>
         </div>

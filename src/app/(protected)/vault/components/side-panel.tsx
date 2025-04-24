@@ -45,45 +45,49 @@ export const SidePanel: React.FC = () => {
         <div className="bg-card border rounded-xl p-5 border-border">
           <div className="fcol gap-4">
             <div className="w-full">
-              <Typography size="sm" className="text-muted-foreground mb-1">
-                My position (USDC)
-              </Typography>
+              <Typography className="text-submerged mb-1">My position (USDC)</Typography>
               <div className="frow-icenter gap-2 whitespace-nowrap">
-                <Typography className="text-muted-foreground">0.00</Typography>
-                <MoveRight className="w-4 h-4 text-muted-foreground" />
-                <Typography weight="medium">5,000,000.00</Typography>
+                <Typography className="text-submerged text-lg">0.00</Typography>
+                <MoveRight className="w-4 h-4 text-submerged" />
+                <Typography weight="medium" className="text-lg">
+                  5,000,000.00
+                </Typography>
               </div>
             </div>
 
             <div>
-              <Typography size="sm" className="text-muted-foreground mb-1">
-                Earn APY
+              <Typography className="text-submerged mb-1">Earn APY</Typography>
+              <Typography weight="medium" className="text-lg">
+                15.00%
               </Typography>
-              <Typography weight="medium">15.00%</Typography>
             </div>
 
             <div>
-              <Typography size="sm" className="text-muted-foreground mb-1">
+              <Typography className="text-submerged mb-1">
                 Projected Earnings/Month (USDC)
               </Typography>
-              <Typography weight="medium">15.00%</Typography>
+              <Typography weight="medium" className="text-lg">
+                15.00%
+              </Typography>
             </div>
 
             <div>
-              <Typography size="sm" className="text-muted-foreground mb-1">
+              <Typography className="text-submerged mb-1">
                 Projected Earnings/Year (USDC)
               </Typography>
-              <Typography weight="medium">15.00%</Typography>
+              <Typography weight="medium" className="text-lg">
+                15.00%
+              </Typography>
             </div>
 
             <div>
-              <Typography size="sm" className="text-muted-foreground mb-1">
-                Wallet Balance (USDC)
-              </Typography>
+              <Typography className="text-submerged mb-1">Wallet Balance (USDC)</Typography>
               <div className="frow-icenter gap-2 whitespace-nowrap">
-                <Typography className="text-muted-foreground">0.00</Typography>
-                <MoveRight className="w-4 h-4 text-muted-foreground" />
-                <Typography weight="medium">5,000,000.00</Typography>
+                <Typography className="text-submerged">0.00</Typography>
+                <MoveRight className="w-4 h-4 text-submerged" />
+                <Typography weight="medium" className="text-lg">
+                  5,000,000.00
+                </Typography>
               </div>
             </div>
           </div>
@@ -91,24 +95,22 @@ export const SidePanel: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="bg-card border border-primary/30 rounded-xl p-5 mt-4">
-            <div>
-              <Typography size="sm" className="text-muted-foreground mb-1">
+            <div className="fcol gap-2">
+              <Typography size="sm" className="text-submerged mb-1">
                 Deposit (USDC)
               </Typography>
               <input
                 type="text"
                 {...register('amount')}
-                className="bg-transparent text-foreground text-2xl w-full focus:outline-none"
+                className="bg-transparent text-foreground w-full focus:outline-none text-3xl"
                 placeholder="0.00"
               />
               {errors.amount ? (
-                <Typography size="sm" className="text-destructive mt-1">
+                <Typography className=" text-sm text-destructive mt-1">
                   {errors.amount.message}
                 </Typography>
               ) : (
-                <Typography size="sm" className="text-muted-foreground">
-                  $0
-                </Typography>
+                <Typography className="text-submerged">$0</Typography>
               )}
             </div>
           </div>

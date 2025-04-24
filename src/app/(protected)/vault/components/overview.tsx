@@ -72,56 +72,57 @@ export const VaultOverview: React.FC = () => {
   // Helper function to render supply cell
   const renderSupplyCell = (item: MarketData | undefined) => {
     if (!item) return null;
-    return <Typography className="text-right">${item.supply.toFixed(2)}M</Typography>;
+    return <Typography>${item.supply.toFixed(2)}M</Typography>;
   };
 
   // Helper function to render cap cell
   const renderCapCell = (item: MarketData | undefined) => {
     if (!item) return null;
-    return <Typography className="text-right">${item.cap.toFixed(2)}M</Typography>;
+    return <Typography>${item.cap.toFixed(2)}M</Typography>;
   };
 
   // Helper function to render APY cell
   const renderApyCell = (item: MarketData | undefined) => {
     if (!item) return null;
     return (
-      <div className="frow-icenter justify-end text-primary font-semibold">
+      <Typography className="frow-icenter font-semibold">
         {item.apy.toFixed(2)}%
         <ArrowUpRight className="ml-1 h-4 w-4" />
-      </div>
+      </Typography>
     );
   };
 
-  // Define columns with direct access to data objects
-  const columns = [
+  // Define columns for the table
+  const columns: ColumnDef<MarketData>[] = [
     {
-      header: 'Market Allocation',
+      header: 'Market',
       accessorKey: 'market',
-      cell: ({ row }: { row: { original: MarketData } }) => renderMarketCell(row.original),
-    },
-    {
-      header: 'Allocation %',
-      accessorKey: 'allocPct',
       enableSorting: true,
-      cell: ({ row }: { row: { original: MarketData } }) => renderAllocationCell(row.original),
+      cell: ({ row }) => renderMarketCell(row),
     },
     {
-      header: 'Total Supply',
+      header: 'Allocation',
+      accessorKey: 'alloc',
+      enableSorting: true,
+      cell: ({ row }) => renderAllocationCell(row),
+    },
+    {
+      header: 'Supply',
       accessorKey: 'supply',
       enableSorting: true,
-      cell: ({ row }: { row: { original: MarketData } }) => renderSupplyCell(row.original),
+      cell: ({ row }) => renderSupplyCell(row),
     },
     {
-      header: 'Cap',
+      header: 'Capacity',
       accessorKey: 'cap',
       enableSorting: true,
-      cell: ({ row }: { row: { original: MarketData } }) => renderCapCell(row.original),
+      cell: ({ row }) => renderCapCell(row),
     },
     {
-      header: 'Supply APY',
+      header: 'APY',
       accessorKey: 'apy',
       enableSorting: true,
-      cell: ({ row }: { row: { original: MarketData } }) => renderApyCell(row.original),
+      cell: ({ row }) => renderApyCell(row),
     },
   ];
 
@@ -168,7 +169,12 @@ export const VaultOverview: React.FC = () => {
               />
             }
           >
-            <SimpleAreaChart data={apyData} tooltipFormatter={value => [`${value}%`, 'APY']} />
+            <SimpleAreaChart
+              data={apyData}
+              tooltipFormatter={value => [`${value}%`, 'APY']}
+              showAvg={true}
+              avgValue={7.77}
+            />
           </ChartCard>
         </div>
         <div className="w-full md:w-1/3 flex items-start">
@@ -177,11 +183,7 @@ export const VaultOverview: React.FC = () => {
       </div>
 
       {/* Market Allocation Table */}
-      <SortableTable
-        data={marketData}
-        columns={columns as unknown as ColumnDef<MarketData>[]}
-        pageSize={8}
-      />
+      <SortableTable data={marketData} columns={columns} pageSize={8} />
     </div>
   );
 };

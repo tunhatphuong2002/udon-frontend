@@ -1,3 +1,5 @@
+'use client';
+
 import type React from 'react';
 
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';

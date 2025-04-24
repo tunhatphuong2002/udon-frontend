@@ -2,6 +2,8 @@ import React from 'react';
 import { cn } from '@/types/utils/tailwind';
 import { ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/popover';
+import { Tabs, TabsList, TabsTrigger } from '@/components/common/tab';
+import { Typography } from '@/components/common/typography';
 
 interface FilterPillProps {
   active?: boolean;
@@ -44,60 +46,31 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
 }) => {
   return (
     <div className="flex flex-wrap gap-3">
-      <div className="bg-[rgba(51,51,54,1)] flex rounded-3xl p-1">
-        <div
-          className={cn(
-            'px-3 py-1 rounded-3xl cursor-pointer transition',
-            chartType === 'deposit'
-              ? 'bg-[rgba(74,74,80,1)] text-white'
-              : 'text-[rgba(121,121,121,1)]'
-          )}
-          onClick={() => setChartType('deposit')}
-        >
-          Deposit
-        </div>
-        <div
-          className={cn(
-            'px-3 py-1 rounded-3xl cursor-pointer transition',
-            chartType === 'liquidity'
-              ? 'bg-[rgba(74,74,80,1)] text-white'
-              : 'text-[rgba(121,121,121,1)]'
-          )}
-          onClick={() => setChartType('liquidity')}
-        >
-          Liquidity
-        </div>
-      </div>
+      <Tabs
+        value={chartType}
+        onValueChange={value => setChartType(value as 'deposit' | 'liquidity')}
+      >
+        <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
+          <TabsTrigger value="deposit">Deposit</TabsTrigger>
+          <TabsTrigger value="liquidity">Liquidity</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <div className="bg-[rgba(51,51,54,1)] flex rounded-3xl p-1">
-        <div
-          className={cn(
-            'px-3 py-1 rounded-3xl cursor-pointer transition',
-            currency === 'usdc' ? 'bg-[rgba(74,74,80,1)] text-white' : 'text-[rgba(121,121,121,1)]'
-          )}
-          onClick={() => setCurrency('usdc')}
-        >
-          USDC
-        </div>
-        <div
-          className={cn(
-            'px-3 py-1 rounded-3xl cursor-pointer transition',
-            currency === 'usdt' ? 'bg-[rgba(74,74,80,1)] text-white' : 'text-[rgba(121,121,121,1)]'
-          )}
-          onClick={() => setCurrency('usdt')}
-        >
-          USDT
-        </div>
-      </div>
+      <Tabs value={currency} onValueChange={value => setCurrency(value as 'usdc' | 'usdt')}>
+        <TabsList className="bg-[rgba(51,51,54,1)] p-1 border-0">
+          <TabsTrigger value="usdc">USDC</TabsTrigger>
+          <TabsTrigger value="usdt">USDT</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Popover>
         <PopoverTrigger asChild>
           <div className="bg-[rgba(51,51,54,1)] flex items-center gap-1 text-[rgba(206,206,206,1)] px-3 py-1 rounded-3xl cursor-pointer">
-            {timePeriod}
+            <Typography variant="small">{timePeriod}</Typography>
             <ChevronDown className="h-4 w-4" />
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2 bg-[rgba(40,40,44,1)] border-[rgba(73,73,76,1)]">
+        <PopoverContent className="w-[100px] p-2 bg-[rgba(40,40,44,1)] border-[rgba(73,73,76,1)]">
           <div className="flex flex-col space-y-1">
             {timeOptions.map(option => (
               <div
@@ -108,7 +81,7 @@ export const ChartFilters: React.FC<ChartFiltersProps> = ({
                 )}
                 onClick={() => setTimePeriod(option)}
               >
-                {option}
+                <Typography variant="small">{option}</Typography>
               </div>
             ))}
           </div>

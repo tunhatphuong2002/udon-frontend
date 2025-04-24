@@ -106,7 +106,7 @@ export function ConnectWallet() {
               {/* Popover Content */}
               {isOpen && (
                 <div className="absolute right-0 top-full mt-2 w-[340px] z-[9999] border rounded-xl shadow-lg">
-                  <div className="rounded-2xl bg-background/95 backdrop-blur-md shadow-lg border border-primary/10 p-5">
+                  <div className="rounded-2xl bg-background/70 backdrop-blur-md shadow-lg border border-primary/10 p-5">
                     <WalletActions />
                   </div>
                 </div>

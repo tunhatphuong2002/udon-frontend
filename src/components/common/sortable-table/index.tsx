@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import {
   Table,
@@ -17,6 +19,8 @@ import {
 // } from '@/components/ui/pagination';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/types/utils/tailwind';
+import { Typography } from '../typography';
+import { Button } from '../button';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -131,22 +135,24 @@ export function SortableTable<T>({
   //   };
 
   return (
-    <div className={cn('w-full', className)}>
-      <div className="w-full overflow-auto">
-        <Table className="w-full bg-[#171718] rounded-lg">
+    <div className={cn('w-full rounded-xl bg-card border p-6', className)}>
+      <div className="w-full rounded-lg">
+        <Table className="w-full rounded-lg">
           <TableHeader>
-            <TableRow className="bg-[#121213] border-b border-[#33333a]">
+            <TableRow className="border-none">
               {columns.map((column, i) => (
                 <TableHead
                   key={i}
                   className={cn(
-                    'text-white font-medium py-3',
-                    column.enableSorting && 'cursor-pointer select-none'
+                    'text-embossed font-medium py-3 bg-background',
+                    column.enableSorting && 'cursor-pointer select-none',
+                    i === 0 && 'rounded-l-full pl-8',
+                    i === columns.length - 1 && 'rounded-r-full pr-8'
                   )}
                   onClick={() => column.enableSorting && toggleSort(column.accessorKey)}
                 >
                   <div className="flex items-center gap-1">
-                    {column.header}
+                    <Typography>{column.header}</Typography>
                     {column.enableSorting && (
                       <div className="flex flex-col">
                         <ChevronUp
@@ -176,10 +182,17 @@ export function SortableTable<T>({
             {paginatedData.map((row, rowIndex) => (
               <TableRow
                 key={rowIndex}
-                className={cn(rowIndex % 2 === 1 ? 'bg-[#1C1C1E]' : 'bg-[#171718]', 'border-none')}
+                className={cn(rowIndex % 2 === 0 ? 'bg-card' : 'bg-[#28292C]', 'border-none')}
               >
                 {columns.map((column, colIndex) => (
-                  <TableCell key={colIndex} className="py-4">
+                  <TableCell
+                    key={colIndex}
+                    className={cn(
+                      'py-4',
+                      colIndex === 0 && 'rounded-l-lg pl-8',
+                      colIndex === columns.length - 1 && 'rounded-r-lg pr-8'
+                    )}
+                  >
                     {column.cell ? column.cell({ row }) : String(row[column.accessorKey])}
                   </TableCell>
                 ))}
@@ -190,73 +203,36 @@ export function SortableTable<T>({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-center items-center pt-4 px-5 pb-2 text-sm gap-8">
-          <button
+        <div className="flex justify-center items-center pt-4 px-5 pb-2 text-sm gap-4">
+          <Button
             onClick={() => {
               if (currentPage > 1) setCurrentPage(currentPage - 1);
             }}
             disabled={currentPage === 1}
             aria-label="Go to previous page"
             className={cn(
-              'flex items-center justify-center w-14 h-14 rounded-full bg-[#232325] shadow-md transition-colors',
+              'flex items-center justify-center w-10 h-10 rounded-full bg-background transition-colors p-0',
               currentPage === 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#29292c]'
             )}
-            style={{
-              minWidth: 56,
-              minHeight: 56,
-              boxShadow: '0 2px 12px 0 rgba(0,0,0,.18)',
-            }}
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <span
-            className="font-medium text-white text-xl select-none"
-            style={{
-              letterSpacing: 0.5,
-            }}
-          >
+            <ChevronDown className="h-5 w-5 rotate-90" />
+          </Button>
+          <Typography className="font-medium">
             {currentPage} of {totalPages}
-          </span>
-          <button
+          </Typography>
+          <Button
             onClick={() => {
               if (currentPage < totalPages) setCurrentPage(currentPage + 1);
             }}
             disabled={currentPage === totalPages}
             aria-label="Go to next page"
             className={cn(
-              'flex items-center justify-center w-14 h-14 rounded-full bg-[#232325] shadow-md transition-colors',
+              'flex items-center justify-center w-10 h-10 rounded-full bg-background transition-colors p-0',
               currentPage === totalPages ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#29292c]'
             )}
-            style={{
-              minWidth: 56,
-              minHeight: 56,
-              boxShadow: '0 2px 12px 0 rgba(0,0,0,.18)',
-            }}
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="9 6 15 12 9 18" />
-            </svg>
-          </button>
+            <ChevronDown className="h-5 w-5 -rotate-90" />
+          </Button>
         </div>
       )}
     </div>

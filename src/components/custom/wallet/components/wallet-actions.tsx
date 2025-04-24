@@ -10,6 +10,7 @@ import DepositForm from '../form/deposit-form';
 import { ChromiaAccount } from './chromia-account';
 import { TokenList } from './token-list';
 import { TransactionHistory } from './transaction-history';
+import { Typography } from '@/components/common/typography';
 
 export function WalletActions() {
   const [activeView, setActiveView] = useState<'account' | 'transfer' | 'deposit'>('account');
@@ -75,10 +76,12 @@ export function WalletActions() {
       >
         <div className="w-full space-y-4">
           <div className="flex items-center">
-            <Button onClick={handleBack} variant="ghost" size="icon" className="mr-auto">
+            <Button onClick={handleBack} variant="secondary" size="icon" className="mr-auto">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h3 className="text-lg font-semibold flex-1 text-center">Transfer</h3>
+            <Typography variant="h4" weight="medium" className="flex-1 text-center">
+              Transfer
+            </Typography>
             <div className="w-9"></div> {/* Placeholder for symmetry */}
           </div>
 
@@ -96,10 +99,12 @@ export function WalletActions() {
       >
         <div className="w-full space-y-4">
           <div className="flex items-center">
-            <Button onClick={handleBack} variant="ghost" size="icon" className="mr-auto">
+            <Button onClick={handleBack} variant="secondary" size="icon" className="mr-auto">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h3 className="text-lg font-semibold flex-1 text-center">Deposit</h3>
+            <Typography variant="h4" weight="medium" className="flex-1 text-center">
+              Deposit
+            </Typography>
             <div className="w-9"></div> {/* Placeholder for symmetry */}
           </div>
 

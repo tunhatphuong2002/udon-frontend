@@ -4,19 +4,20 @@ import { StatCard } from './stat-card';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-// import Image from 'next/image';
+
 export default function Hero() {
   const router = useRouter();
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Background Image */}
-      <div className="absolute w-full max-w-[300px] md:max-w-[800px] aspect-square right-[0px] -top-5 opacity-30 md:opacity-100">
-        <img
-          // src="/images/landing/hero/cube-rotate.gif"
-          src="https://s3-alpha-sig.figma.com/img/d1dd/89f1/40b19c1259800133d18b0f0a6983894d?Expires=1745798400&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=OWd-jHMBRf1LQobP0mic3S0xqpc3A3oIXsmqZPwufh6fUaklaX44GyFLMjh3MoC4QW2sEDaZ2Idcz4vh8mp4PE7UbZ4vnAazLffpFwIoox2z9EH2sDYyoibZQNnBKCt~lsk062fiyTo6wHs2SkokfiUqkCVfgXBQlTplAS3wYeqmmw9eh4ozzHYxyfZ5-iD-8NBreqnaUwAIJOl0LFRuh3ywyEGkUd3obzbuJhfOcnNeh1xOT1k8L~VBLhBZmmpLxtIsxNplg9bjEURKECvnsRppWlSCVXtDzGIUi7LP1TBf2GgIZ~N9GYzEAU1vD4wwexe02yIKKLrmRmR46eiT-Q__"
-          alt="Hero background"
-          // fill
-          className="object-contain"
+      {/* Background Video */}
+      <div className="absolute w-full max-w-[300px] md:max-w-[750px] aspect-square right-[0px] top-6 opacity-30 md:opacity-100">
+        <video
+          src="/images/landing/hero/cube-rotate.webm"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="object-contain w-full h-full"
         />
       </div>
 
@@ -100,12 +101,14 @@ export default function Hero() {
             <StatCard
               value="4,232,090,563"
               label="Total Deposits"
-              iconUrl="/images/landing/hero/coin-stack.gif"
+              iconUrl="/images/landing/hero/coin-stack.webm"
+              isVideo={true}
             />
             <StatCard
               value="4,232,090,563"
               label="Total Borrows"
-              iconUrl="/images/landing/hero/saving-piggy.gif"
+              iconUrl="/images/landing/hero/saving-piggy.webm"
+              isVideo={true}
             />
           </div>
         </div>

@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from '@/types/utils/tailwind';
 import { VariantProps, cva } from 'class-variance-authority';
 /**

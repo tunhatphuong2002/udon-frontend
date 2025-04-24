@@ -15,7 +15,7 @@ export function MainLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-[#181818] overflow-hidden [&_:root]:dark">
+    <div className="relative flex flex-col min-h-screen bg-[#181818] overflow-visible [&_:root]:dark">
       <Header />
       {/* Glowing effect at the top */}
       <div className="absolute w-full h-full -mt-[135px] z-0">

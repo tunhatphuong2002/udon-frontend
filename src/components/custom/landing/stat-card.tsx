@@ -5,9 +5,10 @@ interface StatCardProps {
   value: string;
   label: string;
   iconUrl: string;
+  isVideo?: boolean;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl }) => {
+export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl, isVideo }) => {
   return (
     <div className="bg-[rgba(255,255,255,0.71)] border self-stretch flex min-w-60 overflow-hidden flex-col items-stretch flex- spac[-8px]-y-6 shrink basis-[0%] p-6 rounded-3xl border-[rgba(138,183,246,1)] border-solid backdrop-blur-md">
       {/* Top Glow Effect */}
@@ -23,7 +24,18 @@ export const StatCard: React.FC<StatCardProps> = ({ value, label, iconUrl }) => 
           <div className="text-2xl mt-1.5">{label}</div>
         </div>
         <div className="w-[100px] h-[100px] relative">
-          <Image src={iconUrl} fill alt="Icon Stat Card Supply" />
+          {isVideo ? (
+            <video
+              src={iconUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <Image src={iconUrl} fill alt={`Icon Stat Card ${label}`} />
+          )}
         </div>
       </div>
     </div>

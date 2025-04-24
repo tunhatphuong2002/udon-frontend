@@ -47,11 +47,13 @@ export const UpcomingFeatures: React.FC = () => {
     <section className="relative container mx-auto h-screen">
       {/* Background animation */}
       <div className="absolute h-full w-full inset-0 z-0">
-        <Image
-          src="/images/landing/upcoming/bg.gif"
-          className="object-cover"
-          alt="Background"
-          fill
+        <video
+          src="/images/landing/upcoming/bg.webm"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="object-cover w-full h-full"
         />
       </div>
 
