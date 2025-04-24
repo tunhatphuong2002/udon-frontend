@@ -126,6 +126,9 @@ temp/
 **/temp/
 EOL
 
+# Cursor rule
+**/.cursor/
+
 # Images
 **/images/landing/hero/cube-rotate.gif
 
