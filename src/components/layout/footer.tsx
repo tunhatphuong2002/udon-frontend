@@ -12,21 +12,19 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="relative w-[50vw] max-w-full z-10">
-          <div className="gap-5 flex max-md:flex-col max-md:items-stretch">
-            <div className="w-[33%] max-md:w-full max-md:ml-0">
-              <div className="relative text-[15px] text-[rgba(206,206,206,1)] font-medium max-md:mt-10">
-                <div className="flex min-h-8 w-[156px] max-w-full">
-                  <Image
-                    src="/logo/logo-fulltext.png"
-                    className="object-contain"
-                    alt="Footer decoration"
-                    fill
-                  />
-                </div>
-                <div className="mt-8">Deposit and start earning</div>
+          <div className="gap-5 flex flex-row w-full">
+            <div className="w-[33%] flex flex-col gap-3 h-full items-center justify-center">
+              <div className="relative w-full h-[40px]">
+                <Image
+                  src="/logo/logo-fulltext.png"
+                  className="object-contain"
+                  alt="Footer decoration"
+                  fill
+                />
               </div>
+              <div>Deposit and start earning</div>
             </div>
-            <nav className="w-[67%] ml-5 max-md:w-full max-md:ml-0">
+            <nav className="w-[67%] ml-5 max-md:w-full">
               <div className="relative flex grow gap-6 text-base whitespace-nowrap mt-3 max-md:mt-10">
                 <div className="flex-1 shrink basis-[0%] rounded-xl">
                   <h4 className="text-[rgba(251,253,255,1)] font-semibold">Resources</h4>
@@ -59,13 +57,15 @@ export const Footer: React.FC = () => {
           </div> */}
         </div>
 
-        <div className="absolute bottom-[-150px] left-0 w-full h-[320px]">
-          <Image
-            src="/images/landing/footer/udon-text.png"
-            className="object-contain"
-            alt="Footer decoration"
-            fill
-          />
+        <div className="absolute bottom-0 left-0 w-full h-[170px] overflow-hidden">
+          <div className="absolute bottom-[-150px] left-0 w-full h-[320px]">
+            <Image
+              src="/images/landing/footer/udon-text.png"
+              className="object-contain"
+              alt="Footer decoration"
+              fill
+            />
+          </div>
         </div>
       </div>
     </footer>

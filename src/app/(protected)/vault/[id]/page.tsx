@@ -11,7 +11,7 @@ import {
   VaultRisk,
   VaultDisclosures,
   VaultDepositors,
-} from './components';
+} from '../components';
 
 export default function VaultPage() {
   return (

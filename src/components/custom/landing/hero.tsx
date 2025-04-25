@@ -43,7 +43,8 @@ export default function Hero() {
                   weight="medium"
                   className="text-lg md:text-2xl pt-2 text-center md:text-left"
                 >
-                  Morpho is the most secure, efficient, and flexible lending platform.
+                  Udon Finance is your secure, efficient, and flexible solution for lending and
+                  leverage.
                 </Typography>
               </div>
 

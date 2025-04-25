@@ -26,7 +26,7 @@ export function MainLayout({ children }: PropsWithChildren) {
         </div>
 
         {/* Background frame image */}
-        <div className="absolute w-full h-[1345px] top-[135px] left-0">
+        <div className="absolute w-full h-screen top-[135px] left-0 bg-repeat-y">
           {/* This would be the frame-250-1-1.svg */}
           <Image
             className="w-full h-full object-cover"

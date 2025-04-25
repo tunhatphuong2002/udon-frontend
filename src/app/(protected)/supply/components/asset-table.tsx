@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Table,
   TableHeader,
@@ -11,7 +11,7 @@ import {
 } from '@/components/common/table';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
-import { SupplyModal } from './supply-modal';
+import { useRouter } from 'next/navigation';
 
 interface AssetTableProps {
   title: string;
@@ -28,12 +28,10 @@ const demoRows = [
 ];
 
 export const AssetTable: React.FC<AssetTableProps> = ({ title, showCollateral = false }) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<string | undefined>(undefined);
+  const router = useRouter();
 
-  const handleSupplyClick = (asset: string) => {
-    setSelectedAsset(asset);
-    setModalOpen(true);
+  const handleAssetClick = (asset: string) => {
+    router.push(`/vault/${asset}`);
   };
 
   return (
@@ -84,7 +82,8 @@ export const AssetTable: React.FC<AssetTableProps> = ({ title, showCollateral = 
                     dangerouslySetInnerHTML={{
                       __html: `<svg width="70" height="25" viewBox="0 0 80 25" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 70px; height: 25px"> <circle cx="12" cy="12.5" r="12" fill="currentColor"></circle> <text fill="currentColor" xml:space="preserve" style="white-space: pre" font-family="Inter" font-size="16"><tspan x="30" y="18.3182">${asset.name}</tspan></text> </svg>`,
                     }}
-                    className="mx-auto text-muted-foreground"
+                    className="mx-auto text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => handleAssetClick(asset.name)}
                   />
                 </TableCell>
                 <TableCell className="text-center p-2 sm:p-4">
@@ -108,7 +107,10 @@ export const AssetTable: React.FC<AssetTableProps> = ({ title, showCollateral = 
                   <Button
                     variant="default"
                     size="default"
-                    onClick={() => handleSupplyClick(asset.name)}
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleAssetClick(asset.name);
+                    }}
                     aria-label={`Supply ${asset.name}`}
                     className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
                   >
@@ -120,8 +122,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ title, showCollateral = 
           </TableBody>
         </Table>
       </div>
-      {/* Supply Modal */}
-      <SupplyModal open={modalOpen} onOpenChange={setModalOpen} assetName={selectedAsset} />
     </div>
   );
 };
