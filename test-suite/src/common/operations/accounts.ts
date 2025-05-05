@@ -5,7 +5,7 @@ import {
   registerAccount,
   registrationStrategy,
 } from '@chromia/ft4';
-import chalk from 'chalk';
+// import chalk from 'chalk';
 import { IClient, KeyPair } from 'postchain-client';
 
 export async function registerAccountOpen(client: IClient, kp: KeyPair) {
@@ -16,7 +16,7 @@ export async function registerAccountOpen(client: IClient, kp: KeyPair) {
     store,
     registrationStrategy.open(createSingleSigAuthDescriptorRegistration(['A', 'T'], store.id, null))
   );
-  chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
+  // chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
   return session;
 }
 
@@ -37,7 +37,7 @@ export async function registerAccountTransferFee(client: IClient, kp: KeyPair, a
     registrationStrategy.transferFee(asset, authDescriptor, null)
   );
 
-  chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
+  // chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
   return session;
 }
 
@@ -52,7 +52,7 @@ export async function registerAccountTransferOpen(client: IClient, kp: KeyPair) 
     registrationStrategy.transferOpen(authDescriptor, null)
   );
 
-  chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
+  // chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
   return session;
 }
 
@@ -77,6 +77,6 @@ export async function registerAccountTransferSubscription(
     registrationStrategy.transferSubscription(asset, authDescriptor, null)
   );
 
-  chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
+  // chalk.green(`Account ${kp.pubKey} registered with session ${session.account.id.toString('hex')}`);
   return session;
 }

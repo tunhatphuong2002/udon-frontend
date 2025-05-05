@@ -1,8 +1,5 @@
-import { createAmount, mint, registerAsset, Session } from '@chromia/ft4';
-import { signatureProviderAdmin } from '../../configs/key-pair';
-// import { tokens } from '../../configs/tokens';
+import { createAmount, op, Session } from '@chromia/ft4';
 import { ensureBuffer } from '../../helpers/buffer';
-// import chalk from 'chalk';
 
 export async function registerAssetOp(
   session: Session,
@@ -12,14 +9,8 @@ export async function registerAssetOp(
   iconUrl: string
 ) {
   try {
-    // https://docs.chromia.com/pages/ft4-ts-client/client/functions/admin.registerAsset.html
-    const asset = await registerAsset(
-      session.account.connection.client,
-      signatureProviderAdmin,
-      name,
-      symbol,
-      decimals,
-      iconUrl
+    const asset = await session.call(
+      op('ft4.admin.register_asset', name, symbol, decimals, iconUrl)
     );
 
     console.log(`Registered asset ${name}`, asset);
@@ -28,52 +19,20 @@ export async function registerAssetOp(
   }
 }
 
-// export async function mintAssetOp(session: Session, receiver: string) {
-//   for (const token of Object.values(tokens)) {
-//     try {
-//       // get assetId
-//       const assets = await session.getAssetsBySymbol(token.symbol);
-
-//       const assetId = assets.data[0].id;
-
-//       // mint asset
-//       // https://docs.chromia.com/pages/ft4-ts-client/client/functions/admin.mint.html
-//       const mintAsset = await mint(
-//         session.account.connection.client,
-//         signatureProviderAdmin,
-//         ensureBuffer(receiver),
-//         assetId,
-//         createAmount(100, token.decimal)
-//       );
-
-//       console.log(`Minted ${token.symbol} to ${receiver}`, mintAsset);
-//     } catch (error) {
-//       console.log(`Error minting asset ${token.symbol}`, error);
-//     }
-//   }
-// }
-
 export async function mintAssetOp(
   session: Session,
   receiver: string,
   symbol: string,
   amount: number
-  // decimal: number
 ) {
   try {
     // get assetId
     const assets = await session.getAssetsBySymbol(symbol);
-
     const assetId = assets.data[0].id;
 
     // mint asset
-    // https://docs.chromia.com/pages/ft4-ts-client/client/functions/admin.mint.html
-    const mintAsset = await mint(
-      session.account.connection.client,
-      signatureProviderAdmin,
-      ensureBuffer(receiver),
-      assetId,
-      createAmount(amount)
+    const mintAsset = await session.call(
+      op('ft4.admin.register_asset', ensureBuffer(receiver), assetId, BigInt(amount))
     );
 
     console.log(`Minted ${symbol} to ${receiver}`, mintAsset);
@@ -86,13 +45,10 @@ export async function transferAssetOp(
   session: Session,
   assetSymbol: string,
   decimal: number,
-  sender: string,
   receiver: string
 ) {
   const assets = await session.getAssetsBySymbol(assetSymbol);
-
   const assetId = assets.data[0].id;
-
   const dataTransfer = await session.account.transfer(
     ensureBuffer(receiver),
     assetId,
@@ -104,12 +60,8 @@ export async function transferAssetOp(
 
 export async function burnAssetOp(session: Session, assetSymbol: string, decimal: number) {
   const assets = await session.getAssetsBySymbol(assetSymbol);
-
   const assetId = assets.data[0].id;
-
-  console.log(assetId, 'assetId');
   const resultBurn = await session.account.burn(assetId, createAmount(100000, decimal));
-  console.log(resultBurn, 'resultBurn');
 
   console.log(`Burned ${assetSymbol}`, resultBurn);
 }
