@@ -4,9 +4,9 @@ import Hero from '@/components/custom/landing/hero';
 import React, { useEffect, useState, useRef } from 'react';
 import { BackedBySection } from '@/components/custom/landing/backed-by';
 import { UpcomingFeatures } from '@/components/custom/landing/upcoming-features';
-import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/custom/landing/header';
 import { InfrastructureSection } from '@/components/custom/landing/infrastructure';
+import { Footer } from '@/components/layout/footer';
 
 export const Landing = () => {
   const [visibleSections, setVisibleSections] = useState<{

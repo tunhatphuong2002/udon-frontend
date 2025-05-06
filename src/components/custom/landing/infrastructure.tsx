@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Typography } from '@/components/common/typography';
 import Image from 'next/image';
-import { EllipsisIcon } from 'lucide-react';
+// import { EllipsisIcon } from 'lucide-react';
 
 type HoverState = 'none' | 'simple' | 'optimized' | 'low-cost' | 'per-market-rates';
 
@@ -111,7 +111,7 @@ export const InfrastructureSection: React.FC = () => {
 
           {/* Features Section */}
           <div className="relative mt-16 max-w-4xl shadow-[0px_0px_44.5px_0px_rgba(31,109,233,0.18)] backdrop-blur-[3px] bg-[radial-gradient(86.19%_68.08%_at_29.32%_106.38%,rgba(216,230,255,0.49)_0%,rgba(255,255,255,0.49)_100%)] w-full pl-[23px] rounded-3xl border-2 border-solid border-white max-md:max-w-full">
-            <div className="absolute top-[-180px] left-[-140px] bg-white/60 shadow-md p-6 rounded-xl w-[260px] z-20">
+            {/* <div className="absolute top-[-180px] left-[-140px] bg-white/60 shadow-md p-6 rounded-xl w-[260px] z-20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-8 h-8 bg-[#D86479] rounded-full" />
@@ -143,7 +143,7 @@ export const InfrastructureSection: React.FC = () => {
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
                 incididunt ut labore et dolore magna aliqua...
               </Typography>
-            </div>
+            </div> */}
 
             <div className="grid md:grid-cols-12 gap-8 relative">
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-[200px] w-[60vw] h-[200px] rounded-full bg-[#8ab7f669]/40 z-0 blur-[100px]" />
