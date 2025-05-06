@@ -1,21 +1,21 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/common/card';
-import { Ellipsis } from 'lucide-react';
+// import { Ellipsis } from 'lucide-react';
 import { Typography } from '@/components/common/typography';
 import Image from 'next/image';
 
 export const UpcomingFeatures: React.FC = () => {
   // Data for notification cards
-  const notificationCards = [
-    {
-      position: { top: '-80px', left: '-40px' },
-      handle: '@ssssssssss',
-    },
-    {
-      position: { top: '-200px', right: '-30px' },
-      handle: '@ssssssssss',
-    },
-  ];
+  // const notificationCards = [
+  //   {
+  //     position: { top: '-80px', left: '-40px' },
+  //     handle: '@ssssssssss',
+  //   },
+  //   {
+  //     position: { top: '-200px', right: '-30px' },
+  //     handle: '@ssssssssss',
+  //   },
+  // ];
 
   // Data for strategy options
   const strategyOptions = [
@@ -69,7 +69,7 @@ export const UpcomingFeatures: React.FC = () => {
         {/* Main Content Area */}
         <div className="w-full relative">
           {/* Notification Cards */}
-          {notificationCards.map((card, index) => (
+          {/* {notificationCards.map((card, index) => (
             <Card
               key={index}
               className="w-[280px] h-[104px] absolute rounded-xl shadow-[0px_0px_1.7px_#00000040] backdrop-blur-[9.7px] z-20 border border-border"
@@ -99,7 +99,7 @@ export const UpcomingFeatures: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ))} */}
           {/* Strategy Cards Container */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-9 h-[500px]">
             <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-[100vw] h-[70vh] rounded-full bg-[#8ab7f669]/40 z-0 blur-[100px]"></div>

@@ -43,6 +43,5 @@ describe('Chromia FT4 - initialize_underlying_asset_factory', () => {
   it('should initialize underlying asset factory', async () => {
     const result = await session.call(op('initialize_underlying_asset_factory'));
     expect(result.receipt.statusCode).toBe(200);
-    // You can add more specific assertions here if you know the expected result structure
   });
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { Typography } from '../common/typography';
 
 export const Footer: React.FC = () => {
   return (
@@ -22,7 +23,9 @@ export const Footer: React.FC = () => {
                   fill
                 />
               </div>
-              <div>Deposit and start earning</div>
+              <Typography className="text-lg text-[rgba(206,206,206,1)]">
+                Deposit and start earning
+              </Typography>
             </div>
             <nav className="w-[67%] ml-5 max-md:w-full">
               <div className="relative flex grow gap-6 text-base whitespace-nowrap mt-3 max-md:mt-10">
