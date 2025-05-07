@@ -1,8 +1,8 @@
 import { op, Session } from '@chromia/ft4';
 import { IClient } from 'postchain-client';
-import { admin_kp, user_a_kp, user_b_kp } from '../../configs/key-pair';
-import { getClient } from '../../clients';
-import { registerAccountOpen } from '../../common/operations/accounts';
+import { admin_kp, user_a_kp, user_b_kp } from '../../../configs/key-pair';
+import { getClient } from '../../../clients';
+import { registerAccountOpen } from '../../../common/operations/accounts';
 
 interface Balance {
   asset_id: string;
