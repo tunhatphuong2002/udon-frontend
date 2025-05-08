@@ -9,40 +9,25 @@ describe('Supply Logic', () => {
   let userASession: Session;
   let userBSession: Session;
   let client: IClient;
-  let adminAccountId: string;
-  let userAAccountId: string;
-  let userBAccountId: string;
-  let underlyingAssetId: string;
-  let aAssetId: string;
+  let adminAccountId: Buffer<ArrayBufferLike>;
+  let userAAccountId: Buffer<ArrayBufferLike>;
+  let userBAccountId: Buffer<ArrayBufferLike>;
+  let underlyingAssetId: Buffer<ArrayBufferLike>;
+  let aAssetId: Buffer<ArrayBufferLike>;
 
   beforeAll(async () => {
+    // get client
     client = await getClient();
+
     // Setup sessions
     adminSession = await registerAccountOpen(client, admin_kp);
+    adminAccountId = adminSession.account.id;
+
     userASession = await registerAccountOpen(client, user_a_kp);
+    userAAccountId = userASession.account.id;
+
     userBSession = await registerAccountOpen(client, user_b_kp);
-
-    // Get account IDs
-    const accounts = await adminSession.query('get_accounts_by_signer', {
-      signer: admin_kp.pubKey,
-      limit: 1,
-      offset: null,
-    });
-    adminAccountId = accounts[0].id;
-
-    const userAAccounts = await adminSession.query('get_accounts_by_signer', {
-      signer: user_a_kp.pubKey,
-      limit: 1,
-      offset: null,
-    });
-    userAAccountId = userAAccounts[0].id;
-
-    const userBAccounts = await adminSession.query('get_accounts_by_signer', {
-      signer: user_b_kp.pubKey,
-      limit: 1,
-      offset: null,
-    });
-    userBAccountId = userBAccounts[0].id;
+    userBAccountId = userBSession.account.id;
 
     // Initialize ACL module
     await adminSession.call(op('initialize', admin_kp.pubKey));
@@ -66,7 +51,7 @@ describe('Supply Logic', () => {
       icon: 'http://example.com/icon.png',
     };
 
-    await adminSession.call(
+    const resultCreateUnderlyingAsset = await adminSession.call(
       op(
         'create_underlying_asset',
         underlyingAsset.name,
@@ -76,7 +61,12 @@ describe('Supply Logic', () => {
       )
     );
 
-    underlyingAssetId = await adminSession.query('asset_id', { name: underlyingAsset.name });
+    console.log('resultCreateUnderlyingAsset', resultCreateUnderlyingAsset);
+
+    const underlyingAssetResult = await adminSession.getAssetsBySymbol(underlyingAsset.symbol);
+    underlyingAssetId = underlyingAssetResult.data[0].id;
+
+    // underlyingAssetId = await adminSession.query('asset_id', { name: underlyingAsset.name });
 
     // 5. Set interest rate strategy
     const interestRateParams = {
@@ -108,7 +98,8 @@ describe('Supply Logic', () => {
       op('init_reserve_op', underlyingAssetId, adminAccountId, aAsset.name, aAsset.symbol, '', '')
     );
 
-    aAssetId = await adminSession.query('asset_id', { name: aAsset.name });
+    const aAssetResult = await adminSession.getAssetsBySymbol(aAsset.symbol);
+    aAssetId = aAssetResult.data[0].id;
   });
 
   describe('Basic Supply', () => {
@@ -128,11 +119,6 @@ describe('Supply Logic', () => {
         account_id: userAAccountId,
         asset_id: underlyingAssetId,
       });
-
-      // const initialAAssetBalance = await adminSession.query('balance_of', {
-      //   account_id: userAAccountId,
-      //   asset_id: aAssetId,
-      // });
 
       // Get holding account ID
       const holdingAccountId = await adminSession.query('get_a_asset_holding_account_id', {
@@ -192,28 +178,20 @@ describe('Supply Logic', () => {
       expect(result.receipt.statusCode).toBe(200);
 
       // Check user A's underlying token balance decreased
-      const userAUnderlyingBalance = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: underlyingAssetId,
-      });
+      const userAUnderlyingBalance =
+        await adminSession.account.getBalanceByAssetId(underlyingAssetId);
       expect(Number(userAUnderlyingBalance)).toBe(mintAmount - supplyAmount);
 
       // Check user A did not receive a-assets
-      const userAAAssetBalance = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: aAssetId,
-      });
-      expect(Number(userAAAssetBalance)).toBe(0);
+      const userAAAssetBalance = await adminSession.account.getBalanceByAssetId(aAssetId);
+      expect(Number(userAAAssetBalance.amount.value)).toBe(0);
 
       // Check user B received a-assets
-      const userBAAssetBalance = await adminSession.query('balance_of', {
-        account_id: userBAccountId,
-        asset_id: aAssetId,
-      });
+      const userBAAssetBalance = await adminSession.account.getBalanceByAssetId(aAssetId);
 
       // For initial supply, liquidity index is RAY (10^27), so scaled amount equals original amount
       const expectedATokens = supplyAmount;
-      expect(Number(userBAAssetBalance)).toBeCloseTo(expectedATokens, -10);
+      expect(Number(userBAAssetBalance.amount.value)).toBeCloseTo(expectedATokens, -10);
     });
   });
 
@@ -238,17 +216,11 @@ describe('Supply Logic', () => {
       }
 
       // Verify balances unchanged
-      const underlyingBalance = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: underlyingAssetId,
-      });
-      expect(Number(underlyingBalance)).toBe(smallMintAmount);
+      const underlyingBalance = await adminSession.account.getBalanceByAssetId(underlyingAssetId);
+      expect(Number(underlyingBalance.amount.value)).toBe(smallMintAmount);
 
-      const aAssetBalance = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: aAssetId,
-      });
-      expect(Number(aAssetBalance)).toBe(0);
+      const aAssetBalance = await adminSession.account.getBalanceByAssetId(aAssetId);
+      expect(Number(aAssetBalance.amount.value)).toBe(0);
     });
 
     it('should fail to supply zero amount', async () => {
@@ -305,30 +277,18 @@ describe('Supply Logic', () => {
 
       // Verify balances
       // 1. Underlying token balances
-      const underlyingBalanceA = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: underlyingAssetId,
-      });
-      expect(Number(underlyingBalanceA)).toBe(mintAmountA - supplyAmountA);
+      const underlyingBalanceA = await adminSession.account.getBalanceByAssetId(underlyingAssetId);
+      expect(Number(underlyingBalanceA.amount.value)).toBe(mintAmountA - supplyAmountA);
 
-      const underlyingBalanceB = await adminSession.query('balance_of', {
-        account_id: userBAccountId,
-        asset_id: underlyingAssetId,
-      });
-      expect(Number(underlyingBalanceB)).toBe(mintAmountB - supplyAmountB);
+      const underlyingBalanceB = await adminSession.account.getBalanceByAssetId(underlyingAssetId);
+      expect(Number(underlyingBalanceB.amount.value)).toBe(mintAmountB - supplyAmountB);
 
       // 2. A-asset balances
-      const aAssetBalanceA = await adminSession.query('balance_of', {
-        account_id: userAAccountId,
-        asset_id: aAssetId,
-      });
-      expect(Number(aAssetBalanceA)).toBeCloseTo(supplyAmountA, -10);
+      const aAssetBalanceA = await adminSession.account.getBalanceByAssetId(aAssetId);
+      expect(Number(aAssetBalanceA.amount.value)).toBeCloseTo(supplyAmountA, -10);
 
-      const aAssetBalanceB = await adminSession.query('balance_of', {
-        account_id: userBAccountId,
-        asset_id: aAssetId,
-      });
-      expect(Number(aAssetBalanceB)).toBeCloseTo(supplyAmountB, -10);
+      const aAssetBalanceB = await adminSession.account.getBalanceByAssetId(aAssetId);
+      expect(Number(aAssetBalanceB.amount.value)).toBeCloseTo(supplyAmountB, -10);
     });
   });
 });

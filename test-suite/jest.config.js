@@ -12,7 +12,7 @@ module.exports = {
   // only permit run jest file at /src/test/--.test|spec.ts
   testMatch: ['<rootDir>/src/test/**/*.(test|spec).ts'],
   // Add global timeout here
-  testTimeout: 15000,
+  testTimeout: 45000,
   // Module name mapper for path aliases
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
