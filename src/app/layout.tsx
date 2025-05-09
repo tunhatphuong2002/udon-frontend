@@ -5,6 +5,7 @@ import { SITE_URL } from '@/types/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
 import localFont from 'next/font/local';
+import { Toaster } from '@/components/common/sonner';
 
 const BattlefinFont = localFont({
   src: '../../public/fonts/Battlefin-Black.woff2',
@@ -104,6 +105,8 @@ export default function RootLayout({
         <EnvironmentBadge />
         {/* Analytics webpage */}
         <Analytics />
+        {/* Toaster */}
+        <Toaster closeButton richColors />
       </body>
     </html>
   );

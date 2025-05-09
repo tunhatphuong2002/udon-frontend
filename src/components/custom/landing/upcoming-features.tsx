@@ -39,9 +39,9 @@ export const UpcomingFeatures: React.FC = () => {
     },
   ];
 
-  // Lorem ipsum text for descriptions
-  const loremText =
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+  const leftSideText = 'Maximize your profits by leveraging across a variety of farming pools.';
+  const rightSideText =
+    'Leverage market-neutral strategies, going long or short with clearly defined risk.';
 
   return (
     <section className="relative container mx-auto h-screen">
@@ -121,7 +121,7 @@ export const UpcomingFeatures: React.FC = () => {
                     Farming Strategy
                   </Typography>
                   <Typography className="text-[#6b6b6b] text-base md:text-[15px] text-center line-clamp-3">
-                    {loremText}
+                    {leftSideText}
                   </Typography>
                 </div>
               </CardContent>
@@ -162,7 +162,7 @@ export const UpcomingFeatures: React.FC = () => {
                     Farming Strategy
                   </Typography>
                   <Typography className="text-[#edf5ff] text-base md:text-[15px] text-center line-clamp-3">
-                    {loremText}
+                    {rightSideText}
                   </Typography>
                 </div>
               </CardContent>

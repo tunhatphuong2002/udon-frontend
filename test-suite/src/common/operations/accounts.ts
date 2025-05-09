@@ -1,5 +1,7 @@
 import {
   createConnection,
+  createInMemoryEvmKeyStore,
+  // createInMemoryEvmKeyStore,
   createInMemoryFtKeyStore,
   createSingleSigAuthDescriptorRegistration,
   registerAccount,
@@ -71,6 +73,21 @@ export async function registerAccountTransferSubscription(
     client,
     store,
     registrationStrategy.transferSubscription(asset, authDescriptor, null)
+  );
+
+  return session;
+}
+
+export async function registerAccountOpenEVM(
+  client: IClient,
+  kp: { privKey: Buffer; pubKey: Buffer }
+) {
+  const store = createInMemoryEvmKeyStore(kp);
+
+  const { session } = await registerAccount(
+    client,
+    store,
+    registrationStrategy.open(createSingleSigAuthDescriptorRegistration(['A', 'T'], store.id))
   );
 
   return session;

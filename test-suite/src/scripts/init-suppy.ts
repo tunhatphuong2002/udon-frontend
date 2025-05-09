@@ -1,11 +1,45 @@
 import { op } from '@chromia/ft4';
-import { admin_kp, user_a_kp } from '@configs/key-pair';
-import { registerAccountOpen } from '@common/operations/accounts';
-import { getClient } from '@/clients';
+import { admin_kp, user_a_kp } from '../configs/key-pair';
+import { registerAccountOpen } from '../common/operations/accounts';
+import { getClient } from '../clients';
+import chalk from 'chalk';
+import { formatRay, RAY } from '../helpers/wadraymath';
+import { BigNumber } from 'ethers';
+
+// Token definitions
+const TOKENS = [
+  {
+    name: 'Bitcoin USD',
+    symbol: 'BTCUSD',
+    decimals: 8,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+  },
+  {
+    name: 'Ethereum USD',
+    symbol: 'ETHUSD',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+  },
+  {
+    name: 'MyNeighborAlice',
+    symbol: 'ALICEUSD',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
+  },
+  {
+    name: 'DAR Open Network',
+    symbol: 'DUSD',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+  },
+];
 
 async function initSupply() {
   try {
+    console.log(chalk.bold.cyan('=== Starting Supply Initialization Process ==='));
+
     // Get client and setup sessions
+    console.log(chalk.blue('🔄 Setting up client and sessions...'));
     const client = await getClient();
     const adminSession = await registerAccountOpen(client, admin_kp);
     const adminAccountId = adminSession.account.id;
@@ -13,119 +47,151 @@ async function initSupply() {
     const userSession = await registerAccountOpen(client, user_a_kp);
     const userAccountId = userSession.account.id;
 
-    console.log('Sessions created successfully');
+    console.log(chalk.green('✅ Sessions created successfully'));
 
     // Initialize ACL module
+    console.log(chalk.blue('🔄 Initializing ACL module...'));
     await adminSession.call(op('initialize', admin_kp.pubKey));
     await adminSession.call(op('grant_role', 'POOL_ADMIN', adminAccountId, admin_kp.pubKey));
-    console.log('ACL module initialized');
+    console.log(chalk.green('✅ ACL module initialized'));
 
     // Initialize required factories
+    console.log(chalk.blue('🔄 Initializing asset factories...'));
     await adminSession.call(op('initialize_asset_base'));
     await adminSession.call(op('initialize_underlying_asset_factory'));
     await adminSession.call(op('initialize_a_asset_factory'));
-    console.log('Asset factories initialized');
+    console.log(chalk.green('✅ Asset factories initialized'));
 
-    // Create underlying asset
-    const underlyingAsset = {
-      name: 'Test Underlying Token',
-      symbol: 'TUT',
-      decimals: 6,
-      icon: 'http://example.com/icon.png',
-    };
-
-    await adminSession.call(
-      op(
-        'create_underlying_asset',
-        underlyingAsset.name,
-        underlyingAsset.symbol,
-        underlyingAsset.decimals,
-        underlyingAsset.icon
-      )
-    );
-
-    const underlyingAssetResult = await adminSession.getAssetsBySymbol(underlyingAsset.symbol);
-    const underlyingAssetId = underlyingAssetResult.data[0].id;
-    console.log('Underlying asset created:', underlyingAsset.symbol, underlyingAssetId);
-
-    // Set interest rate strategy
+    // Set interest rate strategy parameters (will be used for all tokens)
     const interestRateParams = {
-      optimalUsageRatio: 800000000000000000000000000, // 0.8 in RAY
-      baseVariableBorrowRate: 50000000000000000000000000, // 0.05 in RAY
-      variableRateSlope1: 40000000000000000000000000, // 0.04 in RAY
-      variableRateSlope2: 600000000000000000000000000, // 0.6 in RAY
+      optimalUsageRatio: BigNumber.from(RAY).mul(80).div(100), // 0.8 in RAY
+      baseVariableBorrowRate: BigNumber.from(RAY).mul(5).div(100), // 0.05 in RAY
+      variableRateSlope1: BigNumber.from(RAY).mul(4).div(100), // 0.04 in RAY
+      variableRateSlope2: BigNumber.from(RAY).mul(60).div(100), // 0.6 in RAY
     };
 
-    await adminSession.call(
-      op(
-        'set_default_reserve_interest_rate_strategy',
-        underlyingAssetId,
-        interestRateParams.optimalUsageRatio,
-        interestRateParams.baseVariableBorrowRate,
-        interestRateParams.variableRateSlope1,
-        interestRateParams.variableRateSlope2
-      )
-    );
-    console.log('Interest rate strategy set');
+    // Create all tokens and their A-tokens
+    console.log(chalk.blue('🔄 Creating tokens and initializing reserves...'));
 
-    // Configure reserve with a-asset
-    const aAsset = {
-      name: 'Test A Token',
-      symbol: 'TAT',
-      decimals: 6,
-    };
+    const createdTokens = [];
 
-    await adminSession.call(
-      op('init_reserve_op', underlyingAssetId, adminAccountId, aAsset.name, aAsset.symbol, '', '')
-    );
+    // Process each token
+    for (const token of TOKENS) {
+      console.log(chalk.blue(`🔄 Creating ${token.symbol}...`));
 
-    const aAssetResult = await adminSession.getAssetsBySymbol(aAsset.symbol);
-    const aAssetId = aAssetResult.data[0].id;
-    console.log('Reserve initialized with a-asset:', aAsset.symbol, aAssetId);
+      // Create underlying asset
+      await adminSession.call(
+        op('create_underlying_asset', token.name, token.symbol, token.decimals, token.icon)
+      );
 
-    // Mint underlying tokens to user
-    const mintAmount = 100 * 10 ** 27; // 100 RAY
-    await adminSession.call(
-      op('mint_underlying_asset', userAccountId, mintAmount, underlyingAssetId)
-    );
-    console.log(`Minted ${mintAmount} tokens to user`);
+      const underlyingAssetResult = await adminSession.getAssetsBySymbol(token.symbol);
+      const underlyingAssetId = underlyingAssetResult.data[0].id;
+      console.log(
+        chalk.green(`✅ ${token.symbol} created:`),
+        chalk.yellow(`(${underlyingAssetId})`)
+      );
 
-    // Supply operation
-    const supplyAmount = 50 * 10 ** 27; // 50 RAY
+      // Set interest rate strategy
+      await adminSession.call(
+        op(
+          'set_default_reserve_interest_rate_strategy',
+          underlyingAssetId,
+          BigInt(interestRateParams.optimalUsageRatio.toString()),
+          BigInt(interestRateParams.baseVariableBorrowRate.toString()),
+          BigInt(interestRateParams.variableRateSlope1.toString()),
+          BigInt(interestRateParams.variableRateSlope2.toString())
+        )
+      );
+      console.log(chalk.green(`✅ Interest rate strategy set for ${token.symbol}`));
+
+      // Configure reserve with a-asset
+      const aAsset = {
+        name: `A ${token.name}`,
+        symbol: `A${token.symbol}`,
+        decimals: token.decimals,
+      };
+
+      await adminSession.call(
+        op('init_reserve_op', underlyingAssetId, adminAccountId, aAsset.name, aAsset.symbol, '', '')
+      );
+
+      const aAssetResult = await adminSession.getAssetsBySymbol(aAsset.symbol);
+      const aAssetId = aAssetResult.data[0].id;
+      console.log(
+        chalk.green(`✅ Reserve initialized with a-asset:`),
+        chalk.yellow(`${aAsset.symbol} (${aAssetId})`)
+      );
+
+      // Mint underlying tokens to user
+      const mintAmount = BigNumber.from(RAY).mul(100); // 100 RAY
+      await adminSession.call(
+        op('mint_underlying_asset', userAccountId, BigInt(mintAmount.toString()), underlyingAssetId)
+      );
+      console.log(
+        chalk.green(
+          `✅ Minted ${chalk.yellow(formatRay(mintAmount))} ${token.symbol} tokens to user`
+        )
+      );
+
+      createdTokens.push({
+        underlying: {
+          id: underlyingAssetId,
+          symbol: token.symbol,
+        },
+        aToken: {
+          id: aAssetId,
+          symbol: aAsset.symbol,
+        },
+      });
+    }
+
+    console.log(chalk.green('✅ All tokens created successfully'));
+
+    // Supply operation for the first token (TUT)
+    console.log(chalk.blue('🔄 Performing supply operation for TUT...'));
+    const supplyToken = createdTokens[0];
+    const supplyAmount = BigNumber.from(RAY).mul(30); // 30 RAY
     const result = await userSession.call(
       op(
         'supply',
         userAccountId,
-        underlyingAssetId,
-        supplyAmount,
+        supplyToken.underlying.id,
+        BigInt(supplyAmount.toString()),
         userAccountId,
-        0 // referral code
+        BigInt(0) // referral code
       )
     );
+    const isSuccess = result.receipt.statusCode === 200;
     console.log(
-      'Supply operation completed:',
-      result.receipt.statusCode === 200 ? 'Success' : 'Failed'
+      isSuccess
+        ? chalk.green('✅ Supply operation completed successfully')
+        : chalk.red('❌ Supply operation failed')
     );
 
-    // Check final balances
-    const finalUnderlyingBalance = await adminSession.query('balance_of', {
-      account_id: userAccountId,
-      asset_id: underlyingAssetId,
-    });
+    // Check final balances using getBalanceByAssetId
+    console.log(chalk.blue('🔄 Checking final balances...'));
 
-    const finalAAssetBalance = await adminSession.query('balance_of', {
-      account_id: userAccountId,
-      asset_id: aAssetId,
-    });
+    // Display balances for all tokens
+    for (const token of createdTokens) {
+      console.log(chalk.yellow(`\n--- ${token.underlying.symbol} Balances ---`));
 
-    console.log('Final underlying balance:', finalUnderlyingBalance);
-    console.log('Final a-asset balance:', finalAAssetBalance);
+      // Get user's underlying balance
+      const underlyingBalance = await userSession.account.getBalanceByAssetId(token.underlying.id);
+      console.log(
+        chalk.yellow(`   Underlying balance: ${formatRay(underlyingBalance.amount.value)}`)
+      );
 
-    console.log('Supply initialization completed successfully');
+      // Get user's a-asset balance
+      const aTokenBalance = await userSession.account.getBalanceByAssetId(token.aToken.id);
+      console.log(chalk.yellow(`   A-token balance: ${formatRay(aTokenBalance.amount.value)}`));
+    }
+
+    console.log(chalk.bold.green('✅✅✅ Supply initialization completed successfully ✅✅✅'));
   } catch (error) {
-    console.error('Error in initSupply:', error);
+    console.error(chalk.bold.red('❌❌❌ ERROR IN INIT SUPPLY ❌❌❌'));
+    console.error(chalk.red(error));
   }
 }
 
 // Execute the script
-initSupply().catch(console.error);
+initSupply().catch(error => console.error(chalk.red('Unhandled error:'), error));

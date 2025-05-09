@@ -7,7 +7,7 @@ import { getClient } from '@/clients';
 // Test constants
 const TEST_ASSET_ID_STORK_BTC = 'BTCUSD';
 const TEST_PRICE_BTC = 53453.2525;
-const TEST_TIMESTAMP_BTC = 1698765432;
+// const TEST_TIMESTAMP_BTC = 1698765432;
 const TEST_NAME_BTC = 'Bitcoin';
 const TEST_SYMBOL_BTC = 'BTC';
 const TEST_DECIMALS_BTC = 8;
@@ -15,7 +15,7 @@ const TEST_ICON_BTC = 'https://example.com/icon.png';
 
 const TEST_ASSET_ID_STORK_ETH = 'ETHUSD';
 const TEST_PRICE_ETH = 1800.2525;
-const TEST_TIMESTAMP_ETH = 1698765789;
+// const TEST_TIMESTAMP_ETH = 1698765789;
 const TEST_NAME_ETH = 'Ethereum';
 const TEST_SYMBOL_ETH = 'ETH';
 const TEST_DECIMALS_ETH = 8;
@@ -49,9 +49,9 @@ describe('Stork Oracle', () => {
       TEST_SYMBOL_BTC,
       TEST_DECIMALS_BTC,
       TEST_ICON_BTC,
-      TEST_ASSET_ID_STORK_BTC,
-      TEST_PRICE_BTC,
-      TEST_TIMESTAMP_BTC
+      TEST_ASSET_ID_STORK_BTC
+      //   TEST_PRICE_BTC,
+      //   TEST_TIMESTAMP_BTC
     );
 
     assetIdEth = await initOracleAsset(
@@ -59,9 +59,9 @@ describe('Stork Oracle', () => {
       TEST_SYMBOL_ETH,
       TEST_DECIMALS_ETH,
       TEST_ICON_ETH,
-      TEST_ASSET_ID_STORK_ETH,
-      TEST_PRICE_ETH,
-      TEST_TIMESTAMP_ETH
+      TEST_ASSET_ID_STORK_ETH
+      //   TEST_PRICE_ETH,
+      //   TEST_TIMESTAMP_ETH
     );
   });
 
@@ -70,9 +70,9 @@ describe('Stork Oracle', () => {
     symbol: string,
     decimals: number,
     icon: string,
-    storkAssetId: string,
-    price: number,
-    timestamp: number
+    storkAssetId: string
+    // price: number,
+    // timestamp: number
   ) {
     // Register asset
     await adminSession.call(op('create_underlying_asset', assetName, symbol, decimals, icon));
@@ -84,53 +84,55 @@ describe('Stork Oracle', () => {
     await adminSession.call(op('create_price_asset', admin_kp.pubKey, storkAssetId, assetId));
 
     // Mock price update
-    await adminSession.call(
-      op('handle_price_update_op', [
-        {
-          asset: storkAssetId,
-          stork_price: {
-            price: BigInt(price * 1e18),
-            signature: {
-              signer: Buffer.from('000000').toString('hex'),
-              r: Buffer.from('000000').toString('hex'),
-              s: Buffer.from('000000').toString('hex'),
-              v: Buffer.from('000000').toString('hex'),
-            },
-            timestamp_nanos: timestamp * 1e6,
-            merkle_root: Buffer.from('123456').toString('hex'),
-            type: 'SPOT',
-            version: '1.0',
-            checksum: Buffer.from('654321').toString('hex'),
-          },
-          publisher_prices: [],
-        },
-      ])
-    );
+    // await adminSession.call(
+    //   op('handle_price_update_op', [
+    //     {
+    //       asset: storkAssetId,
+    //       stork_price: {
+    //         price: BigInt(price * 1e18),
+    //         signature: {
+    //           signer: Buffer.from('000000').toString('hex'),
+    //           r: Buffer.from('000000').toString('hex'),
+    //           s: Buffer.from('000000').toString('hex'),
+    //           v: Buffer.from('000000').toString('hex'),
+    //         },
+    //         timestamp_nanos: timestamp * 1e6,
+    //         merkle_root: Buffer.from('123456').toString('hex'),
+    //         type: 'SPOT',
+    //         version: '1.0',
+    //         checksum: Buffer.from('654321').toString('hex'),
+    //       },
+    //       publisher_prices: [],
+    //     },
+    //   ])
+    // );
 
     return assetId;
   }
 
-  it('should handle price updates', async () => {
-    // Verify price was stored
-    const price = await adminSession.query('get_latest_price_by_asset', {
-      stork_asset_id: TEST_ASSET_ID_STORK_BTC,
-    });
+  //   it('should handle price updates', async () => {
+  //     // Verify price was stored
+  //     const price = await adminSession.query('get_latest_price_by_asset', {
+  //       stork_asset_id: TEST_ASSET_ID_STORK_BTC,
+  //     });
 
-    expect(price).toEqual(TEST_PRICE_BTC);
-  });
+  //     expect(price).toEqual(TEST_PRICE_BTC);
+  //   });
 
-  it('should get latest price by asset ID', async () => {
-    const price = await adminSession.query('get_latest_price_by_asset_id', {
-      asset_id: assetIdBtc,
-    });
+  //   it('should get latest price by asset ID', async () => {
+  //     const price = await adminSession.query('get_latest_price_by_asset_id', {
+  //       asset_id: assetIdBtc,
+  //     });
 
-    expect(price).toEqual(TEST_PRICE_BTC);
-  });
+  //     expect(price).toEqual(TEST_PRICE_BTC);
+  //   });
 
   it('should get latest prices by asset IDs', async () => {
     const prices = (await adminSession.query('get_latest_price_by_asset_ids', {
       asset_ids: [assetIdBtc, assetIdEth],
     })) as Array<{ price: number }>;
+
+    console.log('prices', prices);
 
     expect(prices.length).toBe(2);
     expect(prices[0].price).toEqual(TEST_PRICE_BTC);

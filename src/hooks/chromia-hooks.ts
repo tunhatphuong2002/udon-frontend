@@ -111,5 +111,7 @@ export const useChromiaAccount = ({
     tried, // Indicates if the user has tried creating an account
     account: ftAccounts?.[0], // The first account in the list (if available)
     hasAccount: !!ftAccounts?.length, // Boolean indicating whether the user has an account
+    client,
+    keyStore,
   };
 };
