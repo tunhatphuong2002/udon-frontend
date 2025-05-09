@@ -144,7 +144,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       accessorKey: 'symbol',
       enableSorting: false,
       cell: ({ row }: { row: SupplyAsset }) => (
-        <div className="flex items-center w-full justify-end">
+        <div className="flex flex-row items-center w-full justify-end gap-2">
           <Button
             variant="default"
             size="default"
@@ -156,6 +156,15 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
             className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
           >
             Supply
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => handleAssetClick(row.symbol)}
+            aria-label={`Borrow ${row.symbol}`}
+            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
+          >
+            Details
           </Button>
         </div>
       ),
@@ -195,7 +204,8 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
         </div>
       </div>
 
-      {selectedAsset && (
+      {/* re-render when close or click outside dialog */}
+      {selectedAsset && dialogOpen && (
         <SupplyDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}

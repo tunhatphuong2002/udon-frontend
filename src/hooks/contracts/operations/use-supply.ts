@@ -8,7 +8,6 @@ import { parseUnits } from 'ethers/lib/utils';
 interface SupplyParams {
   assetId: string | Buffer;
   amount: number | string;
-  useAsCollateral?: boolean;
   decimals: number;
 }
 
