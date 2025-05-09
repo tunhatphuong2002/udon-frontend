@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 import { ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/common/tab';

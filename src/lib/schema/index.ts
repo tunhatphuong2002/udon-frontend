@@ -1,4 +1,4 @@
-import { SITE_URL } from '@/types/utils/env';
+import { SITE_URL } from '@/utils/env';
 
 /**
  * Organization schema for website

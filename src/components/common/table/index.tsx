@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (

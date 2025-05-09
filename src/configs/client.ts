@@ -1,4 +1,4 @@
-import { env } from '@/types/utils/env';
+import { env } from '@/utils/env';
 import type { ClientConfig } from '@chromia/react';
 import { FailoverStrategy } from 'postchain-client';
 

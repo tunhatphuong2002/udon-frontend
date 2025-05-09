@@ -1,7 +1,7 @@
 'use client';
 
 import { Balance, convertToRawAmount } from '@chromia/ft4';
-import { useTokenBalance } from '@/hooks/use-token-balance';
+import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
 import Image from 'next/image';
 
 // Extend the Balance type with additional properties

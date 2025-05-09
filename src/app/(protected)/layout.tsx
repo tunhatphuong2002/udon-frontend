@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/theme-context';
 
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardDescription, CardTitle } from '@/components/common/card';
-import { useChromiaAccount } from '@/hooks/chromia-hooks';
+import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { useAccountCreatedModal } from '@/components/custom/modals/account-created-modal';
 import { MainLayout } from '@/components/layout';
 import { Button } from '@/components/common/button';

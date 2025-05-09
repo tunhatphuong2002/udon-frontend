@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { TransferHistoryEntry, PaginatedEntity } from '@chromia/ft4';
-import { useChromiaAccount } from './chromia-hooks';
+import { useChromiaAccount } from '../../configs/chromia-hooks';
 
 export const TRANSFER_HISTORY_QUERY_KEY = ['transfer-history'] as const;
 

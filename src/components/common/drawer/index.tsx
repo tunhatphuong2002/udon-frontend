@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { Drawer as DrawerPrimitive } from 'vaul';
 
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 const Drawer = ({
   shouldScaleBackground = true,

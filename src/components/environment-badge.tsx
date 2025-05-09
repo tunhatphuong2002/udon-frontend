@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { APP_NAME, getNetwork, Network } from '@/types/utils/env';
+import { APP_NAME, getNetwork, Network } from '@/utils/env';
 
 type BadgeColors = {
   [key: string]: {

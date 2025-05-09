@@ -1,4 +1,4 @@
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 import { Typography } from '@/components/common/typography';
 import React from 'react';
 import Image from 'next/image';

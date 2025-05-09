@@ -4,7 +4,7 @@ import type React from 'react';
 
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from '@/hooks/commons/use-media-query';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../dialog';
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '../drawer';

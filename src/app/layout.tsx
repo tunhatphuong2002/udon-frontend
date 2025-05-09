@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import EnvironmentBadge from '@/components/environment-badge';
 import { Analytics } from '@/analytics';
-import { SITE_URL } from '@/types/utils/env';
+import { SITE_URL } from '@/utils/env';
 import { Providers } from '@/providers';
 import './globals.css';
 import localFont from 'next/font/local';

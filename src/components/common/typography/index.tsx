@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 import { VariantProps, cva } from 'class-variance-authority';
 /**
  * Typography component

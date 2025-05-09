@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Avatar } from 'connectkit';
 import { Typography } from '@/components/common/typography';
-import { useChromiaAccount } from '@/hooks/chromia-hooks';
+import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 
 export function ChromiaAccount() {
   const [copiedChromia, setCopiedChromia] = useState(false);

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useChromiaAccount } from './chromia-hooks';
+import { useChromiaAccount } from '../../configs/chromia-hooks';
 
 // Define asset price interface
 export interface AssetPrice {
@@ -65,6 +65,7 @@ export function useAssetPrice(
     enabled: enabled && !!client && !!formattedAssetId,
     staleTime: 30000, // Consider data fresh for 30 seconds
     retry: 2, // Retry failed requests twice
+    networkMode: 'offlineFirst',
   });
 
   return {

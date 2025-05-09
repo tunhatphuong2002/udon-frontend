@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 
 import { createAmount, op } from '@chromia/ft4';
-import { useChromiaAccount } from '@/hooks/chromia-hooks';
-import { ensureBuffer } from '@/types/utils/ensure-buffer';
+import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
+import { ensureBuffer } from '@/utils/ensure-buffer';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
-import { useTokenBalance } from './use-token-balance';
+import { useTokenBalance } from '../queries/use-token-balance';
 
 interface MintTokenParams {
   ticker: string;

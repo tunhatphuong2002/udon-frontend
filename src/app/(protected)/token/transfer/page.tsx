@@ -9,7 +9,7 @@ import LinkIconButton from '@/components/chromia-ui-kit/link-icon-button';
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardTitle } from '@/components/common/card';
 import TransferTokenForm from '@/forms/transfer';
-import { useTokenBalance } from '@/hooks/use-token-balance';
+import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
 
 export default function TransferToken() {
   const router = useRouter();

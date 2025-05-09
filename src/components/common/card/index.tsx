@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (

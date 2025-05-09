@@ -1,4 +1,4 @@
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 import React from 'react';
 
 interface StatCardGridProps {

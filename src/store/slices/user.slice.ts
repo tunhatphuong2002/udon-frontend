@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { UserSlice, UserState, User } from '@/store/types/user.type';
-import { OmitProperties } from '@/types/utils/type-factory';
+import { OmitProperties } from '@/types/type-factory';
 
 type SetState = (fn: (state: UserSlice) => UserSlice) => void;
 

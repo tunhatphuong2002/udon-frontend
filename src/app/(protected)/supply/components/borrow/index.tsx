@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { SortableTable, type ColumnDef } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import {
@@ -31,15 +31,9 @@ interface BorrowTableProps {
   title: string;
   assets: BorrowAsset[];
   isLoading: boolean;
-  onRefresh: () => void;
 }
 
-export const BorrowTable: React.FC<BorrowTableProps> = ({
-  title,
-  assets,
-  isLoading,
-  onRefresh,
-}) => {
+export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoading }) => {
   const [selectedAsset, setSelectedAsset] = useState<BorrowAsset | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
@@ -146,16 +140,6 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           <Typography variant="h4" weight="semibold" className="text-lg sm:text-xl">
             {title}
           </Typography>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="h-8 w-8 p-0"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
         </div>
 
         {(!borrowAssets || borrowAssets.length === 0) && !isLoading && (

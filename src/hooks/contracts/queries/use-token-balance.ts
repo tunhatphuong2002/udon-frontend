@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Balance } from '@chromia/ft4';
-import { useChromiaAccount } from './chromia-hooks';
+import { useChromiaAccount } from '../../configs/chromia-hooks';
 
 interface BalanceResponse {
   data: Balance[];

@@ -10,7 +10,7 @@ import LinkButton from '@/components/chromia-ui-kit/link-button';
 import { CardLoading } from '@/components/custom/card-loading';
 import { Card, CardTitle } from '@/components/common/card';
 import MintToken from '@/forms/mint-token';
-import { useTokenBalance } from '@/hooks/use-token-balance';
+import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
 
 export default function TokenPage() {
   const { balances, isLoading, refreshBalance } = useTokenBalance();

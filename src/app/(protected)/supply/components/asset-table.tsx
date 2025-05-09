@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { useChromiaQuery } from '@/hooks/chromia-hooks';
+import { useChromiaQuery } from '@/hooks/configs/chromia-hooks';
 import { Asset, PaginatedEntity } from '@chromia/ft4';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';

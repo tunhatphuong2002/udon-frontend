@@ -17,7 +17,7 @@ import {
 } from '@/app/(protected)/vault/charts';
 import { SortableTable, type ColumnDef } from '@/components/common/sortable-table';
 import { ArrowUpRight } from 'lucide-react';
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 // Market table indicator component
 const MarketIndicator = ({ active }: { active?: boolean }) => (

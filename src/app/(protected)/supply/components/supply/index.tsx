@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ColumnDef, SortableTable } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import {
@@ -34,7 +34,6 @@ interface SupplyTableProps {
   showCollateral?: boolean;
   assets: SupplyAsset[];
   isLoading: boolean;
-  onRefresh: () => void;
 }
 
 export const SupplyTable: React.FC<SupplyTableProps> = ({
@@ -42,7 +41,6 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
   showCollateral = false,
   assets,
   isLoading,
-  onRefresh,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<SupplyAsset | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -171,16 +169,6 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
           <Typography variant="h4" weight="semibold" className="text-lg sm:text-xl">
             {title}
           </Typography>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="h-8 w-8 p-0"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="sr-only">Refresh</span>
-          </Button>
         </div>
 
         {(!supplyAssets || supplyAssets.length === 0) && !isLoading && (

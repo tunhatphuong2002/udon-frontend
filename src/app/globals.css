@@ -18,7 +18,8 @@
     /* fixed border color */
     --border: 0 0% 71%;
 
-    --input: 240 10.64% 90.78%;
+    /* fixed input color */
+    --input: 0 0% 6%;
 
     /* fixed primary color */
     --primary: 203 76% 64%;
@@ -30,7 +31,10 @@
     --accent-foreground: 0 0% 0%;
     --destructive: 3.35 100% 61.37%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 211.29 100% 50%;
+
+    /* fixed ring color */
+    --ring: 203 76% 64%;
+
     --chart-1: 135.1 58.57% 49.22%;
     --chart-2: 48 100% 50%;
     --chart-3: 221.25 94.12% 66.67%;
@@ -58,7 +62,8 @@
     /* fixed border color */
     --border: 240 2% 29%;
 
-    --input: 240 2.22% 8.82%;
+    /* fixed input color */
+    --input: 0 0% 6%;
 
     /* fixed primary color */
     --primary: 203 76% 64%;
@@ -73,7 +78,9 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 7 88% 58%;
     --destructive-foreground: 0 0% 100%;
-    --ring: 210.12 100% 51.96%;
+
+    /* fixed ring color */
+    --ring: 203 76% 64%;
     --chart-1: 129.09 67.35% 51.96%;
     --chart-2: 49.96 100% 51.96%;
     --chart-3: 197.42 100% 69.61%;

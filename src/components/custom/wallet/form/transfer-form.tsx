@@ -7,13 +7,13 @@ import * as z from 'zod';
 import { Calendar, Clock } from 'lucide-react';
 
 import { Button } from '@/components/common/button';
-import { useTokenBalance } from '@/hooks/use-token-balance';
-import { useTransferHistory } from '@/hooks/use-tranfer-history';
+import { useTokenBalance } from '@/hooks/contracts/queries/use-token-balance';
+import { useTransferHistory } from '@/hooks/contracts/queries/use-tranfer-history';
 import Input from '@/components/chromia-ui-kit/input';
 import { LoaderCubes, Chr } from '@/components/chromia-ui-kit/icons';
 import { useTransferedSuccessModal } from '@/components/custom/modals/transfered-success-modal';
 import { useTransactionFailedModal } from '@/components/custom/modals/transaction-failed-modal';
-import { useTransferTokens } from '@/hooks/token-hooks';
+import { useTransferTokens } from '@/hooks/contracts/operations/token-hooks';
 
 interface TransferFormProps {
   onBack: () => void;

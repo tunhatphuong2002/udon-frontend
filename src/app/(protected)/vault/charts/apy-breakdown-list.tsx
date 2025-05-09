@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 interface APYBreakdownItemProps {
   label: string;

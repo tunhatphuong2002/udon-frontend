@@ -4,7 +4,7 @@ import { StackedAreaChart } from '../charts/stacked-area-chart';
 import { SortableTable, ColumnDef } from '@/components/common/sortable-table';
 import { Typography } from '@/components/common/typography';
 import { ChartFilters, ChartCard } from '../charts';
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 
 interface AllocationHistoryProps {
   className?: string;

@@ -6,7 +6,7 @@ import { Typography } from '@/components/common/typography';
 import { SupplyTable } from './components/supply';
 import { BorrowTable } from './components/borrow';
 import { Asset, PaginatedEntity } from '@chromia/ft4';
-import { useChromiaAccount, useChromiaQuery } from '@/hooks/chromia-hooks';
+import { useChromiaAccount, useChromiaQuery } from '@/hooks/configs/chromia-hooks';
 import { toast } from 'sonner';
 
 // Define asset price interface
@@ -35,7 +35,6 @@ export default function SupplyPage() {
     data: assetsData,
     isLoading: isLoadingAssets,
     error: assetsError,
-    mutate: refetchAssets,
   } = useChromiaQuery<string, Record<string, unknown>, PaginatedEntity<Asset>>({
     queryName: 'ft4.get_assets_by_type',
     queryParams: {
@@ -108,15 +107,6 @@ export default function SupplyPage() {
     }
   }, [assetsError]);
 
-  // Handle refresh
-  const handleRefresh = () => {
-    refetchAssets();
-    if (assetIds.length > 0) {
-      fetchPrices();
-    }
-    toast('Refreshing assets and prices...');
-  };
-
   const isLoading = isLoadingAssets || isLoadingPrices;
 
   return (
@@ -165,14 +155,8 @@ export default function SupplyPage() {
           showCollateral={false}
           assets={processedAssets}
           isLoading={isLoading}
-          onRefresh={handleRefresh}
         />
-        <BorrowTable
-          title="Assets to borrow"
-          assets={processedAssets}
-          isLoading={isLoading}
-          onRefresh={handleRefresh}
-        />
+        <BorrowTable title="Assets to borrow" assets={processedAssets} isLoading={isLoading} />
       </section>
     </main>
   );

@@ -1,11 +1,11 @@
 'use client';
 
 import { ArrowUpRight, ArrowDownRight, Calendar, Clock } from 'lucide-react';
-import { useTransferHistory } from '@/hooks/use-tranfer-history';
+import { useTransferHistory } from '@/hooks/contracts/queries/use-tranfer-history';
 import { format } from 'date-fns';
 // import { convertToRawAmount } from '@chromia/ft4';
 // import Link from 'next/link';
-import { getTxLink } from '@/types/utils/get-tx-link';
+import { getTxLink } from '@/utils/get-tx-link';
 
 export function TransactionHistory() {
   const { transfers, isLoading } = useTransferHistory();

@@ -12,7 +12,7 @@ import { Chr, LoaderCubes } from '@/components/chromia-ui-kit/icons';
 import Input from '@/components/chromia-ui-kit/input';
 import { useTransactionFailedModal } from '@/components/custom/modals/transaction-failed-modal';
 import { useTransferedSuccessModal } from '@/components/custom/modals/transfered-success-modal';
-import { useTransferTokens } from '@/hooks/token-hooks';
+import { useTransferTokens } from '@/hooks/contracts/operations/token-hooks';
 
 const transferTokenSchema = z.object({
   recepient: z.string().min(1, {

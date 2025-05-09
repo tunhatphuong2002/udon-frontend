@@ -18,7 +18,7 @@ import {
 //   PaginationPrevious,
 // } from '@/components/ui/pagination';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '@/types/utils/tailwind';
+import { cn } from '@/utils/tailwind';
 import { Typography } from '../typography';
 import { Button } from '../button';
 

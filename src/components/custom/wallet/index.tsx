@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/common/button';
 import { WalletActions } from './components/wallet-actions';
-import { useChromiaAccount } from '@/hooks/chromia-hooks';
+import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 
 interface ConnectedButtonProps {
   className?: string;

@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { debounce } from 'lodash';
-import { useAssetPrice } from '@/hooks/use-asset-price';
-import { useSupply } from '@/hooks/use-supply';
+import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
+import { useSupply } from '@/hooks/contracts/operations/use-supply';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/common/dialog';
@@ -16,36 +16,10 @@ import { Typography } from '@/components/common/typography';
 import { Input } from '@/components/common/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Switch } from '@/components/common/switch';
-
-// Create a simple Alert component if it doesn't exist
-const Alert = ({
-  className = '',
-  children,
-}: {
-  variant?: 'default' | 'info'; // We keep the type for API compatibility, but don't use it
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <div className={`p-4 rounded-md ${className}`}>
-      <div className="flex gap-3">{children}</div>
-    </div>
-  );
-};
-
-// Create a simple AlertDescription component if it doesn't exist
-const AlertDescription = ({
-  className = '',
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  return <div className={className}>{children}</div>;
-};
+import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 
 const supplyFormSchema = z.object({
-  amount: z.string().min(1, 'Amount is required'),
+  amount: z.string().min(1, 'Amount is required!'),
 });
 
 type SupplyFormValues = z.infer<typeof supplyFormSchema>;
@@ -187,7 +161,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
           </div>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
           <div className="space-y-6 py-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -196,20 +170,34 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                 </Typography>
               </div>
 
-              <div className="relative">
-                <Input
-                  {...form.register('amount')}
-                  placeholder="0.00"
-                  className="pr-24 text-xl font-medium placeholder:text-submerged"
-                  inputMode="decimal"
-                  onChange={handleAmountChange}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                    <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium text-lg">{asset.symbol}</span>
+              <div className="border px-3 py-2 rounded-lg">
+                <div className="relative">
+                  <Input
+                    {...form.register('amount')}
+                    autoComplete="off"
+                    placeholder="0.00"
+                    className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0"
+                    inputMode="decimal"
+                    onChange={handleAmountChange}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                      <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-lg">{asset.symbol}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-base">
+                  <Typography>{usdAmount}</Typography>
+                  <div
+                    className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                    onClick={handleMaxAmount}
+                  >
+                    <Typography>Balance {asset.balance}</Typography>
+                    <Typography className="font-bold text-primary">MAX</Typography>
+                  </div>
                 </div>
               </div>
 
@@ -218,17 +206,6 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                   {form.formState.errors.amount.message}
                 </Typography>
               )}
-
-              <div className="flex justify-between items-center text-base">
-                <Typography>{usdAmount}</Typography>
-                <div
-                  className="flex flex-row items-center gap-1 text-primary cursor-pointer"
-                  onClick={handleMaxAmount}
-                >
-                  <Typography>Balance {asset.balance}</Typography>
-                  <Typography className="font-bold text-primary">MAX</Typography>
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -279,12 +256,13 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
               </Typography>
             </div>
 
-            <Alert variant="info" className="bg-blue-50 border-blue-100">
-              <AlertCircle className="h-5 w-5 text-blue-500" />
-              <AlertDescription className="text-base text-blue-700">
-                <span className="font-semibold">Attention:</span> Parameter changes via governance
-                can alter your account health factor and risk of liquidation. Follow the{' '}
-                <a href="#" className="text-blue-600 underline">
+            <Alert className="border border-primary">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle className="text-base">Attention</AlertTitle>
+              <AlertDescription className="text-sm">
+                Parameter changes via governance can alter your account health factor and risk of
+                liquidation. Follow the{' '}
+                <a href="#" className="text-primary underline">
                   Udon governance forum
                 </a>{' '}
                 for updates.
@@ -301,7 +279,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
               <Button
                 type="submit"
                 className="w-full text-lg py-6"
-                disabled={!form.watch('amount')}
+                // disabled={!form.watch('amount')}
               >
                 Supply {asset.symbol}
               </Button>
