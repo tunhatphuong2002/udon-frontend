@@ -42,6 +42,11 @@ export default function SupplyPage() {
       page_size: null,
       page_cursor: null,
     },
+    swrConfiguration: {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300000,
+    },
   });
 
   // Extract asset IDs for price query

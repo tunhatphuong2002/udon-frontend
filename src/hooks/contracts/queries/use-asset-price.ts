@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
+import { ensureString } from '@/utils/string';
 
 // Define asset price interface
 export interface AssetPrice {
@@ -20,22 +21,7 @@ export function useAssetPrice(
 ) {
   const { client } = useChromiaAccount();
 
-  // Format asset ID for API call
-  const getFormattedAssetId = () => {
-    if (!assetId) return null;
-
-    if (typeof assetId === 'string') {
-      return assetId;
-    } else if (Buffer.isBuffer(assetId)) {
-      return assetId.toString('hex');
-    } else if (assetId && typeof assetId.toString === 'function') {
-      return assetId.toString();
-    }
-
-    return assetId;
-  };
-
-  const formattedAssetId = getFormattedAssetId();
+  const formattedAssetId = ensureString(assetId);
 
   // Use TanStack Query to fetch and cache price data
   const query = useQuery({
@@ -65,7 +51,7 @@ export function useAssetPrice(
     enabled: enabled && !!client && !!formattedAssetId,
     staleTime: 30000, // Consider data fresh for 30 seconds
     retry: 2, // Retry failed requests twice
-    networkMode: 'offlineFirst',
+    networkMode: 'offlineFirst', // priority cache first
   });
 
   return {

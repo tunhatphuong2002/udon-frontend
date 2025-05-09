@@ -115,7 +115,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
       accessorKey: 'symbol',
       enableSorting: false,
       cell: ({ row }: { row: BorrowAsset }) => (
-        <div className="flex items-center w-full justify-end">
+        <div className="flex flex-row items-center w-full justify-end gap-2">
           <Button
             variant="default"
             size="default"
@@ -127,6 +127,15 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
             className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
           >
             Borrow
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => handleAssetClick(row.symbol)}
+            aria-label={`Borrow ${row.symbol}`}
+            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
+          >
+            Details
           </Button>
         </div>
       ),
@@ -166,7 +175,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
         </div>
       </div>
 
-      {selectedAsset && (
+      {selectedAsset && dialogOpen && (
         <BorrowDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
