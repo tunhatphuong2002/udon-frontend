@@ -18,9 +18,9 @@ const Layout = ({
   children: React.ReactNode;
 }>) => {
   const { isConnected, isReconnecting } = useAccount();
-  const { show } = useAccountCreatedModal();
+  const accountCreatedModal = useAccountCreatedModal();
   const { hasAccount, createAccount, isLoading, tried } = useChromiaAccount({
-    onAccountCreated: show,
+    onAccountCreated: accountCreatedModal.show,
   });
   const { setTheme } = useTheme();
 
@@ -29,59 +29,50 @@ const Layout = ({
     setTheme('dark');
   }, [setTheme]);
 
-  if (isConnected) {
-    if (hasAccount) {
-      return <MainLayout>{children}</MainLayout>;
-    }
+  return (
+    <MainLayout>
+      {accountCreatedModal.modal}
 
-    return (
-      <MainLayout>
+      {isConnected ? (
+        hasAccount ? (
+          children
+        ) : (
+          <div className="h-screen flex flex-1 items-center justify-center">
+            {isLoading || isReconnecting ? (
+              <CardLoading />
+            ) : (
+              <Popup
+                variant="notfound"
+                title="Account not found"
+                description="You need to create an chromia account first!"
+                buttonText={tried ? 'Retry creating account' : 'Create account'}
+                onButtonClick={createAccount}
+              />
+            )}
+          </div>
+        )
+      ) : (
         <div className="h-screen flex flex-1 items-center justify-center">
           {isLoading || isReconnecting ? (
             <CardLoading />
           ) : (
-            <>
-              <Popup
-                variant="notfound"
-                title="Account not found"
-                description="You need to create an chromia account first"
-                buttonText={tried ? 'Retry creating account' : 'Create account'}
-                onButtonClick={createAccount}
-              />
-            </>
-          )}
-        </div>
-      </MainLayout>
-    );
-  }
-
-  return (
-    <MainLayout>
-      <div className="h-screen flex flex-1 items-center justify-center">
-        {isLoading || isReconnecting ? (
-          <CardLoading />
-        ) : (
-          <ConnectKitButton.Custom>
-            {({ show, isConnecting }) => {
-              if (isConnecting) {
-                return <CardLoading />;
-              }
-
-              return (
-                <>
+            <ConnectKitButton.Custom>
+              {({ show, isConnecting }) => {
+                if (isConnecting) return <CardLoading />;
+                return (
                   <Popup
                     variant="wallet"
                     title="Connect to your wallet"
-                    description="You need to connect your wallet to mint own token."
+                    description="You need to connect your wallet to continue!"
                     buttonText="Connect wallet"
                     onButtonClick={show ?? (() => {})}
                   />
-                </>
-              );
-            }}
-          </ConnectKitButton.Custom>
-        )}
-      </div>
+                );
+              }}
+            </ConnectKitButton.Custom>
+          )}
+        </div>
+      )}
     </MainLayout>
   );
 };

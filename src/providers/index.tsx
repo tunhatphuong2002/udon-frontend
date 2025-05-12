@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 const defaultTheme = {
   // Font & Typography
-  '--ck-font-family': 'Inter',
+  '--ck-font-family': 'Roboto',
   '--ck-font-weight': '400',
 
   // Border & Radius
@@ -27,8 +27,8 @@ const defaultTheme = {
   '--ck-recent-badge-border-radius': '32px',
 
   // Overlay
-  '--ck-overlay-background': '#00000008',
-  '--ck-overlay-backdrop-filter': 'blur(0px)',
+  '--ck-overlay-background': '#3f393908',
+  '--ck-overlay-backdrop-filter': 'blur(20px)',
 
   // Modal & UI
   '--ck-modal-heading-font-weight': '500',
@@ -239,6 +239,7 @@ export function Providers(props: PropsWithChildren) {
                 <FtProvider>
                   <NiceModal.Provider>{props.children}</NiceModal.Provider>
                 </FtProvider>
+                <div className="bg-[#12121255]"></div>
               </SafeHydration>
             </CustomConnectKitProvider>
           </QueryClientProvider>

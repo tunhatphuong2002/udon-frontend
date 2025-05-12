@@ -9,14 +9,22 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'text-base bg-primary text-primary-foreground shadow hover:bg-primary/90 relative',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90 relative',
+        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/20',
         outline:
           'border border-primary bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
         secondary: 'bg-secondary text-embossed shadow-sm hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         third: 'bg-muted text-muted-foreground hover:border-ring',
         disabled: 'bg-muted text-muted-foreground hover:border-ring !cursor-not-allowed',
+        gradient:
+          'bg-gradient-to-r from-[#52E5FF] hover:opacity-90 via-[#36B1FF] to-[#E4F5FF] text-black',
+        outlineGradient: `
+  relative bg-transparent text-[#36B1FF] 
+  border border-transparent
+  !border-none
+  overflow-hidden
+`,
       },
       size: {
         default: 'h-9 px-6 py-2',
@@ -79,8 +87,40 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <div className="relative">
-        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>
-          {children}
+        <Comp
+          className={cn(
+            buttonVariants({ variant, size, className }),
+            variant === 'outlineGradient' && 'overflow-hidden'
+          )}
+          ref={ref}
+          {...props}
+        >
+          {variant === 'outlineGradient' && (
+            <>
+              <div
+                aria-hidden
+                className="
+                  pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px]
+                  bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]
+                "
+              />
+              <div
+                aria-hidden
+                className="
+                  pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-black
+                "
+              />
+            </>
+          )}
+          <div
+            className={
+              variant === 'outlineGradient'
+                ? 'flex flex-row justify-center items-center gap-3 relative z-20 bg-gradient-to-r from-[#52E5FF] hover:opacity-90 via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
+                : 'flex flex-row w-full justify-center items-center gap-2'
+            }
+          >
+            {children}
+          </div>
         </Comp>
 
         {badgeLabel && (

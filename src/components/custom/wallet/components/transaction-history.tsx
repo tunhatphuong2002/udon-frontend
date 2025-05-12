@@ -1,14 +1,80 @@
 'use client';
 
-import { ArrowUpRight, ArrowDownRight, Calendar, Clock } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, HandCoins, Banknote, HelpCircle } from 'lucide-react';
 import { useTransferHistory } from '@/hooks/contracts/queries/use-tranfer-history';
-import { format } from 'date-fns';
 // import { convertToRawAmount } from '@chromia/ft4';
 // import Link from 'next/link';
 import { getTxLink } from '@/utils/get-tx-link';
+import React from 'react';
+import { cn } from '@/utils/tailwind';
 
-export function TransactionHistory() {
+interface TransactionHistoryProps {
+  compact?: boolean;
+  fullList?: boolean;
+  onViewAll?: () => void;
+  className?: string;
+}
+
+function getTxTypeInfo(operationName: string) {
+  const op = operationName.toLowerCase();
+  if (op.includes('supply')) {
+    return {
+      label: 'Supply',
+      icon: <Banknote className="h-7 w-7 text-red-500" />,
+      color: 'text-red-500',
+      amountColor: 'text-red-500',
+    };
+  }
+  if (op.includes('withdraw')) {
+    return {
+      label: 'Withdraw',
+      icon: <ArrowDownRight className="h-7 w-7 text-green-500" />,
+      color: 'text-green-500',
+      amountColor: 'text-green-500',
+    };
+  }
+  if (op.includes('borrow')) {
+    return {
+      label: 'Borrow',
+      icon: <HandCoins className="h-7 w-7 text-green-500" />,
+      color: 'text-green-500',
+      amountColor: 'text-green-500',
+    };
+  }
+  if (op.includes('repay')) {
+    return {
+      label: 'Repay',
+      icon: <Banknote className="h-7 w-7 text-red-500" />,
+      color: 'text-red-500',
+      amountColor: 'text-red-500',
+    };
+  }
+  if (op.includes('transfer')) {
+    return {
+      label: 'Transfer',
+      icon: <ArrowUpRight className="h-7 w-7 text-red-500" />,
+      color: 'text-red-500',
+      amountColor: 'text-red-500',
+    };
+  }
+  return {
+    label: op,
+    icon: <HelpCircle className="h-7 w-7 text-gray-400" />,
+    color: 'text-gray-400',
+    amountColor: 'text-gray-400',
+  };
+}
+
+export function TransactionHistory({
+  compact = false,
+  fullList = false,
+  onViewAll,
+  className,
+}: TransactionHistoryProps) {
   const { transfers, isLoading } = useTransferHistory();
+  const showCompact = compact && !fullList;
+  const displayTransfers = showCompact ? (transfers || []).slice(0, 3) : transfers || [];
+  const hasMore = showCompact && (transfers?.length || 0) > 1;
 
   // Function to truncate string (like hex address)
   const truncateHash = (hash: string, startChars = 6, endChars = 3) => {
@@ -18,78 +84,91 @@ export function TransactionHistory() {
   };
 
   return (
-    <div className="w-full mt-6">
-      <h3 className="text-md font-semibold mb-2">Your Activity</h3>
-
-      <div className="relative">
+    <div className={cn('w-full flex flex-col h-full', className)}>
+      <div className="flex items-center justify-between mb-2">
+        {!fullList && (
+          <h3 className="text-md font-semibold">
+            Your Activity{transfers?.length ? ` (${transfers.length})` : ''}
+          </h3>
+        )}
+        {showCompact && hasMore && (
+          <button
+            className="text-sm text-primary font-medium hover:underline focus:outline-none"
+            onClick={onViewAll}
+          >
+            View all
+          </button>
+        )}
+      </div>
+      <div className="relative flex-1 flex flex-col">
         {isLoading && (
           <div className="absolute right-0 top-0">
             <div className="h-3 w-3 rounded-full border-2 border-primary/60 border-t-transparent animate-spin"></div>
           </div>
         )}
-
-        <div className="max-h-[130px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-          {transfers && transfers.length > 0 ? (
-            <div className="space-y-3">
-              {transfers.map((transfer, index) => {
-                const isReceived = transfer.isInput;
-                // const amount = convertToRawAmount(
-                //   transfer.delta,
-                //   transfer.asset?.decimals
-                // ).value.toString();
-                // const symbol = transfer.asset?.symbol;
+        <div className="flex-1 overflow-y-auto">
+          {displayTransfers && displayTransfers.length > 0 ? (
+            <div className={cn('flex flex-col gap-4', fullList && 'pb-[120px]')}>
+              {displayTransfers.map((transfer, index) => {
                 const transactionHash = transfer?.transactionId?.toString('hex') || '';
-
+                const txType = getTxTypeInfo(transfer.operationName || '');
+                // Format amount using decimals
+                const decimals = transfer.asset?.decimals ?? 0;
+                const symbol = transfer.asset?.symbol ?? '';
+                const raw = transfer.delta.toString();
+                const value = Number(raw) / Math.pow(10, decimals);
+                // Show sign for positive/negative
+                const amountStr = value > 0 ? `+${value} ${symbol}` : `${value} ${symbol}`;
                 return (
                   <div
                     key={index}
-                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/30 via-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm cursor-pointer"
-                    onClick={() => {
-                      window.open(getTxLink(transactionHash), '_blank');
-                    }}
+                    className="flex items-center gap-4 rounded-xl bg-[#232323] p-4 shadow-md hover:shadow-lg hover:bg-[#282828] transition"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent"></div>
-                    <div className="relative">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium">
-                            {truncateHash(transactionHash.toUpperCase())}
-                          </span>
-                        </div>
-                        {isReceived ? (
-                          <ArrowDownRight className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <ArrowUpRight className="h-5 w-5 text-blue-500" />
-                        )}
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span
-                          className={`text-xs ${isReceived ? 'text-green-500' : 'text-blue-500'}`}
-                        >
-                          {transfer.operationName || (isReceived ? 'Received' : 'Sent')}
+                    {/* Icon */}
+                    <div
+                      className={`flex items-center justify-center rounded-full ${txType.color} min-w-[44px] min-h-[44px]`}
+                    >
+                      {txType.icon}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-semibold ${txType.color}`}>
+                          {txType.label}
                         </span>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>
-                            {transfer.timestamp
-                              ? format(new Date(transfer.timestamp), 'dd/MM/yy')
-                              : '-'}
-                          </span>
-                          <Clock className="h-3 w-3 ml-2 mr-1" />
-                          <span>
-                            {transfer.timestamp
-                              ? format(new Date(transfer.timestamp), 'HH:mm')
-                              : '-'}
-                          </span>
-                        </div>
-
-                        {/* <span className="text-sm font-semibold">
-                          {isReceived ? '+' : '-'}
-                          {amount} {symbol}
-                        </span> */}
+                      </div>
+                      <div className="flex row items-center gap-2 mt-1">
+                        <span className="text-sm text-white/80 font-medium">
+                          {truncateHash(transactionHash.toUpperCase())}
+                        </span>
+                        <a
+                          href={getTxLink(transactionHash)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1 -top-1 hover:underline"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="inline h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M18 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h6m5-3h3m0 0v3m0-3L10 14"
+                            />
+                          </svg>
+                        </a>
                       </div>
                     </div>
+                    {/* Amount */}
+                    <span className={`text-base font-bold ml-2 ${txType.amountColor}`}>
+                      {amountStr}
+                    </span>
                   </div>
                 );
               })}
@@ -98,7 +177,7 @@ export function TransactionHistory() {
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary/30 via-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent"></div>
               <div className="relative text-center">
-                <p className="text-sm text-muted-foreground">No transactions found</p>
+                <p className="text-sm text-muted-foreground">Nothing found</p>
               </div>
             </div>
           )}

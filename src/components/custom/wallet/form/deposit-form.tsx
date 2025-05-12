@@ -79,34 +79,39 @@ export default function DepositForm({ onBack }: DepositFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(values => registerAsset(values))} className="space-y-6">
-      <Input
-        {...register('ticker')}
-        label="Enter token ticker"
-        error={!!errors.ticker}
-        info={errors.ticker?.message ?? ''}
-        rightElement={<Chr className="h-6 w-6" />}
-      />
-      <Input
-        {...register('name')}
-        label="Enter token full name"
-        error={!!errors.name}
-        info={errors.name?.message ?? ''}
-      />
-      <Input
-        {...register('amount', { valueAsNumber: true })}
-        label="Enter amount"
-        error={!!errors.amount}
-        info={errors.amount?.message ?? 'Max possible to mint 100 000 tokens'}
-      />
+    <form
+      onSubmit={handleSubmit(values => registerAsset(values))}
+      className="px-6 pb-8 pt-14 flex flex-col justify-between h-full"
+    >
+      <div className="space-y-6">
+        <Input
+          {...register('ticker')}
+          label="Enter token ticker"
+          error={!!errors.ticker}
+          info={errors.ticker?.message ?? ''}
+          rightElement={<Chr className="h-6 w-6" />}
+        />
+        <Input
+          {...register('name')}
+          label="Enter token full name"
+          error={!!errors.name}
+          info={errors.name?.message ?? ''}
+        />
+        <Input
+          {...register('amount', { valueAsNumber: true })}
+          label="Enter amount"
+          error={!!errors.amount}
+          info={errors.amount?.message ?? 'Max possible to mint 100 000 tokens'}
+        />
+      </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button variant="gradient" type="submit" className="w-full text-base" disabled={isSubmitting}>
         {isSubmitting ? (
           <LoaderCubes />
         ) : (
           <>
-            Mint
-            <Plus className="h-5 w-5" />
+            Deposit
+            <Plus className="h-6 w-6" />
           </>
         )}
       </Button>

@@ -1,29 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { ConnectKitButton, Avatar } from 'connectkit';
 import { ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/common/button';
 import { WalletActions } from './components/wallet-actions';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/common/dialog';
+import { useRef } from 'react';
 
 interface ConnectedButtonProps {
   className?: string;
   address?: `0x${string}`;
   ensName?: string;
-  isOpen: boolean;
-  onClick: () => void;
-  onMouseEnter: () => void;
 }
 
-function ConnectedButton({
-  className,
-  ensName,
-  isOpen,
-  onClick,
-  onMouseEnter,
-}: ConnectedButtonProps) {
+function ConnectedButton({ className, ensName }: ConnectedButtonProps) {
   const { account } = useChromiaAccount();
   const truncatedAddress = account?.id.toString('hex')
     ? `${account?.id.toString('hex').toUpperCase().slice(0, 6)}...${account?.id.toString('hex').toUpperCase().slice(-4)}`
@@ -31,10 +23,8 @@ function ConnectedButton({
 
   return (
     <Button
-      //   variant="outline"
-      className={`group py-5 border bg-gradient-to-b from-primary/80 to-background hover:shadow-md ${className}`}
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
+      variant="outlineGradient"
+      className={`group py-5 !gap-2 px-6 border hover:shadow-md ${className}`}
     >
       <div className="relative flex h-7 w-7 items-center justify-center">
         <div className="relative flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent ring-1 ring-primary/20">
@@ -45,43 +35,21 @@ function ConnectedButton({
           />
         </div>
       </div>
-      <span className="font-medium tracking-tight">{ensName || truncatedAddress}</span>
-      <ChevronDown
-        className={`ml-1 h-4 w-4 text-muted-foreground/70 transition-all group-hover:text-primary ${isOpen ? 'rotate-180' : ''}`}
-      />
+      <span className="text-base ">{ensName || truncatedAddress}</span>
+      <ChevronDown className="ml-1 h-4 w-4 text-muted-foreground/70 transition-all group-hover:text-primary" />
     </Button>
   );
 }
 
 export function ConnectWallet() {
-  //   const [mounted, setMounted] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
   const { account } = useChromiaAccount();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  //   useEffect(() => {
-  //     setMounted(true);
-  //   }, []);
-
-  // Close popover when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Not render content until the client is mounted
-  // But still maintain the space on the UI to avoid layout shift
-  //   if (!mounted) {
-  //     return <div className="h-9 w-44" />;
-  //   }
+  const handleClose = () => {
+    if (closeButtonRef.current) {
+      closeButtonRef.current.click();
+    }
+  };
 
   if (!account?.id.toString('hex')) {
     return <></>;
@@ -92,26 +60,17 @@ export function ConnectWallet() {
       {({ show, isConnected, isConnecting, ensName, address }) => {
         if (isConnected) {
           return (
-            <div className="relative" ref={popoverRef}>
-              {/* Mobile view */}
-              <ConnectedButton
-                className="w-full"
-                address={address}
-                ensName={ensName}
-                isOpen={isOpen}
-                onClick={() => setIsOpen(!isOpen)}
-                onMouseEnter={() => setIsOpen(true)}
-              />
-
-              {/* Popover Content */}
-              {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[340px] z-[9999] border rounded-xl shadow-lg">
-                  <div className="rounded-2xl bg-background/70 backdrop-blur-md shadow-lg border border-primary/10 p-5">
-                    <WalletActions />
-                  </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div>
+                  <ConnectedButton className="w-full" address={address} ensName={ensName} />
                 </div>
-              )}
-            </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] p-0" showCloseButton={false}>
+                {/* <DialogClose ref={closeButtonRef} className="hidden" /> */}
+                <WalletActions onClose={handleClose} />
+              </DialogContent>
+            </Dialog>
           );
         }
 

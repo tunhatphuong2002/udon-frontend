@@ -52,7 +52,7 @@ export default function Hero() {
               <div className="flex flex-col md:flex-row items-center gap-3 pb-8 md:pb-16">
                 {/* Earn Button */}
                 <Button
-                  className="w-full md:w-auto"
+                  className="flex flex-row !w-[120px] md:w-auto"
                   onClick={() => {
                     router.push('/supply');
                   }}

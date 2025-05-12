@@ -152,7 +152,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ title, type, showCollate
       cell: ({ row }) => renderAssetCell(row),
     },
     {
-      header: 'Wallet balance',
+      header: 'Balance',
       accessorKey: 'balance',
       enableSorting: true,
       cell: ({ row }) => <Typography>{row.balance}</Typography>,

@@ -29,12 +29,15 @@ export { useChromiaImmutableQuery, useChromiaQuery };
 /**
  * Custom hook for managing Chromia account creation and checking account status.
  * @param onAccountCreated - Optional callback to trigger after account creation.
+ * @param onError - Optional callback to trigger when an error occurs.
  * @returns Object containing account management functions and current account status.
  */
 export const useChromiaAccount = ({
   onAccountCreated,
+  onError,
 }: {
   onAccountCreated?: () => void;
+  onError?: () => void;
 } = {}) => {
   const [isLoading, setIsLoading] = useState(true); // Tracks if account creation is in progress
   const [tried, setTried] = useState(false); // Tracks if account creation has been attempted
@@ -70,7 +73,10 @@ export const useChromiaAccount = ({
       setIsLoading(true); // Set loading state to true during the account creation process
 
       // Ensure necessary data (Ethereum address, key store, client) is available before proceeding
-      if (!ethAddress || !keyStore || !client) return;
+      if (!ethAddress || !keyStore || !client) {
+        onError?.();
+        return;
+      }
       console.log('ethAddress', ethAddress);
       console.log('keyStore', keyStore);
       console.log('client', client);
@@ -98,11 +104,13 @@ export const useChromiaAccount = ({
       console.log('createAccount success');
     } catch (error) {
       console.error(error); // Log any error that occurs during account creation
+      // Call onError when
+      onError?.();
     } finally {
       setIsLoading(false); // Set loading state to false when done
       setTried(true); // Mark that account creation was attempted
     }
-  }, [client, ethAddress, keyStore, mutate, onAccountCreated]);
+  }, [client, ethAddress, keyStore, mutate, onAccountCreated, onError]);
 
   // Return an interface with account management functions and status
   return {
