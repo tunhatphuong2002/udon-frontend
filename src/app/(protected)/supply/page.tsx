@@ -28,9 +28,21 @@ interface CommonAsset {
   decimals: number;
 }
 
+interface UserReserveData {
+  asset: CommonAsset;
+  current_a_token_balance: bigint;
+  current_variable_debt: bigint;
+  scaled_variable_debt: bigint;
+  liquidity_rate: bigint;
+  usage_as_collateral_enabled: boolean;
+}
+
 export default function SupplyPage() {
-  const { client } = useChromiaAccount();
+  const { client, account } = useChromiaAccount();
   const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+  const [isLoadingReserves, setIsLoadingReserves] = useState(false);
+  const [supplyPositions, setSupplyPositions] = useState<UserReserveData[]>([]);
+  const [borrowPositions, setBorrowPositions] = useState<UserReserveData[]>([]);
 
   // Query for assets
   const {
@@ -114,7 +126,60 @@ export default function SupplyPage() {
     }
   }, [assetsError]);
 
-  const isLoading = isLoadingAssets || isLoadingPrices;
+  // Fetch user reserves data
+  const fetchUserReserves = useCallback(async () => {
+    if (!client || !account || !processedAssets.length) return;
+
+    try {
+      setIsLoadingReserves(true);
+
+      // Create an array of promises for all asset queries
+      const reservePromises = processedAssets.map(asset =>
+        client
+          .query('get_user_reserve_data', {
+            asset_id: asset.id,
+            user_id: account.id,
+          })
+          .then(reserveData => ({
+            asset,
+            ...(reserveData as {
+              current_a_token_balance: bigint;
+              current_variable_debt: bigint;
+              scaled_variable_debt: bigint;
+              liquidity_rate: bigint;
+              usage_as_collateral_enabled: boolean;
+            }),
+          }))
+      );
+
+      // Wait for all queries to complete
+      const userReserves = await Promise.all(reservePromises);
+
+      // Filter positions
+      const supplyData = userReserves.filter(
+        reserve => reserve.current_a_token_balance > BigInt(0)
+      );
+
+      const borrowData = userReserves.filter(reserve => reserve.current_variable_debt > BigInt(0));
+
+      setSupplyPositions(supplyData);
+      setBorrowPositions(borrowData);
+    } catch (error) {
+      console.error('Failed to fetch user reserves:', error);
+      toast.error('Failed to load your positions. Please try again.');
+    } finally {
+      setIsLoadingReserves(false);
+    }
+  }, [client, account, processedAssets]);
+
+  // Fetch reserves when processed assets change
+  useEffect(() => {
+    if (processedAssets.length > 0) {
+      fetchUserReserves();
+    }
+  }, [processedAssets, fetchUserReserves]);
+
+  const isLoading = isLoadingAssets || isLoadingPrices || isLoadingReserves;
 
   return (
     <main className="container mx-auto px-4 sm:px-5 py-[180px]">
@@ -157,8 +222,8 @@ export default function SupplyPage() {
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
-        <SupplyPositionTable />
-        <BorrowPositionTable />
+        <SupplyPositionTable positions={supplyPositions} isLoading={isLoading} />
+        <BorrowPositionTable positions={borrowPositions} isLoading={isLoading} />
         <SupplyTable
           title="Assets to supply"
           showCollateral={false}
