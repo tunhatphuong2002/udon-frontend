@@ -135,7 +135,7 @@ export function SortableTable<T>({
   //   };
 
   return (
-    <div className={cn('w-full rounded-xl bg-card border p-6', className)}>
+    <div className={cn('w-full rounded-xl bg-card border', className)}>
       <div className="w-full rounded-lg">
         <Table className="w-full rounded-lg">
           <TableHeader>

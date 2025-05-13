@@ -289,6 +289,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                 </Button>
               ) : (
                 <Button
+                  variant="gradient"
                   type="submit"
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}

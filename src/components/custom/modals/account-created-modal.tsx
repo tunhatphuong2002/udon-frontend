@@ -1,34 +1,26 @@
-import { create, useModal } from '@ebay/nice-modal-react';
+import React, { useState, useCallback } from 'react';
+import { Popup } from '@/components/common/popup';
 
-import Button from '@/components/chromia-ui-kit/button';
-import { DrawerDialog } from '@/components/common/drawer-dialog';
-import TadaBg from '@/components/common/tada-bg';
-
-const AccountCreatedModal = create(() => {
-  const modal = useModal();
-
+export const AccountCreatedModal: React.FC<{ open: boolean; onClose: () => void }> = ({
+  open,
+  onClose,
+}) => {
+  if (!open) return null;
   return (
-    <DrawerDialog
-      DialogContentProps={{ 'aria-describedby': undefined }}
-      footer={
-        <Button variant="secondary" onClick={modal.hide}>
-          Great 🎉
-        </Button>
-      }
-      open={modal.visible}
-      title={
-        <span className="grid place-items-center py-20">
-          <TadaBg className="absolute" />
-          Thanks for creation an account!
-        </span>
-      }
-      onOpenChange={modal.hide}
-    ></DrawerDialog>
+    <Popup
+      variant="success"
+      title="Thanks for creating an account"
+      description="Your Chromia account has been created successfully."
+      buttonText="Continue"
+      onButtonClick={onClose}
+    />
   );
-});
-
-export const useAccountCreatedModal = () => {
-  const modal = useModal(AccountCreatedModal);
-
-  return modal;
 };
+
+export function useAccountCreatedModal() {
+  const [open, setOpen] = useState(false);
+  const show = useCallback(() => setOpen(true), []);
+  const hide = useCallback(() => setOpen(false), []);
+  const modal = <AccountCreatedModal open={open} onClose={hide} />;
+  return { open, show, hide, modal };
+}

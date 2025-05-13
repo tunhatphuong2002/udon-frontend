@@ -100,7 +100,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       cell: ({ row }: { row: SupplyAsset }) => renderAssetCell(row),
     },
     {
-      header: 'Wallet balance',
+      header: 'Balance',
       accessorKey: 'balance',
       enableSorting: true,
       cell: ({ row }: { row: SupplyAsset }) => <Typography>{row.balance}</Typography>,
@@ -146,8 +146,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
       cell: ({ row }: { row: SupplyAsset }) => (
         <div className="flex flex-row items-center w-full justify-end gap-2">
           <Button
-            variant="default"
-            size="default"
+            variant="gradient"
             onClick={e => {
               e.stopPropagation();
               handleSupplyClick(row);
@@ -159,7 +158,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
           </Button>
 
           <Button
-            variant="outline"
+            variant="outlineGradient"
             onClick={() => handleAssetClick(row.symbol)}
             aria-label={`Borrow ${row.symbol}`}
             className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
@@ -175,7 +174,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
     <>
       <div className="flex-1 border bg-card p-3 sm:p-5 rounded-[18px] border-solid border-border min-w-[320px] max-w-full">
         <div className="flex justify-between items-center">
-          <Typography variant="h4" weight="semibold" className="text-lg sm:text-xl">
+          <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
             {title}
           </Typography>
         </div>

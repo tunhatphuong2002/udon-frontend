@@ -271,6 +271,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
               ) : (
                 <Button
                   type="submit"
+                  variant="gradient"
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >

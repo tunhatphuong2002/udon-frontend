@@ -8,6 +8,8 @@ import { BorrowTable } from './components/borrow';
 import { Asset, PaginatedEntity } from '@chromia/ft4';
 import { useChromiaAccount, useChromiaQuery } from '@/hooks/configs/chromia-hooks';
 import { toast } from 'sonner';
+import { SupplyPositionTable } from './components/supply/position';
+import { BorrowPositionTable } from './components/borrow/position';
 
 // Define asset price interface
 interface AssetPrice {
@@ -154,7 +156,9 @@ export default function SupplyPage() {
         />
       </section>
 
-      <section className="flex flex-col lg:flex-row gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
+        <SupplyPositionTable />
+        <BorrowPositionTable />
         <SupplyTable
           title="Assets to supply"
           showCollateral={false}

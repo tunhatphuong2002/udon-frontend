@@ -85,57 +85,58 @@ export default function TransferForm({ onBack }: TransferFormProps) {
   return (
     <form
       onSubmit={handleSubmit(values => transferTokens(values.recipient, values.amount))}
-      className="space-y-6"
+      className="px-6 pb-8 pt-14 flex flex-col justify-between h-full"
     >
-      <Input label="Token" disabled value={symbol} rightElement={<Chr className="h-6 w-6" />} />
+      <div className="space-y-6">
+        <Input label="Token" disabled value={symbol} rightElement={<Chr className="h-6 w-6" />} />
 
-      <Input
-        {...register('recipient')}
-        label="Receiver"
-        error={!!errors.recipient}
-        info={errors.recipient?.message ?? ''}
-      />
+        <Input
+          {...register('recipient')}
+          label="Receiver"
+          error={!!errors.recipient}
+          info={errors.recipient?.message ?? ''}
+        />
 
-      <Input
-        {...register('amount', { valueAsNumber: true })}
-        label="Amount"
-        error={!!errors.amount}
-        rightElement={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setValue('amount', currentBalance)}
-            className="h-8 py-0 px-2 text-xs"
-          >
-            Max
-          </Button>
-        }
-        info={
-          errors.amount?.message ??
-          `Balance: ${Intl.NumberFormat().format(currentBalance)} ${symbol}`
-        }
-      />
+        <Input
+          {...register('amount', { valueAsNumber: true })}
+          label="Amount"
+          error={!!errors.amount}
+          rightElement={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setValue('amount', currentBalance)}
+              className="h-8 py-0 px-2 text-xs"
+            >
+              Max
+            </Button>
+          }
+          info={
+            errors.amount?.message ??
+            `Balance: ${Intl.NumberFormat().format(currentBalance)} ${symbol}`
+          }
+        />
 
-      <div className="space-y-4 mt-6 pt-4 border-t border-border/40">
-        <div className="flex justify-between gap-2 text-sm leading-none">
-          <p className="text-muted-foreground flex items-center">
-            <Calendar className="h-3 w-3 mr-1" />
-            Arrival time
-          </p>
-          <hr className="flex-1 self-end border-0 border-t border-dotted border-muted" />
-          <p className="font-medium">Instantly</p>
-        </div>
-        <div className="flex justify-between gap-2 text-sm leading-none">
-          <p className="text-muted-foreground flex items-center">
-            <Clock className="h-3 w-3 mr-1" />
-            Network fee
-          </p>
-          <hr className="flex-1 self-end border-0 border-t border-dotted border-muted" />
-          <p className="font-medium">0.00 CHR</p>
+        <div className="space-y-4 mt-6 pt-4 border-t border-border/40">
+          <div className="flex flex-row items-center justify-between gap-2 text-sm leading-none">
+            <p className="text-muted-foreground flex items-center">
+              <Calendar className="h-3 w-3 mr-2" />
+              Arrival time
+            </p>
+            <p className="font-medium">Instantly</p>
+          </div>
+          <div className="flex flex-row items-center justify-between gap-2 text-sm leading-none">
+            <p className="text-muted-foreground flex items-center">
+              <Clock className="h-3 w-3 mr-2" />
+              Network fee
+            </p>
+            <hr className="flex-1 self-end border-0 border-t border-dotted border-muted" />
+            <p className="font-medium">0.00 CHR</p>
+          </div>
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" variant="gradient" className="w-full text-base" disabled={isSubmitting}>
         {isSubmitting ? <LoaderCubes /> : 'Request transfer'}
       </Button>
     </form>

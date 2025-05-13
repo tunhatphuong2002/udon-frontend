@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import EnvironmentBadge from '@/components/environment-badge';
+// import EnvironmentBadge from '@/components/environment-badge';
 import { Analytics } from '@/analytics';
 import { SITE_URL } from '@/utils/env';
 import { Providers } from '@/providers';
@@ -102,7 +102,7 @@ export default function RootLayout({
       <body className="antialiased bg-background text-foreground">
         <Providers>{children}</Providers>
         {/* TODO: remove this when we have a production environment */}
-        <EnvironmentBadge />
+        {/* <EnvironmentBadge /> */}
         {/* Analytics webpage */}
         <Analytics />
         {/* Toaster */}

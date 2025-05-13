@@ -45,7 +45,7 @@
 
   .dark {
     /* fixed background color */
-    --background: 0 0% 6%;
+    --background: 0 0% 7%;
 
     /* fixed foreground color */
     --foreground: 0 0% 100%;
@@ -122,7 +122,7 @@
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground));
+    background-color: hsl(var(--primary));
   }
 }
 
