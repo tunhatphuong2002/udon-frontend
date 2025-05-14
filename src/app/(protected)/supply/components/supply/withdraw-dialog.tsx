@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { debounce } from 'lodash';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
+import { useWithdraw } from '@/hooks/contracts/operations/use-withdraw';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/common/dialog';
@@ -14,7 +15,6 @@ import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { Input } from '@/components/common/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
-import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import { Skeleton } from '@/components/common/skeleton';
 import {
   Tooltip,
@@ -22,42 +22,43 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
+import { CommonAsset } from '../../types';
 
-const borrowFormSchema = z.object({
-  amount: z.string().min(1, 'Amount is required'),
+const withdrawFormSchema = z.object({
+  amount: z.string().min(1, 'Amount is required!'),
 });
 
-type BorrowFormValues = z.infer<typeof borrowFormSchema>;
+type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
 
-export interface BorrowDialogProps {
+export interface WithdrawDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: {
-    id: Buffer<ArrayBufferLike>;
-    symbol: string;
-    name: string;
-    iconUrl: string;
-    available: string;
-    maxAmount: number;
-    apy: string;
-    price?: number;
-  };
+  asset: CommonAsset;
+  supplyBalance?: string;
+  healthFactor?: number;
+  mutateAssets: () => void;
 }
 
 // Create a debounced fetch function with lodash
 const debouncedFn = debounce((callback: () => void) => {
-  console.log('Lodash debounce triggered in borrow dialog');
   callback();
 }, 1000);
 
-export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, asset }) => {
+export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
+  open,
+  onOpenChange,
+  asset,
+  supplyBalance = '0',
+  healthFactor = 1.0,
+  mutateAssets,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(asset.price);
-  const [inputAmount, setInputAmount] = useState<string>('');
+  const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
 
-  const form = useForm<BorrowFormValues>({
-    resolver: zodResolver(borrowFormSchema),
+  const form = useForm<WithdrawFormValues>({
+    resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
       amount: '',
     },
@@ -70,10 +71,20 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
     refetch: fetchPrice,
   } = useAssetPrice(asset.id, isRefetchEnabled);
 
+  // Use the withdraw hook
+  const withdraw = useWithdraw({
+    onSuccess: (result, params) => {
+      console.log('Withdraw success:', { result, params });
+      mutateAssets();
+    },
+    onError: (error, params) => {
+      console.error('Withdraw error:', { error, params });
+    },
+  });
+
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
-      console.log('Fetch price triggered via lodash debounce in borrow');
       setIsRefetchEnabled(true);
       fetchPrice();
     });
@@ -81,9 +92,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
 
   // Update price when data is fetched
   useEffect(() => {
-    console.log('Borrow dialog: Price data changed:', priceData);
     if (priceData !== null && priceData !== undefined) {
-      console.log('Borrow dialog: Setting current price to:', priceData.price);
       setCurrentPrice(priceData.price);
       // Disable refetching to prevent unnecessary calls
       setIsRefetchEnabled(false);
@@ -107,24 +116,38 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', asset.maxAmount.toString());
-    setInputAmount(asset.maxAmount.toString());
+    // Use supply balance as the max amount
+    form.setValue('amount', supplyBalance);
+    setInputAmount(supplyBalance);
     handleFetchPrice();
   };
 
-  const onSubmit = async (data: BorrowFormValues) => {
+  const onSubmit = async (data: WithdrawFormValues) => {
     setIsSubmitting(true);
 
     try {
-      // Here would be the actual borrow transaction logic
-      console.log('Borrow submitted:', data);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success(`Successfully borrowed ${data.amount} ${asset.symbol}`);
-      onOpenChange(false);
+      // Use the withdraw hook
+      const withdrawResult = await withdraw({
+        assetId: asset.id,
+        amount: data.amount,
+        decimals: asset.decimals,
+      });
+
+      console.log('Withdraw submitted:', {
+        amount: data.amount,
+        result: withdrawResult,
+      });
+
+      if (withdrawResult.success) {
+        toast.success(`Successfully withdrew ${data.amount} ${asset.symbol}`);
+        // Close dialog after successful operation
+        onOpenChange(false);
+      } else {
+        toast.error(`Failed to withdraw: ${withdrawResult.error?.message || 'Unknown error'}`);
+      }
     } catch (error) {
-      console.error('Error submitting borrow:', error);
-      toast.error('Failed to submit borrow transaction');
+      console.error('Error submitting withdraw:', error);
+      toast.error('Failed to submit withdraw transaction');
     } finally {
       setIsSubmitting(false);
     }
@@ -135,8 +158,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
     ? `$${(parseFloat(inputAmount || '0') * (currentPrice || 0)).toFixed(2)}`
     : '$0';
 
-  const healthFactor = 'Δ0.00';
-  const liquidationAt = '<1.0';
+  // Calculate remaining supply after withdrawal
+  const remainingSupply = Math.max(
+    0,
+    parseFloat(supplyBalance) - parseFloat(inputAmount || '0')
+  ).toFixed(2);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,11 +170,11 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">Borrow {asset.symbol}</DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Withdraw {asset.symbol}</DialogTitle>
             </div>
           </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -175,28 +201,39 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
                   </div>
 
                   <div className="flex justify-between items-center text-base">
-                    <Typography>{usdAmount}</Typography>
+                    {isPriceFetching ? (
+                      <Skeleton className="h-5 w-20" />
+                    ) : (
+                      <Typography>{usdAmount}</Typography>
+                    )}
                     <div
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Available {asset.available}</Typography>
+                      <Typography>Supply balance {supplyBalance}</Typography>
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {form.formState.errors.amount && (
-                <Typography className="text-destructive">
-                  {form.formState.errors.amount.message}
-                </Typography>
-              )}
+                {form.formState.errors.amount && (
+                  <Typography className="text-destructive">
+                    {form.formState.errors.amount.message}
+                  </Typography>
+                )}
+              </div>
 
               <div className="space-y-4">
                 <Typography weight="semibold" className="text-lg">
                   Transaction overview
                 </Typography>
+
+                <div className="flex justify-between items-center">
+                  <Typography className="flex items-center gap-1">Remaining supply</Typography>
+                  <Typography weight="medium">
+                    {remainingSupply} {asset.symbol}
+                  </Typography>
+                </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">
@@ -206,76 +243,41 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({ open, onOpenChange, 
                         <Info className="h-4 w-4" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Your account&apos;s health factor determines the risk of liquidation</p>
+                        <p>Liquidation occurs when health factor is below 1.0</p>
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  <Typography weight="medium" className="text-green-500">
-                    {healthFactor}
+                  <Typography
+                    weight="medium"
+                    className={healthFactor >= 1.0 ? 'text-amber-500' : 'text-red-500'}
+                  >
+                    {healthFactor.toFixed(2)}
                   </Typography>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Liquidation at
-                    <Tooltip>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>The health factor threshold at which your position can be liquidated</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </Typography>
-                  <Typography weight="medium" className="text-destructive">
-                    {liquidationAt}
-                  </Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Borrow amount</Typography>
-                  <Typography weight="medium">
-                    {inputAmount || 0} {asset.symbol} ~{' '}
-                    {isPriceFetching ? <Skeleton className="inline-block h-5 w-20" /> : usdAmount}
-                  </Typography>
+                <div className="text-sm text-muted-foreground">
+                  <Typography>Liquidation at &lt;1.0</Typography>
                 </div>
               </div>
-
-              {/* price fee */}
-              {/* <div className="flex items-center gap-2 text-muted-foreground">
-                <Typography className="flex items-center gap-1">
-                  <Info className="h-4 w-4" />
-                  $0.06
-                </Typography>
-              </div> */}
-
-              <Alert className="border border-primary">
-                <AlertCircle className="h-5 w-5 text-primary" />
-                <AlertTitle className="text-base text-primary">Attention</AlertTitle>
-                <AlertDescription className="text-sm">
-                  Parameter changes via governance can alter your account health factor and risk of
-                  liquidation. Follow the{' '}
-                  <a href="#" className="text-primary underline">
-                    governance forum
-                  </a>{' '}
-                  for updates.
-                </AlertDescription>
-              </Alert>
             </div>
 
             <div className="mt-4">
               {isSubmitting ? (
                 <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-                  Approving {asset.symbol}...
+                  Processing...
+                </Button>
+              ) : !inputAmount || parseFloat(inputAmount) === 0 ? (
+                <Button disabled className="w-full text-lg py-6">
+                  Enter an amount
                 </Button>
               ) : (
                 <Button
-                  type="submit"
                   variant="gradient"
+                  type="submit"
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Borrow {asset.symbol}
+                  Withdraw {asset.symbol}
                 </Button>
               )}
             </div>

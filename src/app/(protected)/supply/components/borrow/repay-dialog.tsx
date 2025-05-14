@@ -1,16 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Info,
-  // AlertCircle
-} from 'lucide-react';
+import { Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { debounce } from 'lodash';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
-import { useSupply } from '@/hooks/contracts/operations/use-supply';
+import { useRepay } from '@/hooks/contracts/operations/use-repay';
 import { toast } from 'sonner';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/common/dialog';
@@ -25,45 +22,46 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-// import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
+import { CommonAsset } from '../../types';
 
-const supplyFormSchema = z.object({
+const repayFormSchema = z.object({
   amount: z.string().min(1, 'Amount is required!'),
 });
 
-type SupplyFormValues = z.infer<typeof supplyFormSchema>;
+type RepayFormValues = z.infer<typeof repayFormSchema>;
 
-export interface SupplyDialogProps {
+export interface RepayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: {
-    id: Buffer<ArrayBufferLike>;
-    symbol: string;
-    name: string;
-    iconUrl: string;
-    balance: string;
-    maxAmount: number;
-    apy: string;
-    price?: number;
-    decimals: number;
-  };
+  asset: CommonAsset;
+  debtBalance?: string;
+  walletBalance?: string;
+  healthFactor?: number;
+  mutateAssets: () => void;
 }
 
 // Create a debounced fetch function with lodash
 const debouncedFn = debounce((callback: () => void) => {
-  console.log('Lodash debounce triggered');
   callback();
 }, 1000);
 
-export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, asset }) => {
+export const RepayDialog: React.FC<RepayDialogProps> = ({
+  open,
+  onOpenChange,
+  asset,
+  debtBalance = '0.001',
+  walletBalance = '0.0021429',
+  healthFactor = 4.91,
+  mutateAssets,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [useAsCollateral, setUseAsCollateral] = useState(true);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(asset.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
+  const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>('wallet');
 
-  const form = useForm<SupplyFormValues>({
-    resolver: zodResolver(supplyFormSchema),
+  const form = useForm<RepayFormValues>({
+    resolver: zodResolver(repayFormSchema),
     defaultValues: {
       amount: '',
     },
@@ -76,13 +74,20 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
     refetch: fetchPrice,
   } = useAssetPrice(asset.id, isRefetchEnabled);
 
-  // Use the supply hook
-  const supply = useSupply();
+  // Use the repay hook
+  const repay = useRepay({
+    onSuccess: (result, params) => {
+      console.log('Repay success:', { result, params });
+      mutateAssets();
+    },
+    onError: (error, params) => {
+      console.error('Repay error:', { error, params });
+    },
+  });
 
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
-      console.log('Fetch price triggered via lodash debounce');
       setIsRefetchEnabled(true);
       fetchPrice();
     });
@@ -90,9 +95,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
 
   // Update price when data is fetched
   useEffect(() => {
-    console.log('Price data changed:', priceData);
     if (priceData !== null && priceData !== undefined) {
-      console.log('Setting current price to:', priceData.price);
       setCurrentPrice(priceData.price);
       // Disable refetching to prevent unnecessary calls
       setIsRefetchEnabled(false);
@@ -116,37 +119,41 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
   };
 
   const handleMaxAmount = () => {
-    form.setValue('amount', asset.maxAmount.toString());
-    setInputAmount(asset.maxAmount.toString());
+    // Use the appropriate maximum based on the repayment source
+    const maxAmount = repaySource === 'wallet' ? walletBalance : debtBalance;
+    form.setValue('amount', maxAmount);
+    setInputAmount(maxAmount);
     handleFetchPrice();
   };
 
-  const onSubmit = async (data: SupplyFormValues) => {
+  const onSubmit = async (data: RepayFormValues) => {
     setIsSubmitting(true);
 
     try {
-      // Use the supply hook
-      const supplyResult = await supply({
+      // Use the repay hook
+      const repayResult = await repay({
         assetId: asset.id,
         amount: data.amount,
         decimals: asset.decimals,
+        useWalletBalance: repaySource === 'wallet',
       });
 
-      console.log('Supply submitted:', {
+      console.log('Repay submitted:', {
         amount: data.amount,
-        result: supplyResult,
+        source: repaySource,
+        result: repayResult,
       });
 
-      if (supplyResult.success) {
-        toast.success(`Successfully supplied ${data.amount} ${asset.symbol}`);
+      if (repayResult.success) {
+        toast.success(`Successfully repaid ${data.amount} ${asset.symbol}`);
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
-        toast.error(`Failed to supply: ${supplyResult.error?.message || 'Unknown error'}`);
+        toast.error(`Failed to repay: ${repayResult.error?.message || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error submitting supply:', error);
-      toast.error('Failed to submit supply transaction');
+      console.error('Error submitting repay:', error);
+      toast.error('Failed to submit repay transaction');
     } finally {
       setIsSubmitting(false);
     }
@@ -157,18 +164,46 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
     ? `$${(parseFloat(inputAmount || '0') * (currentPrice || 0)).toFixed(2)}`
     : '$0';
 
+  // Calculate remaining debt after repayment
+  const remainingDebt = Math.max(
+    0,
+    parseFloat(debtBalance) - parseFloat(inputAmount || '0')
+  ).toFixed(7);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">Supply {asset.symbol}</DialogTitle>
+              <DialogTitle className="text-2xl font-semibold">Repay {asset.symbol}</DialogTitle>
             </div>
           </DialogHeader>
 
           <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
             <div className="space-y-6 py-4">
+              <div className="space-y-4">
+                <Typography>Repay with</Typography>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={repaySource === 'wallet' ? 'default' : 'outline'}
+                    onClick={() => setRepaySource('wallet')}
+                    className="w-full"
+                  >
+                    Wallet balance
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={repaySource === 'collateral' ? 'default' : 'outline'}
+                    onClick={() => setRepaySource('collateral')}
+                    className="w-full"
+                  >
+                    Collateral
+                  </Button>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Typography className="flex items-center gap-1">Amount</Typography>
@@ -184,12 +219,14 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                       inputMode="decimal"
                       onChange={handleAmountChange}
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
                         <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-lg">{asset.symbol}</span>
+                      <div className="flex flex-row items-center gap-1">
+                        <span className="font-medium text-lg">{asset.symbol}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -203,7 +240,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                       className="flex flex-row items-center gap-1 text-primary cursor-pointer"
                       onClick={handleMaxAmount}
                     >
-                      <Typography>Balance {asset.balance}</Typography>
+                      <Typography>Wallet balance {walletBalance}</Typography>
                       <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
@@ -222,70 +259,52 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                 </Typography>
 
                 <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Supply APY
-                    <Tooltip>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Annual Percentage Yield for supplying this asset</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </Typography>
-                  <Typography weight="medium">5.68%</Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Collateral
-                    <Tooltip>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>This asset can be used as collateral for borrowing</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </Typography>
-                  <Typography weight="medium">Yes</Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Supply amount</Typography>
-                  <div className="font-medium text-base">
-                    {inputAmount || 0} {asset.symbol} ~{' '}
-                    {isPriceFetching ? <Skeleton className="inline-block h-5 w-20" /> : usdAmount}
+                  <Typography className="flex items-center gap-1">Remaining debt</Typography>
+                  <div className="flex items-center">
+                    <Typography weight="medium">
+                      {remainingDebt} {asset.symbol} → {remainingDebt} {asset.symbol}
+                    </Typography>
                   </div>
                 </div>
+                <div className="flex justify-between items-center text-muted-foreground text-sm">
+                  <div></div>
+                  <Typography>
+                    ${(parseFloat(remainingDebt) * (currentPrice || 0)).toFixed(2)} → $
+                    {(parseFloat(remainingDebt) * (currentPrice || 0)).toFixed(2)}
+                  </Typography>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <Typography className="flex items-center gap-1">
+                    Health factor
+                    <Tooltip>
+                      <TooltipTrigger type="button">
+                        <Info className="h-4 w-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Liquidation occurs when health factor is below 1.0</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </Typography>
+                  <Typography weight="medium" className="text-green-500">
+                    {healthFactor.toFixed(2)}
+                  </Typography>
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  <Typography>Liquidation at &lt;1.0</Typography>
+                </div>
               </div>
-
-              {/* price fee */}
-              {/* <div className="flex items-center gap-2 text-muted-foreground">
-                <Typography className="flex items-center gap-1">
-                  <Info className="h-4 w-4" />
-                  $0.06
-                </Typography>
-              </div> */}
-
-              {/* <Alert className="border border-primary">
-                <AlertCircle className="h-5 w-5" />
-                <AlertTitle className="text-base">Attention</AlertTitle>
-                <AlertDescription className="text-sm">
-                  Parameter changes via governance can alter your account health factor and risk of
-                  liquidation. Follow the{' '}
-                  <a href="#" className="text-primary underline">
-                    Udon governance forum
-                  </a>{' '}
-                  for updates.
-                </AlertDescription>
-              </Alert> */}
             </div>
 
             <div className="mt-4">
               {isSubmitting ? (
                 <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-                  Approving {asset.symbol}...
+                  Processing...
+                </Button>
+              ) : !inputAmount || parseFloat(inputAmount) === 0 ? (
+                <Button disabled className="w-full text-lg py-6">
+                  Enter an amount
                 </Button>
               ) : (
                 <Button
@@ -294,7 +313,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({ open, onOpenChange, 
                   className="w-full text-lg py-6"
                   disabled={!form.watch('amount')}
                 >
-                  Supply {asset.symbol}
+                  Repay {asset.symbol}
                 </Button>
               )}
             </div>

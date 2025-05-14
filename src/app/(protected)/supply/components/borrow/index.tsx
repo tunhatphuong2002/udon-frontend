@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-import { BorrowDialog } from './dialog';
+import { BorrowDialog } from './borrow-dialog';
 
 // Define type for borrow assets
 interface BorrowAsset {
@@ -25,15 +25,23 @@ interface BorrowAsset {
   iconUrl: string;
   maxAmount?: number;
   price?: number;
+  canBeCollateral?: boolean;
+  decimals?: number;
 }
 
 interface BorrowTableProps {
   title: string;
   assets: BorrowAsset[];
   isLoading: boolean;
+  mutateAssets: () => void;
 }
 
-export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoading }) => {
+export const BorrowTable: React.FC<BorrowTableProps> = ({
+  title,
+  assets,
+  isLoading,
+  mutateAssets,
+}) => {
   const [selectedAsset, setSelectedAsset] = useState<BorrowAsset | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
@@ -115,27 +123,29 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
       accessorKey: 'symbol',
       enableSorting: false,
       cell: ({ row }: { row: BorrowAsset }) => (
-        <div className="flex flex-row items-center w-full justify-end gap-2">
-          <Button
-            variant="gradient"
-            onClick={e => {
-              e.stopPropagation();
-              handleBorrowClick(row);
-            }}
-            aria-label={`Borrow ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Borrow
-          </Button>
+        <div className="flex justify-end">
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="gradient"
+              onClick={e => {
+                e.stopPropagation();
+                handleBorrowClick(row);
+              }}
+              aria-label={`Borrow ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Borrow
+            </Button>
 
-          <Button
-            variant="outlineGradient"
-            onClick={() => handleAssetClick(row.symbol)}
-            aria-label={`Borrow ${row.symbol}`}
-            className="rounded-full px-3 sm:px-5 py-2 sm:py-2.5"
-          >
-            Details
-          </Button>
+            <Button
+              variant="outlineGradient"
+              onClick={() => handleAssetClick(row.symbol)}
+              aria-label={`Borrow ${row.symbol}`}
+              className="w-[100px]"
+            >
+              Details
+            </Button>
+          </div>
         </div>
       ),
     },
@@ -183,7 +193,9 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({ title, assets, isLoadi
             available: selectedAsset.available || '0.0045852',
             apy: selectedAsset.apy || '<0.001%',
             maxAmount: selectedAsset.maxAmount || 0.0045852,
+            decimals: selectedAsset.decimals || 18,
           }}
+          mutateAssets={mutateAssets}
         />
       )}
     </>
