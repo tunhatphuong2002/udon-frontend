@@ -97,8 +97,8 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
   useEffect(() => {
     console.log('Price data changed:', priceData);
     if (priceData !== null && priceData !== undefined) {
-      console.log('Setting current price to:', priceData.price);
-      setCurrentPrice(priceData.price);
+      console.log('Setting current price to:', priceData);
+      setCurrentPrice(priceData);
       // Disable refetching to prevent unnecessary calls
       setIsRefetchEnabled(false);
     }

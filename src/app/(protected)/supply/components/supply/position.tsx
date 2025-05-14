@@ -86,7 +86,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>

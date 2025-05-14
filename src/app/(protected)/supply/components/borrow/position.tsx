@@ -75,7 +75,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>
@@ -213,13 +213,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
         <BorrowDialog
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
-          asset={{
-            ...selectedPosition.asset,
-            available: '0.05', // This would come from available liquidity calculation
-            maxAmount: 0.05,
-            apy: '5.00%',
-            decimals: selectedPosition.asset.decimals,
-          }}
+          asset={selectedPosition.asset}
           availableToBorrow="0.05" // This would come from available liquidity calculation
           healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}

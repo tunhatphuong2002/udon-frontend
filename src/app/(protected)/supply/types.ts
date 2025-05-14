@@ -12,6 +12,8 @@ export interface CommonAsset extends Asset {
   canBeCollateral?: boolean;
   supplyAPY?: number;
   borrowAPY?: number;
+  icon_url?: string;
+  available?: string;
 }
 
 export interface AssetPrice {

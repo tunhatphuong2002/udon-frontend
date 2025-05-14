@@ -39,7 +39,7 @@ async function initSupply() {
     const underlyingAsset = {
       name: 'MyNeighborAlice',
       symbol: 'ALICEUSD',
-      decimals: 6,
+      decimals: 8,
       icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
     };
 
@@ -93,7 +93,7 @@ async function initSupply() {
     const aAsset = {
       name: 'AMyNeighborAlice',
       symbol: 'AALICEUSD',
-      decimals: 6,
+      decimals: 8,
     };
 
     await adminSession.call(

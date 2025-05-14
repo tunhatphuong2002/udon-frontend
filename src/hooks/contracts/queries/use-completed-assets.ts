@@ -180,7 +180,7 @@ export function useCompletedAssets() {
           current_variable_debt: BigInt(0),
           scaled_variable_debt: BigInt(0),
           liquidity_rate: BigInt(Math.floor(Math.random() * 1000000)),
-          usage_as_collateral_enabled: false,
+          usage_as_collateral_enabled: true,
         }));
 
         // Create mock data for borrow positions - only use first two assets for demo
@@ -190,7 +190,7 @@ export function useCompletedAssets() {
           current_variable_debt: BigInt(Math.floor(Math.random() * 10000000000)),
           scaled_variable_debt: BigInt(Math.floor(Math.random() * 9000000000)),
           liquidity_rate: BigInt(0),
-          usage_as_collateral_enabled: false,
+          usage_as_collateral_enabled: true,
         }));
 
         // Update state with mock data

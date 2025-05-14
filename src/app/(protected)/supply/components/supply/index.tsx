@@ -58,6 +58,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
 
   // Render asset icon and symbol
   const renderAssetCell = (asset: CommonAsset) => {
+    console.log('asset', asset);
     return (
       <TooltipProvider>
         <Tooltip>
@@ -67,7 +68,7 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               onClick={() => handleAssetClick(asset.symbol)}
             >
               <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
               <Typography weight="medium">{asset.symbol}</Typography>

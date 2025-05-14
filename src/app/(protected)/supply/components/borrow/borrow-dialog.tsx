@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
+import { CommonAsset } from '../../types';
 
 const borrowFormSchema = z.object({
   amount: z.string().min(1, 'Amount is required!'),
@@ -32,17 +33,7 @@ type BorrowFormValues = z.infer<typeof borrowFormSchema>;
 export interface BorrowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: {
-    id: Buffer<ArrayBufferLike>;
-    symbol: string;
-    name: string;
-    iconUrl: string;
-    available: string;
-    maxAmount: number;
-    apy: string;
-    price?: number;
-    decimals: number;
-  };
+  asset: CommonAsset;
   availableToBorrow?: string;
   healthFactor?: number;
   mutateAssets: () => void;
@@ -201,7 +192,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
                     />
                     <div className="flex items-center gap-2 absolute right-3 top-1/2 -translate-y-1/2">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+                        <AvatarImage src={asset.icon_url} alt={asset.symbol} />
                         <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-row items-center gap-1">
