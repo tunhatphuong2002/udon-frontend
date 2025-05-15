@@ -127,7 +127,7 @@ async function initSupply() {
         userAccountId,
         BigInt(0), // referral code
         // get current block timestamp
-        BigInt(Date.now())
+        Date.now()
       )
     );
     const isSuccess = result.receipt.statusCode === 200;
@@ -146,7 +146,7 @@ async function initSupply() {
         userAccountId,
         BigInt(0), // referral code
         // get current block timestamp
-        BigInt(Date.now())
+        Date.now()
       )
     );
     const isSuccess2 = result2.receipt.statusCode === 200;

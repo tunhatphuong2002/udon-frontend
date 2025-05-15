@@ -108,15 +108,15 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       cell: ({ row }) => renderAssetCell(row.asset),
     },
     {
-      header: 'Balance',
+      header: 'Amount',
       accessorKey: 'current_a_token_balance',
       cell: ({ row }) => {
         const asset = row.asset;
-        const balance = Number(row.current_a_token_balance) / Math.pow(10, asset.decimals);
-        const balanceUsd = balance * (asset.price || 0);
+        const balance = row.current_a_token_balance;
+        const balanceUsd = Number(balance) * (asset.price || 0);
         return (
           <div>
-            <Typography weight="medium">{balance.toFixed(4)}</Typography>
+            <Typography weight="medium">{balance.toString()}</Typography>
             <Typography variant="small" color="submerged">
               ${balanceUsd.toFixed(2)}
             </Typography>
