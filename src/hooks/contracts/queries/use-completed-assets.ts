@@ -198,7 +198,7 @@ export function useCompletedAssets() {
         // setBorrowPositions(mockBorrowPositions);
 
         // Create an array of promises for all asset queries
-        const reservePromises = processedAssets.map(asset =>
+        const reservePromises = assets.map(asset =>
           client
             .query('get_user_reserve_data', {
               asset_id: asset.id,
@@ -207,7 +207,8 @@ export function useCompletedAssets() {
             .then(response => {
               // Cast response to correct tuple type
               const reserveData = response as unknown as [bigint, bigint, bigint, bigint, boolean];
-              console.log('ormatRay(reserveData[0])', formatRay(reserveData[0]));
+              console.log('reserveData[0]', reserveData[0]);
+              console.log('formatRay(reserveData[0])', formatRay(reserveData[0]));
               return {
                 asset,
                 current_a_token_balance: Number(formatRay(reserveData[0])),
@@ -272,14 +273,21 @@ export function useCompletedAssets() {
       const assetsWithPrices = await fetchPrices(assetsData.data);
       if (!assetsWithPrices.length) return;
 
+      console.log('assetsWithPrices', assetsWithPrices);
+
       // Step 2: Get assets with prices and balances
       const completedAssets = await fetchBalances(assetsWithPrices);
 
+      console.log('completedAssets', completedAssets);
+
       // Update state
       setProcessedAssets(completedAssets);
+      console.log('processedAssets', processedAssets);
 
       // Step 3: Fetch user positions after assets are loaded
+      console.log('fetching user reserves');
       await fetchUserReserves(completedAssets);
+      console.log('user reserves fetched');
     } catch (error) {
       console.error('Error loading complete asset data:', error);
       toast.error('Failed to load complete asset data');
