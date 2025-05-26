@@ -7,9 +7,9 @@ import { BorrowTable } from './components/borrow';
 import { SupplyPositionTable } from './components/supply/position';
 import { BorrowPositionTable } from './components/borrow/position';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
-import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
+// import { useMediaQuery } from '@/hooks/use-media-query';
+// import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
+// import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
 
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   } = useCompletedAssets();
 
   // Check if the current device is mobile
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  // const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <main className="px-4 sm:px-8 py-10 sm:py-[180px]">
@@ -76,7 +76,7 @@ export default function DashboardPage() {
         />
       </section>
 
-      {isMobile ? (
+      {/* {isMobile ? (
         <section className="flex flex-col gap-6 mt-6">
           <MobilePositionTabs
             supplyPositions={supplyPositions}
@@ -101,42 +101,42 @@ export default function DashboardPage() {
             availableLiquidityTokens={availableLiquidityTokens}
           />
         </section>
-      ) : (
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
-          <SupplyPositionTable
-            yourSupplyBalancePosition={yourSupplyBalancePosition}
-            yourSupplyCollateralPosition={yourSupplyCollateralPosition}
-            yourSupplyAPYPosition={yourSupplyAPYPosition}
-            positions={supplyPositions}
-            isLoading={isLoading}
-            mutateAssets={refetchAssets}
-          />
-          <BorrowPositionTable
-            yourBorrowBalancePosition={yourBorrowBalancePosition}
-            yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
-            yourBorrowAPYPosition={yourBorrowAPYPosition}
-            positions={borrowPositions}
-            isLoading={isLoading}
-            mutateAssets={refetchAssets}
-            enableBorrow={enableBorrow}
-            availableLiquidityTokens={availableLiquidityTokens}
-          />
-          <SupplyTable
-            title="Assets to supply"
-            reserves={processedAssets}
-            isLoading={isLoading}
-            mutateAssets={refetchAssets}
-          />
-          <BorrowTable
-            title="Assets to borrow"
-            reserves={processedAssets}
-            isLoading={isLoading}
-            mutateAssets={refetchAssets}
-            enableBorrow={enableBorrow}
-            availableLiquidityTokens={availableLiquidityTokens}
-          />
-        </section>
-      )}
+      ) : ( */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
+        <SupplyPositionTable
+          yourSupplyBalancePosition={yourSupplyBalancePosition}
+          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
+          yourSupplyAPYPosition={yourSupplyAPYPosition}
+          positions={supplyPositions}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+        />
+        <BorrowPositionTable
+          yourBorrowBalancePosition={yourBorrowBalancePosition}
+          yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
+          yourBorrowAPYPosition={yourBorrowAPYPosition}
+          positions={borrowPositions}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+          enableBorrow={enableBorrow}
+          availableLiquidityTokens={availableLiquidityTokens}
+        />
+        <SupplyTable
+          title="Assets to supply"
+          reserves={processedAssets}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+        />
+        <BorrowTable
+          title="Assets to borrow"
+          reserves={processedAssets}
+          isLoading={isLoading}
+          mutateAssets={refetchAssets}
+          enableBorrow={enableBorrow}
+          availableLiquidityTokens={availableLiquidityTokens}
+        />
+      </section>
+      {/* )} */}
     </main>
   );
 }
