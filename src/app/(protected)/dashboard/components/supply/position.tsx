@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
-import { UserReserveData } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
 
@@ -28,6 +28,7 @@ interface SupplyPositionTableProps {
   yourSupplyBalancePosition: number;
   yourSupplyCollateralPosition: number;
   yourSupplyAPYPosition: number;
+  accountData: UserAccountData;
 }
 
 export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
@@ -37,6 +38,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   yourSupplyBalancePosition,
   yourSupplyCollateralPosition,
   yourSupplyAPYPosition,
+  accountData,
 }) => {
   const router = useRouter();
 
@@ -296,6 +298,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           onOpenChange={setSupplyDialogOpen}
           reserve={selectedPosition}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 

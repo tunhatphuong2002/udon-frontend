@@ -86,6 +86,8 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     'get_max_borrow_amount'
   );
 
+  console.log('maxWithdrawAmount', maxWithdrawAmount);
+
   // Use the withdraw hook
   const withdraw = useWithdraw({
     onSuccess: (result, params) => {
@@ -336,7 +338,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Withdraw amount</Typography>
-                  <div className="font-medium text-base">
+                  <div className="font-medium text-base flex flex-row items-center gap-1">
                     <CountUp
                       value={Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}

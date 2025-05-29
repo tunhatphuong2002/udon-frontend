@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+  AlertCircle,
   CircleX,
   Info,
   // ChevronDown
@@ -34,6 +35,7 @@ import {
 // } from '@/components/common/dropdown-menu';
 import { UserReserveData } from '../../types';
 import CountUp from '@/components/common/count-up';
+import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 
 const repayFormSchema = z.object({
   amount: z
@@ -87,6 +89,9 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     Number(reserve.balance) > Number(reserve.currentVariableDebt)
       ? Number(reserve.currentVariableDebt)
       : Number(reserve.balance);
+
+  console.log('reserve', reserve.balance, reserve.currentVariableDebt);
+  console.log('maxAmount', maxAmount);
 
   const repaySource = 'wallet';
 
@@ -283,6 +288,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       max={repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt}
                       step="any"
                       onChange={handleAmountChange}
+                      disabled={maxAmount === 0}
                     />
                     <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
                       {/* clear icon */}
@@ -422,7 +428,7 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Repay amount</Typography>
-                  <div className="font-medium text-base">
+                  <div className="font-medium text-base flex flex-row items-center gap-1">
                     <CountUp
                       value={Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}
@@ -440,6 +446,16 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                     )}
                   </div>
                 </div>
+
+                {maxAmount === 0 && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    <AlertTitle className="text-base">No balance</AlertTitle>
+                    <AlertDescription className="text-sm">
+                      You can not repay this amount, because you don&apos;t have any balance.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
 

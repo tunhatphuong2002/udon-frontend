@@ -358,7 +358,7 @@ export const BorrowDialog: React.FC<BorrowDialogProps> = ({
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Borrow amount</Typography>
-                  <div className="font-medium text-base">
+                  <div className="font-medium text-base flex flex-row items-center gap-1">
                     <CountUp
                       value={Number(form.watch('amount'))}
                       suffix={` ${reserve.symbol}`}
