@@ -1,31 +1,50 @@
 import BigNumber from 'bignumber.js';
-import { valueToBigNumber } from './bignumber';
 import { calculateHealthFactorFromBalancesBigUnits } from './pool-math';
 
 export const calculateHFAfterSupply = (
-  totalCollateralBeforeSupply: string,
+  totalCollateralBeforeSupply: BigNumber,
   supplyAmount: BigNumber,
   currentLiquidationThreshold: BigNumber,
   formattedReserveLiquidationThreshold: BigNumber,
   totalCollateralMarketReferenceCurrency: BigNumber,
   totalBorrowsMarketReferenceCurrency: BigNumber,
-  userHealFactor = '-1'
+  userHealFactor: BigNumber
 ) => {
-  let healthFactorAfterDeposit = valueToBigNumber(userHealFactor);
+  let healthFactorAfterDeposit = userHealFactor;
   // total collater after we supply = total_collater_before + amount_deposit_extra
-  const totalCollateralAfterSupply = valueToBigNumber(totalCollateralBeforeSupply).plus(
-    supplyAmount
+  console.log('totalCollateralBeforeSupply', totalCollateralBeforeSupply.toString());
+  console.log('supplyAmount', supplyAmount.toString());
+  console.log('currentLiquidationThreshold', currentLiquidationThreshold.toString());
+  console.log(
+    'formattedReserveLiquidationThreshold',
+    formattedReserveLiquidationThreshold.toString()
   );
-  const liquidationThresholdAfter = valueToBigNumber(totalCollateralMarketReferenceCurrency)
+  console.log(
+    'totalCollateralMarketReferenceCurrency',
+    totalCollateralMarketReferenceCurrency.toString()
+  );
+  console.log(
+    'totalBorrowsMarketReferenceCurrency',
+    totalBorrowsMarketReferenceCurrency.toString()
+  );
+  console.log('userHealFactor', userHealFactor.toString());
+  const totalCollateralAfterSupply = totalCollateralBeforeSupply.plus(supplyAmount);
+  console.log('totalCollateralAfterSupply', totalCollateralAfterSupply.toString());
+  const liquidationThresholdAfter = totalCollateralMarketReferenceCurrency
     .multipliedBy(currentLiquidationThreshold)
     .plus(supplyAmount.multipliedBy(formattedReserveLiquidationThreshold))
-    .dividedBy(totalCollateralAfterSupply);
+    .dividedBy(totalCollateralAfterSupply)
+    .dividedBy(100);
+
+  console.log('liquidationThresholdAfter', liquidationThresholdAfter.toString());
 
   healthFactorAfterDeposit = calculateHealthFactorFromBalancesBigUnits({
     collateralBalanceMarketReferenceCurrency: totalCollateralAfterSupply,
-    borrowBalanceMarketReferenceCurrency: valueToBigNumber(totalBorrowsMarketReferenceCurrency),
+    borrowBalanceMarketReferenceCurrency: totalBorrowsMarketReferenceCurrency,
     currentLiquidationThreshold: liquidationThresholdAfter,
   });
+
+  console.log('healthFactorAfterDeposit', healthFactorAfterDeposit.toString());
 
   return healthFactorAfterDeposit;
 };

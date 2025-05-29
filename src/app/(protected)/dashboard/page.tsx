@@ -8,6 +8,7 @@ import { SupplyPositionTable } from './components/supply/position';
 import { BorrowPositionTable } from './components/borrow/position';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
+import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
 // import { useMediaQuery } from '@/hooks/use-media-query';
 // import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 // import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
@@ -18,7 +19,7 @@ export default function DashboardPage() {
     assets: processedAssets,
     supplyPositions,
     borrowPositions,
-    isLoading,
+    isLoading: isLoadingAssets,
     refresh: refetchAssets,
     yourSupplyBalancePosition,
     yourSupplyCollateralPosition,
@@ -34,10 +35,28 @@ export default function DashboardPage() {
     totalValueDeposited,
     totalValueBorrowed,
     isLoading: isStatSupplyDepositFetching,
+    refetch: refetchStatsSupplyDeposit,
   } = useStatsSupplyDeposit();
+
+  const {
+    data: accountData,
+    isLoading: isAccountDataFetching,
+    refetch: refetchAccountData,
+  } = useAccountData();
+
+  console.log('accountData', accountData);
+  console.log('isAccountDataFetching', isAccountDataFetching);
 
   // Check if the current device is mobile
   // const isMobile = useMediaQuery('(max-width: 768px)');
+
+  const isLoadingTable = isLoadingAssets || isAccountDataFetching;
+
+  const handleFetchData = () => {
+    refetchAssets();
+    refetchAccountData();
+    refetchStatsSupplyDeposit();
+  };
 
   return (
     <main className="px-4 sm:px-8 py-10 sm:py-[180px]">
@@ -97,7 +116,6 @@ export default function DashboardPage() {
             yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
             yourBorrowAPYPosition={yourBorrowAPYPosition}
             enableBorrow={enableBorrow}
-            availableLiquidityTokens={availableLiquidityTokens}
           />
 
           <MobileAssetTabs
@@ -105,7 +123,6 @@ export default function DashboardPage() {
             isLoading={isLoading}
             mutateAssets={refetchAssets}
             enableBorrow={enableBorrow}
-            availableLiquidityTokens={availableLiquidityTokens}
           />
         </section>
       ) : ( */}
@@ -115,32 +132,34 @@ export default function DashboardPage() {
           yourSupplyCollateralPosition={yourSupplyCollateralPosition}
           yourSupplyAPYPosition={yourSupplyAPYPosition}
           positions={supplyPositions}
-          isLoading={isLoading}
-          mutateAssets={refetchAssets}
+          isLoading={isLoadingTable}
+          mutateAssets={handleFetchData}
+          accountData={accountData}
         />
         <BorrowPositionTable
           yourBorrowBalancePosition={yourBorrowBalancePosition}
           yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
           yourBorrowAPYPosition={yourBorrowAPYPosition}
           positions={borrowPositions}
-          isLoading={isLoading}
-          mutateAssets={refetchAssets}
+          isLoading={isLoadingTable}
+          mutateAssets={handleFetchData}
           enableBorrow={enableBorrow}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
         <SupplyTable
           title="Assets to supply"
           reserves={processedAssets}
-          isLoading={isLoading}
-          mutateAssets={refetchAssets}
+          isLoading={isLoadingTable}
+          mutateAssets={handleFetchData}
+          accountData={accountData}
         />
         <BorrowTable
           title="Assets to borrow"
           reserves={processedAssets}
-          isLoading={isLoading}
-          mutateAssets={refetchAssets}
+          isLoading={isLoadingTable}
+          mutateAssets={handleFetchData}
           enableBorrow={enableBorrow}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       </section>
       {/* )} */}
