@@ -1,12 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  AlertCircle,
-  CircleX,
-  Info,
-  // ChevronDown
-} from 'lucide-react';
+import { AlertCircle, CircleX, Info, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,15 +22,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/common/tooltip';
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from '@/components/common/dropdown-menu';
-import { UserReserveData } from '../../types';
+import { UserReserveData, UserAccountData } from '../../types';
 import CountUp from '@/components/common/count-up';
 import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
+import { calculateHFAfterRepay } from '@/utils/hf';
+import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 
 const repayFormSchema = z.object({
   amount: z
@@ -58,7 +49,7 @@ export interface RepayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   reserve: UserReserveData;
-  healthFactor?: number;
+  accountData: UserAccountData;
   mutateAssets: () => void;
 }
 
@@ -71,19 +62,14 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
   open,
   onOpenChange,
   reserve,
-  // healthFactor = 4.91,
+  accountData,
   mutateAssets,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-  // const [repaySource, setRepaySource] = useState<'wallet' | 'collateral'>('wallet');
-  // const [selectedToken, setSelectedToken] = useState({
-  //   symbol: reserve.symbol,
-  //   type: 'wallet',
-  //   iconUrl: reserve.iconUrl,
-  // });
+  const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
 
   const maxAmount =
     Number(reserve.balance) > Number(reserve.currentVariableDebt)
@@ -120,12 +106,39 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     },
   });
 
+  // Calculate health factor based on current input
+  const calculateHealthFactor = useCallback(() => {
+    if (accountData.healthFactor === -1) {
+      setCalculatedHealthFactor(-1);
+      return;
+    }
+
+    const amount = form.watch('amount');
+    if (!amount || Number(amount) <= 0) {
+      setCalculatedHealthFactor(
+        Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
+      return;
+    }
+
+    const hf = calculateHFAfterRepay(
+      valueToBigNumber(accountData.totalCollateralBase.toString()),
+      valueToBigNumber(normalize(reserve.price.toString(), 18)).multipliedBy(
+        valueToBigNumber(amount)
+      ),
+      valueToBigNumber(accountData.totalDebtBase.toString()),
+      valueToBigNumber((Number(accountData.currentLiquidationThreshold) / 100).toString()),
+      valueToBigNumber(accountData.healthFactor.toString())
+    );
+
+    console.log('hf after repay', hf.toString());
+    setCalculatedHealthFactor(Number(hf));
+  }, [accountData, form, reserve.price]);
+
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
       // Don't allow value > max amount based on source
-      // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
-
       const valueWithBalance =
         Number(form.watch('amount')) > Number(maxAmount) ? maxAmount : Number(form.watch('amount'));
       const needToChangeValue = valueWithBalance !== Number(form.watch('amount'));
@@ -135,8 +148,10 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       }
       setIsRefetchEnabled(true);
       fetchPrice();
+      // Calculate health factor after debounce
+      calculateHealthFactor();
     });
-  }, [fetchPrice, form, reserve.balance, reserve.currentVariableDebt, repaySource]);
+  }, [fetchPrice, form, maxAmount, calculateHealthFactor]);
 
   // Update price when data is fetched
   useEffect(() => {
@@ -147,10 +162,11 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     }
   }, [priceData]);
 
-  // Initialize with asset price
+  // Initialize with asset price and calculate initial health factor
   useEffect(() => {
     setCurrentPrice(reserve.price);
-  }, [reserve.price]);
+    calculateHealthFactor();
+  }, [reserve.price, calculateHealthFactor]);
 
   // Watch for input changes and fetch price
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,30 +186,22 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
+    } else {
+      // If amount is empty or 0, reset health factor to current
+      setCalculatedHealthFactor(
+        accountData.healthFactor === -1
+          ? -1
+          : Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
     }
   };
 
   const handleMaxAmount = () => {
     // Use the appropriate maximum based on the repayment source
-    // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
-    // ex: debt : 3, wallet : 2 if debt > wallet, use wallet
-    // const maxAmount =
-    //   Number(reserve.balance) > Number(reserve.currentVariableDebt)
-    //     ? Number(reserve.currentVariableDebt)
-    //     : Number(reserve.balance);
     form.setValue('amount', maxAmount.toString());
     setInputAmount(maxAmount.toString());
     handleFetchPrice();
   };
-
-  // const handleSelectToken = (type: 'wallet' | 'collateral') => {
-  //   setRepaySource(type);
-  //   setSelectedToken({
-  //     symbol: type === 'wallet' ? reserve.symbol : `a${reserve.symbol}`,
-  //     type,
-  //     iconUrl: reserve.iconUrl,
-  //   });
-  // };
 
   const selectedToken = {
     symbol: reserve.symbol,
@@ -212,7 +220,6 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       }
 
       // Check if amount exceeds max based on source
-      // const maxAmount = repaySource === 'wallet' ? reserve.balance : reserve.currentVariableDebt;
       if (amount > Number(maxAmount)) {
         toast.error(
           `Amount exceeds your ${repaySource === 'wallet' ? 'wallet' : 'debt'} balance of ${maxAmount} ${reserve.symbol}`
@@ -258,6 +265,11 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
     Number(reserve.currentVariableDebt) - Number(inputAmount || '0')
   ).toFixed(7);
 
+  const currentHealthFactor =
+    accountData.healthFactor === -1
+      ? -1
+      : normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -299,54 +311,23 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                           onClick={() => {
                             form.setValue('amount', '');
                             setInputAmount('');
+                            // Reset health factor when clearing input
+                            setCalculatedHealthFactor(
+                              accountData.healthFactor === -1
+                                ? -1
+                                : Number(
+                                    normalizeBN(
+                                      valueToBigNumber(accountData.healthFactor.toString()),
+                                      18
+                                    )
+                                  )
+                            );
                           }}
                           className="hover:opacity-70"
                         >
                           <CircleX className="h-6 w-6 text-embossed" />
                         </Button>
                       )}
-                      {/* <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="flex items-center gap-1.5 px-2 py-1">
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage src={selectedToken.iconUrl} alt={selectedToken.symbol} />
-                              <AvatarFallback>{selectedToken.symbol.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-row items-center gap-1">
-                              <span className="font-medium text-lg">{selectedToken.symbol}</span>
-                              <ChevronDown className="h-4 w-4" />
-                            </div>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-[180px]">
-                          <DropdownMenuItem onClick={() => handleSelectToken('wallet')}>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
-                                <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{reserve.symbol}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Wallet balance
-                                </span>
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSelectToken('collateral')}>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src={reserve.iconUrl} alt={`a${reserve.symbol}`} />
-                                <AvatarFallback>a{reserve.symbol.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col">
-                                <span className="font-medium">a{reserve.symbol}</span>
-                                <span className="text-xs text-muted-foreground">Collateral</span>
-                              </div>
-                            </div>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu> */}
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
                         <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
@@ -416,15 +397,50 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </Typography>
-                  {/* <Typography weight="medium" className="text-green-500">
-                    <CountUp value={healthFactor} decimals={2} animateOnlyOnce={true} />
-                  </Typography> */}
-                  <Typography weight="medium">_ </Typography>
-                </div>
 
-                {/* <div className="text-sm text-muted-foreground">
-                  <Typography>Liquidation at &lt;1.0</Typography>
-                </div> */}
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    {Number(currentHealthFactor) === -1 ? (
+                      <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={Number(currentHealthFactor)}
+                        decimals={2}
+                        className={
+                          Number(currentHealthFactor) === -1
+                            ? 'text-green-500'
+                            : Number(currentHealthFactor) <= 1.25
+                              ? 'text-red-500'
+                              : Number(currentHealthFactor) <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                        animateOnlyOnce={true}
+                      />
+                    )}
+
+                    {/* icon arrow left to right */}
+                    <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                    {calculatedHealthFactor === -1 ? (
+                      <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                    ) : (
+                      <CountUp
+                        value={calculatedHealthFactor}
+                        decimals={2}
+                        className={
+                          calculatedHealthFactor === -1
+                            ? 'text-green-500'
+                            : calculatedHealthFactor <= 1.25
+                              ? 'text-red-500'
+                              : calculatedHealthFactor <= 1.5
+                                ? 'text-amber-500'
+                                : 'text-green-500'
+                        }
+                        animateOnlyOnce={true}
+                      />
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex justify-between items-center">
                   <Typography className="flex items-center gap-1">Repay amount</Typography>

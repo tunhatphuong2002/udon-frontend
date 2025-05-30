@@ -118,9 +118,8 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
       valueToBigNumber(normalize(reserve.price.toString(), 18)).multipliedBy(
         valueToBigNumber(amount)
       ),
-      valueToBigNumber(accountData.currentLiquidationThreshold.toString()),
+      valueToBigNumber((Number(accountData.currentLiquidationThreshold) / 100).toString()),
       valueToBigNumber(reserve.liquidationThreshold.toString()),
-      valueToBigNumber(accountData.totalCollateralBase.toString()),
       valueToBigNumber(accountData.totalDebtBase.toString()),
       valueToBigNumber(accountData.healthFactor.toString())
     );
@@ -128,7 +127,7 @@ export const SupplyDialog: React.FC<SupplyDialogProps> = ({
     console.log('hf', hf.toString());
 
     setCalculatedHealthFactor(Number(hf));
-  }, [accountData, form, reserve.liquidationThreshold]);
+  }, [accountData, form, reserve.liquidationThreshold, reserve.price]);
 
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {

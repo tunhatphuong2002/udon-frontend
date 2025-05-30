@@ -38,7 +38,7 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
   enableBorrow,
-  // accountData,
+  accountData,
 }) => {
   const router = useRouter();
   // Dialog state management
@@ -269,8 +269,8 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
           reserve={selectedPosition}
-          healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -280,9 +280,8 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedPosition}
-          healthFactor={4.91} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       )}
     </div>

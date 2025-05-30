@@ -34,7 +34,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   isLoading,
   mutateAssets,
   enableBorrow,
-  // accountData,
+  accountData,
 }) => {
   const [selectedAsset, setSelectedAsset] = useState<UserReserveData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -225,7 +225,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
           onOpenChange={setDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
-          // availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       )}
     </>

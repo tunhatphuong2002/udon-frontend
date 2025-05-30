@@ -308,8 +308,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
           reserve={selectedPosition}
-          healthFactor={1.23} // This would be calculated based on user's positions
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
