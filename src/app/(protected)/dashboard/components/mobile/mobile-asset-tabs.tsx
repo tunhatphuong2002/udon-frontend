@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/ta
 import { Typography } from '@/components/common/typography';
 import { Button } from '@/components/common/button';
 import { CheckIcon, XIcon } from 'lucide-react';
-import { UserReserveData, AvailableLiquidityToken } from '../../types';
+import { UserReserveData, UserAccountData } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Skeleton } from '@/components/common/skeleton';
 import { FaucetTestBadge } from '../faucet-badge';
@@ -25,7 +25,7 @@ interface MobileAssetTabsProps {
   isLoading: boolean;
   mutateAssets: () => void;
   enableBorrow: boolean;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  accountData: UserAccountData;
 }
 
 export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
@@ -33,7 +33,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
   isLoading,
   mutateAssets,
   enableBorrow,
-  availableLiquidityTokens,
+  accountData,
 }) => {
   const router = useRouter();
 
@@ -311,18 +311,12 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
                               <Typography variant="small" color="submerged" className="mb-1">
                                 Available
                               </Typography>
-                              {(() => {
-                                const availableLiquidityToken =
-                                  availableLiquidityTokens.find(
-                                    t => t.assetId.toString('hex') === asset.assetId.toString('hex')
-                                  )?.availableLiquidityToken || 0;
 
-                                return availableLiquidityToken === 0 ? (
-                                  <Typography>_</Typography>
-                                ) : (
-                                  <CountUp value={availableLiquidityToken} className="text-base" />
-                                );
-                              })()}
+                              {asset.availableLiquidity === 0 ? (
+                                <Typography>_</Typography>
+                              ) : (
+                                <CountUp value={asset.availableLiquidity} className="text-base" />
+                              )}
                             </div>
                             <div className="flex gap-6">
                               <div>
@@ -389,6 +383,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
           onOpenChange={setSupplyDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -399,7 +394,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedAsset}
           mutateAssets={mutateAssets}
-          availableLiquidityTokens={availableLiquidityTokens}
+          accountData={accountData}
         />
       )}
     </div>

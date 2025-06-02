@@ -159,3 +159,72 @@ export const calculateHFAfterRepay = (
   console.log('healthFactorAfterRepay', healthFactorAfterRepay.toString());
   return healthFactorAfterRepay;
 };
+
+export const calculateHFAfterCallUsageAsCollateral = (
+  totalCollateral: BigNumber,
+  assetCollateral: BigNumber,
+  userLiquidationThreshold: BigNumber,
+  reserveLiquidationThreshold: BigNumber,
+  totalDebt: BigNumber,
+  userHealFactor: BigNumber,
+  isCollateralEnabled: boolean
+) => {
+  console.log('totalCollateral', totalCollateral.toString());
+  console.log('assetCollateral', assetCollateral.toString());
+  console.log('userLiquidationThreshold', userLiquidationThreshold.toString());
+  console.log('reserveLiquidationThreshold', reserveLiquidationThreshold.toString());
+  console.log('totalDebt', totalDebt.toString());
+  console.log('userHealFactor', userHealFactor.toString());
+  console.log('isCollateralEnabled', isCollateralEnabled);
+
+  let liquidationThresholdAfterCall = userLiquidationThreshold;
+  let healthFactorAfterCall = userHealFactor;
+
+  // If debt is zero, health factor is always infinite
+  if (totalDebt.isZero()) {
+    return new BigNumber(-1); // -1 represents infinite health factor
+  }
+
+  // Calculate new liquidation threshold based on collateral status change
+  if (isCollateralEnabled) {
+    // Currently enabled -> going to disable
+    // We need to remove this asset from the collateral calculation
+    // Formula: (totalCollateral * userLiquidationThreshold - assetCollateral * reserveLiquidationThreshold) / (totalCollateral - assetCollateral)
+    // Need to check if this will leave any collateral
+    if (totalCollateral.isEqualTo(assetCollateral)) {
+      // No collateral left after disabling this asset
+      liquidationThresholdAfterCall = new BigNumber(0);
+      // With no collateral and existing debt, health factor would be 0
+      return new BigNumber(0);
+    } else {
+      // Calculate new liquidation threshold after removing this asset from collateral
+      const collateralAfterCall = totalCollateral.minus(assetCollateral);
+      liquidationThresholdAfterCall = totalCollateral
+        .multipliedBy(userLiquidationThreshold)
+        .minus(assetCollateral.multipliedBy(reserveLiquidationThreshold))
+        .dividedBy(collateralAfterCall)
+        .dividedBy(100);
+    }
+  } else {
+    // Currently disabled -> going to enable
+    // We add this asset to the collateral calculation
+    // Formula: (totalCollateral * userLiquidationThreshold + assetCollateral * reserveLiquidationThreshold) / totalCollateral
+    liquidationThresholdAfterCall = totalCollateral
+      .multipliedBy(userLiquidationThreshold)
+      .plus(assetCollateral.multipliedBy(reserveLiquidationThreshold))
+      .dividedBy(totalCollateral)
+      .dividedBy(100);
+  }
+
+  console.log('liquidationThresholdAfterCall', liquidationThresholdAfterCall.toString());
+
+  // Calculate new health factor based on the new liquidation threshold
+  healthFactorAfterCall = calculateHealthFactorFromBalancesBigUnits({
+    totalCollateral: isCollateralEnabled ? totalCollateral.minus(assetCollateral) : totalCollateral,
+    totalDebt: totalDebt,
+    currentLiquidationThreshold: liquidationThresholdAfterCall,
+  });
+
+  console.log('healthFactorAfterCall', healthFactorAfterCall.toString());
+  return healthFactorAfterCall;
+};

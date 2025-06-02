@@ -319,8 +319,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           open={collateralDialogOpen}
           onOpenChange={setCollateralDialogOpen}
           reserve={selectedCollateral}
-          healthFactor={1.26} // Using a placeholder value, would be calculated based on actual data
-          newHealthFactor={selectedCollateral.usageAsCollateralEnabled ? 1.1 : 2.4} // Would be dynamically calculated
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}

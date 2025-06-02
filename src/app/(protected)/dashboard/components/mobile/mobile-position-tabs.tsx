@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
 import { Typography } from '@/components/common/typography';
-import { UserReserveData, AvailableLiquidityToken } from '../../types';
+import { UserAccountData, UserReserveData } from '../../types';
 import { Badge } from '@/components/common/badge';
 import { Skeleton } from '@/components/common/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
@@ -36,7 +36,7 @@ interface MobilePositionTabsProps {
   yourBorrowPowerUsagePosition: number;
   yourBorrowAPYPosition: number;
   enableBorrow: boolean;
-  availableLiquidityTokens: AvailableLiquidityToken[];
+  accountData: UserAccountData;
 }
 
 export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
@@ -51,7 +51,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
   yourBorrowPowerUsagePosition,
   yourBorrowAPYPosition,
   enableBorrow,
-  availableLiquidityTokens,
+  accountData,
 }) => {
   const router = useRouter();
 
@@ -441,6 +441,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           onOpenChange={setSupplyDialogOpen}
           reserve={selectedSupplyPosition}
           mutateAssets={mutateAssets}
+          accountData={accountData}
         />
       )}
 
@@ -449,7 +450,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
           reserve={selectedSupplyPosition}
-          healthFactor={1.23} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -459,8 +460,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={collateralDialogOpen}
           onOpenChange={setCollateralDialogOpen}
           reserve={selectedSupplyPosition}
-          healthFactor={1.26} // Placeholder value
-          newHealthFactor={selectedSupplyPosition.usageAsCollateralEnabled ? 1.1 : 2.4} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -471,7 +471,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={repayDialogOpen}
           onOpenChange={setRepayDialogOpen}
           reserve={selectedBorrowPosition}
-          healthFactor={4.91} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
         />
       )}
@@ -481,9 +481,8 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           open={borrowDialogOpen}
           onOpenChange={setBorrowDialogOpen}
           reserve={selectedBorrowPosition}
-          healthFactor={4.91} // Placeholder value
+          accountData={accountData}
           mutateAssets={mutateAssets}
-          availableLiquidityTokens={availableLiquidityTokens}
         />
       )}
     </div>

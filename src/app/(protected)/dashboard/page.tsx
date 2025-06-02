@@ -9,9 +9,9 @@ import { BorrowPositionTable } from './components/borrow/position';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
 import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
-// import { useMediaQuery } from '@/hooks/use-media-query';
-// import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
-// import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
+import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
 
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
@@ -28,7 +28,6 @@ export default function DashboardPage() {
     yourBorrowPowerUsagePosition,
     yourBorrowAPYPosition,
     enableBorrow,
-    // availableLiquidityTokens,
   } = useCompletedAssets();
 
   const {
@@ -48,7 +47,7 @@ export default function DashboardPage() {
   console.log('isAccountDataFetching', isAccountDataFetching);
 
   // Check if the current device is mobile
-  // const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const isLoadingTable = isLoadingAssets || isAccountDataFetching;
 
@@ -102,12 +101,12 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* {isMobile ? (
+      {isMobile ? (
         <section className="flex flex-col gap-6 mt-6">
           <MobilePositionTabs
             supplyPositions={supplyPositions}
             borrowPositions={borrowPositions}
-            isLoading={isLoading}
+            isLoading={isLoadingTable}
             mutateAssets={refetchAssets}
             yourSupplyBalancePosition={yourSupplyBalancePosition}
             yourSupplyCollateralPosition={yourSupplyCollateralPosition}
@@ -116,53 +115,55 @@ export default function DashboardPage() {
             yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
             yourBorrowAPYPosition={yourBorrowAPYPosition}
             enableBorrow={enableBorrow}
+            accountData={accountData}
           />
 
           <MobileAssetTabs
             processedAssets={processedAssets}
-            isLoading={isLoading}
+            isLoading={isLoadingTable}
             mutateAssets={refetchAssets}
             enableBorrow={enableBorrow}
+            accountData={accountData}
           />
         </section>
-      ) : ( */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
-        <SupplyPositionTable
-          yourSupplyBalancePosition={yourSupplyBalancePosition}
-          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
-          yourSupplyAPYPosition={yourSupplyAPYPosition}
-          positions={supplyPositions}
-          isLoading={isLoadingTable}
-          mutateAssets={handleFetchData}
-          accountData={accountData}
-        />
-        <BorrowPositionTable
-          yourBorrowBalancePosition={yourBorrowBalancePosition}
-          yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
-          yourBorrowAPYPosition={yourBorrowAPYPosition}
-          positions={borrowPositions}
-          isLoading={isLoadingTable}
-          mutateAssets={handleFetchData}
-          enableBorrow={enableBorrow}
-          accountData={accountData}
-        />
-        <SupplyTable
-          title="Assets to supply"
-          reserves={processedAssets}
-          isLoading={isLoadingTable}
-          mutateAssets={handleFetchData}
-          accountData={accountData}
-        />
-        <BorrowTable
-          title="Assets to borrow"
-          reserves={processedAssets}
-          isLoading={isLoadingTable}
-          mutateAssets={handleFetchData}
-          enableBorrow={enableBorrow}
-          accountData={accountData}
-        />
-      </section>
-      {/* )} */}
+      ) : (
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
+          <SupplyPositionTable
+            yourSupplyBalancePosition={yourSupplyBalancePosition}
+            yourSupplyCollateralPosition={yourSupplyCollateralPosition}
+            yourSupplyAPYPosition={yourSupplyAPYPosition}
+            positions={supplyPositions}
+            isLoading={isLoadingTable}
+            mutateAssets={handleFetchData}
+            accountData={accountData}
+          />
+          <BorrowPositionTable
+            yourBorrowBalancePosition={yourBorrowBalancePosition}
+            yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
+            yourBorrowAPYPosition={yourBorrowAPYPosition}
+            positions={borrowPositions}
+            isLoading={isLoadingTable}
+            mutateAssets={handleFetchData}
+            enableBorrow={enableBorrow}
+            accountData={accountData}
+          />
+          <SupplyTable
+            title="Assets to supply"
+            reserves={processedAssets}
+            isLoading={isLoadingTable}
+            mutateAssets={handleFetchData}
+            accountData={accountData}
+          />
+          <BorrowTable
+            title="Assets to borrow"
+            reserves={processedAssets}
+            isLoading={isLoadingTable}
+            mutateAssets={handleFetchData}
+            enableBorrow={enableBorrow}
+            accountData={accountData}
+          />
+        </section>
+      )}
     </main>
   );
 }
