@@ -43,9 +43,6 @@ export default function DashboardPage() {
     refetch: refetchAccountData,
   } = useAccountData();
 
-  console.log('accountData', accountData);
-  console.log('isAccountDataFetching', isAccountDataFetching);
-
   // Check if the current device is mobile
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -58,11 +55,11 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="px-4 sm:px-8 py-10 sm:py-[180px]">
-      <section className="flex flex-col items-center gap-2 sm:gap-2.5">
+    <main className="px-4 sm:px-8 py-[100px] sm:py-[180px]">
+      <section className="flex flex-col items-center gap-2 sm:gap-2.5 mb-10 sm:mb-0">
         <div
           dangerouslySetInnerHTML={{
-            __html: `<svg id="384:1283" width="152" height="36" viewBox="0 0 152 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="title-icon w-32 h-8 sm:w-40 sm:h-10" style="max-width: 152px"> <circle cx="18" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="47" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="76" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="105" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="134" cy="18" r="17.5" stroke="currentColor"></circle> </svg>`,
+            __html: `<svg id="384:1283" width="152" height="36" viewBox="0 0 152 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="title-icon w-40 h-10" style="max-width: 152px"> <circle cx="18" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="47" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="76" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="105" cy="18" r="17.5" stroke="currentColor"></circle> <circle cx="134" cy="18" r="17.5" stroke="currentColor"></circle> </svg>`,
           }}
           className="mb-2 text-foreground"
         />
@@ -70,7 +67,7 @@ export default function DashboardPage() {
           variant="h2"
           weight="normal"
           align="center"
-          className="text-2xl sm:text-3xl md:text-[40px] font-light"
+          className="text-4xl sm:text-4xl md:text-[40px] font-light"
         >
           Streamline your
         </Typography>
@@ -78,7 +75,7 @@ export default function DashboardPage() {
           variant="h2"
           weight="normal"
           align="center"
-          className="text-2xl sm:text-3xl md:text-[40px] font-light"
+          className="text-4xl sm:text-4xl md:text-[40px] font-light"
         >
           crypto investment on Chromia
         </Typography>
@@ -127,7 +124,7 @@ export default function DashboardPage() {
           />
         </section>
       ) : (
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
+        <section className="grid xl:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
           <SupplyPositionTable
             yourSupplyBalancePosition={yourSupplyBalancePosition}
             yourSupplyCollateralPosition={yourSupplyCollateralPosition}

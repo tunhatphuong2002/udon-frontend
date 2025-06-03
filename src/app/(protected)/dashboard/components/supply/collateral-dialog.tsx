@@ -114,7 +114,7 @@ export const CollateralDialog: React.FC<CollateralDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">Review tx {reserve.symbol}</DialogTitle>
         </DialogHeader>
