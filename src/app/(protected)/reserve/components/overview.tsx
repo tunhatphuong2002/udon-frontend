@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Typography } from '@/components/common/typography';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
 import {
   depositsData,
   apyData,
@@ -40,8 +41,13 @@ interface MarketData {
   apy: number;
 }
 
+interface VaultOverviewProps {
+  reserve?: UserReserveData;
+}
+
 // Main component
-export const VaultOverview: React.FC = () => {
+export const VaultOverview: React.FC<VaultOverviewProps> = ({ reserve }) => {
+  console.log('reserve', reserve);
   // Chart filter states
   const [depositChartType, setDepositChartType] = useState<'deposit' | 'liquidity'>('deposit');
   const [depositCurrency, setDepositCurrency] = useState<'usdc' | 'usdt'>('usdc');

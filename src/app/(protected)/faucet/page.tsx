@@ -121,11 +121,11 @@ export default function FaucetPage() {
                 <AvatarImage src={asset.icon} alt={asset.symbol} />
                 <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
+              <Typography weight="medium">{asset.symbol.replace(/USD$/, '').trim()}</Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{asset.name}</p>
+            <p>{asset.name.replace(/USD$/, '')}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -185,7 +185,7 @@ export default function FaucetPage() {
   ];
 
   return (
-    <main className="px-32 py-[200px]">
+    <main className="px-4 sm:px-32 py-[100px] sm:py-[200px]">
       <div className="mb-8">
         <Button
           variant="secondary"

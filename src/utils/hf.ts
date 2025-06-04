@@ -108,11 +108,17 @@ export const calculateHFAfterBorrow = (
   console.log('liquidationThresholdAfterBorrow', liquidationThresholdAfterBorrow.toString());
 
   // Calculate new health factor
-  const healthFactorAfterBorrow = calculateHealthFactorFromBalancesBigUnits({
-    totalCollateral: totalCollateral,
-    totalDebt: totalDebtAfterBorrow,
-    currentLiquidationThreshold: liquidationThresholdAfterBorrow,
-  });
+  let healthFactorAfterBorrow;
+  if (totalDebtAfterBorrow.isZero()) {
+    // When there's no debt, health factor is infinite (represented as -1 in your system)
+    healthFactorAfterBorrow = new BigNumber(-1);
+  } else {
+    healthFactorAfterBorrow = calculateHealthFactorFromBalancesBigUnits({
+      totalCollateral: totalCollateral,
+      totalDebt: totalDebtAfterBorrow,
+      currentLiquidationThreshold: liquidationThresholdAfterBorrow,
+    });
+  }
 
   console.log('healthFactorAfterBorrow', healthFactorAfterBorrow.toString());
   return healthFactorAfterBorrow;

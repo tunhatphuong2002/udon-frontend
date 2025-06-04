@@ -5,6 +5,8 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
+import CountUp from '@/components/common/count-up';
 
 // Define the schema using Zod
 const depositSchema = z.object({
@@ -23,7 +25,11 @@ const depositSchema = z.object({
 // Infer the type from the schema
 type DepositFormData = z.infer<typeof depositSchema>;
 
-export const SidePanel: React.FC = () => {
+interface SidePanelProps {
+  reserve?: UserReserveData;
+}
+
+export const SidePanel: React.FC<SidePanelProps> = ({ reserve }) => {
   const {
     register,
     handleSubmit,
@@ -45,12 +51,18 @@ export const SidePanel: React.FC = () => {
         <div className="bg-card border rounded-xl p-5 border-border">
           <div className="fcol gap-4">
             <div className="w-full">
-              <Typography className="text-submerged mb-1">My position (USDC)</Typography>
+              <Typography className="text-submerged mb-1">
+                My position ({reserve?.symbol || 'Asset'})
+              </Typography>
               <div className="frow-icenter gap-2 whitespace-nowrap">
                 <Typography className="text-submerged text-lg">0.00</Typography>
                 <MoveRight className="w-4 h-4 text-submerged" />
                 <Typography weight="medium" className="text-lg">
-                  5,000,000.00
+                  {reserve ? (
+                    <CountUp value={reserve.currentATokenBalance} decimals={2} />
+                  ) : (
+                    'Loading...'
+                  )}
                 </Typography>
               </div>
             </div>
@@ -58,35 +70,55 @@ export const SidePanel: React.FC = () => {
             <div>
               <Typography className="text-submerged mb-1">Earn APY</Typography>
               <Typography weight="medium" className="text-lg">
-                15.00%
+                {reserve ? (
+                  <CountUp value={reserve.supplyAPY} decimals={2} suffix="%" />
+                ) : (
+                  'Loading...'
+                )}
               </Typography>
             </div>
 
             <div>
               <Typography className="text-submerged mb-1">
-                Projected Earnings/Month (USDC)
+                Projected Earnings/Month ({reserve?.symbol || 'Asset'})
               </Typography>
               <Typography weight="medium" className="text-lg">
-                15.00%
+                {reserve && reserve.currentATokenBalance > 0 ? (
+                  <CountUp
+                    value={(reserve.currentATokenBalance * reserve.supplyAPY) / 100 / 12}
+                    decimals={2}
+                  />
+                ) : (
+                  '0.00'
+                )}
               </Typography>
             </div>
 
             <div>
               <Typography className="text-submerged mb-1">
-                Projected Earnings/Year (USDC)
+                Projected Earnings/Year ({reserve?.symbol || 'Asset'})
               </Typography>
               <Typography weight="medium" className="text-lg">
-                15.00%
+                {reserve && reserve.currentATokenBalance > 0 ? (
+                  <CountUp
+                    value={(reserve.currentATokenBalance * reserve.supplyAPY) / 100}
+                    decimals={2}
+                  />
+                ) : (
+                  '0.00'
+                )}
               </Typography>
             </div>
 
             <div>
-              <Typography className="text-submerged mb-1">Wallet Balance (USDC)</Typography>
+              <Typography className="text-submerged mb-1">
+                Wallet Balance ({reserve?.symbol || 'Asset'})
+              </Typography>
               <div className="frow-icenter gap-2 whitespace-nowrap">
                 <Typography className="text-submerged">0.00</Typography>
                 <MoveRight className="w-4 h-4 text-submerged" />
                 <Typography weight="medium" className="text-lg">
-                  5,000,000.00
+                  {reserve ? <CountUp value={reserve.balance} decimals={2} /> : 'Loading...'}
                 </Typography>
               </div>
             </div>
