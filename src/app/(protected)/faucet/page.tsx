@@ -197,12 +197,12 @@ export default function FaucetPage() {
         <Typography variant="h2" weight="semibold">
           Test Assets
         </Typography>
-        <Typography className="text-submerged mt-2">
+        <Typography className="text-base text-submerged mt-2">
           With testnet Faucet you can get free assets to test the Protocol. Make sure your wallet is
           connected, select the desired asset, and click &apos;Faucet&apos; to get tokens
           transferred to your wallet. Each request mints 1000 tokens to your wallet.
         </Typography>
-        <Typography className="text-submerged mt-2 text-sm">
+        <Typography className="text-base text-submerged mt-2">
           The assets on a testnet have no monetary value. They are only for testing purposes.
         </Typography>
       </div>

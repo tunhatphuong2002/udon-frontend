@@ -52,7 +52,6 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
 
   // Render asset icon and symbol
   const renderAssetCell = (asset: UserReserveData) => {
-    console.log('asset', asset);
     return (
       <TooltipProvider>
         <Tooltip>

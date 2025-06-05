@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Typography } from '@/components/common/typography';
 import { useReserveData } from '@/hooks/contracts/queries/use-reserve-data';
 import { useParams } from 'next/navigation';
@@ -15,17 +15,14 @@ import {
   // VaultDisclosures,
   // VaultDepositors,
 } from '../components';
+import { UserReserveData } from '../../dashboard/types';
 
 export default function VaultPage() {
   const params = useParams();
-  const assetId = useMemo(() => {
-    if (!params.id || typeof params.id !== 'string') return Buffer.from('');
-    return Buffer.from(params.id as string, 'hex');
-  }, [params.id]);
 
-  const { reserve, isLoading, error } = useReserveData(assetId);
+  const { reserve, isLoading, error } = useReserveData(params.id as string);
 
-  if (error) {
+  if (error || !reserve) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
         <Typography variant="h3" className="text-destructive">
@@ -48,7 +45,7 @@ export default function VaultPage() {
                 </div>
               ) : (
                 <>
-                  <VaultHeader reserve={reserve} />
+                  <VaultHeader reserve={reserve as UserReserveData} />
 
                   {/* Overview Section */}
                   <section className="w-full mt-8 md:mt-10">
@@ -99,7 +96,7 @@ export default function VaultPage() {
             </div>
           </main>
 
-          <aside className="col-span-12 md:col-span-4 md:sticky md:pt-48">
+          <aside className="col-span-12 md:col-span-4 md:sticky md:pt-36">
             {isLoading ? <Skeleton className="h-64 w-full" /> : <SidePanel reserve={reserve} />}
           </aside>
         </div>

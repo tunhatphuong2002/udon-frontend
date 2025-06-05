@@ -7,6 +7,51 @@ import { SECONDS_PER_YEAR } from '@/utils/constants';
 import { normalizeBN } from '@/utils/bignumber';
 import { useQuery } from '@tanstack/react-query';
 
+export type PeriodType = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export type APYHistoryDataPoint = {
+  timestamp: number;
+  value: number;
+};
+
+export type APYHistoryResponse = {
+  timestamp: string | number;
+  value: string | bigint;
+}[];
+
+export function useAPYHistory(assetId: string, periodType: PeriodType = 'monthly') {
+  const { client } = useChromiaAccount();
+
+  const query = useQuery({
+    queryKey: ['apy_history', assetId, periodType],
+    queryFn: async () => {
+      if (!client) return null;
+
+      const result = await client.query('get_apy_history', {
+        reserve_id: Buffer.from(assetId, 'hex'),
+        period_type: periodType,
+      });
+
+      if (!result || !Array.isArray(result)) return [];
+
+      // Convert result to an array of data points with timestamp and value
+      return result.map(item => ({
+        timestamp: Number(item.timestamp),
+        value: Number(formatRay(item.value)),
+      }));
+    },
+    enabled: !!client && !!assetId,
+    retry: 2,
+  });
+
+  return {
+    data: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+}
+
 export function useReserveData(assetId: string) {
   const { client, account } = useChromiaAccount();
 
