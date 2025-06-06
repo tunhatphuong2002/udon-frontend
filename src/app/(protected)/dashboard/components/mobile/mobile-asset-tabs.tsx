@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
 import { Typography } from '@/components/common/typography';
 import { Button } from '@/components/common/button';
 import { CheckIcon } from 'lucide-react';

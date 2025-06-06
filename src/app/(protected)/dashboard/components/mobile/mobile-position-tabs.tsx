@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
 import { Typography } from '@/components/common/typography';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Badge } from '@/components/common/badge';

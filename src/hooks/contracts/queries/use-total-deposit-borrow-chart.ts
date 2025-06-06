@@ -1,7 +1,6 @@
 import { ChartType, TimePeriod } from '@/app/(protected)/reserve/types';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { normalizeBN } from '@/utils/bignumber';
-// import { formatRay } from '@/utils/wadraymath';
 import { useQuery } from '@tanstack/react-query';
 
 export type ChartDataPoint = {
@@ -9,41 +8,39 @@ export type ChartDataPoint = {
   value: number;
 };
 
-export function useAPYHistory(
+export function useTotalDepositBorrowHistory(
   assetId: Buffer<ArrayBufferLike>,
   periodType: TimePeriod = 'hourly',
+  decimals: number,
   chartType: ChartType
 ) {
   const { client } = useChromiaAccount();
 
   const query = useQuery({
-    queryKey: ['apy_history', assetId, periodType, chartType],
+    queryKey: ['total_deposit_borrow_history', assetId, periodType, chartType],
     queryFn: async () => {
       if (!client) return null;
 
       // Select endpoint based on chart type
       const endpoint =
-        chartType === 'deposit' ? 'get_apy_deposit_history' : 'get_apy_borrow_history';
+        chartType === 'deposit' ? 'get_total_deposit_history' : 'get_total_borrow_history';
 
       const result = await client.query(endpoint, {
         asset_id: assetId,
         period_type: periodType,
       });
 
-      console.log('result', result);
-
       if (!result) return null;
 
-      // Parse the result - assuming it's now an array of [timestamp, apyValue] arrays
-      const dataArray = JSON.parse(result as string) as [number, bigint][];
+      // Parse the result - it's now an array of [timestamp, totalDeposit] arrays
+      const dataArray = JSON.parse(result as string) as [number, number][];
+
       console.log('dataArray', dataArray);
+
       // Convert to chart data format with proper date formatting
       const chartData = dataArray.map(item => {
         const timestamp = item[0]; // First element is timestamp
-        console.log('item', item);
-        const apyValue = Number(normalizeBN(item[1].toString(), 27)); // Second element is APY value
-
-        console.log('apyValue', apyValue);
+        const totalSupply = Number(normalizeBN(item[1].toString(), decimals)); // Second element is totalDeposit
         const date = new Date(timestamp * 1000);
         let formattedDate = '';
 
@@ -80,9 +77,11 @@ export function useAPYHistory(
 
         return {
           date: formattedDate,
-          value: apyValue * 100, // Convert to percentage
+          value: totalSupply,
         } as ChartDataPoint;
       });
+
+      console.log('chartData', chartData);
 
       return chartData;
     },

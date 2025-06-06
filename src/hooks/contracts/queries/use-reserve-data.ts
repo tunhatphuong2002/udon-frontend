@@ -1,7 +1,6 @@
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { formatRay } from '@/utils/wadraymath';
 import { keysToCamelCase } from '@/utils/object';
-import { UserReserveData } from '@/app/(protected)/dashboard/types';
 import { calculateCompoundedRate } from '@/utils/math/compounded-interest';
 import { SECONDS_PER_YEAR } from '@/utils/constants';
 import { normalizeBN } from '@/utils/bignumber';
@@ -22,7 +21,7 @@ export function useReserveData(assetId: string) {
       });
       if (!result) return null;
       // convert key in object to camelCase
-      let reserves = keysToCamelCase(result) as UserReserveData;
+      let reserves = keysToCamelCase(result);
 
       const pricesResult = await client.query('get_latest_price_by_asset_id', {
         asset_id: Buffer.from(assetId, 'hex'),
@@ -33,7 +32,7 @@ export function useReserveData(assetId: string) {
         ...reserves,
         // replace USD with empty string at end of string
         symbol: reserves.symbol.replace(/USD$/, ''),
-        assetId: Buffer.from(reserves.assetId.toString('hex')),
+        assetId: Buffer.from(reserves.assetId, 'hex'),
         // reserve
         totalSupply: Number(normalizeBN(reserves.totalSupply.toString(), reserves.decimals)),
         balance: Number(normalizeBN(reserves.balance.toString(), reserves.decimals)),
@@ -91,6 +90,7 @@ export function useReserveData(assetId: string) {
           )
         ),
       };
+      console.log('reserves', reserves.assetId.toString('hex'));
       return reserves;
     },
     enabled: !!client && !!account?.id && !!assetId,

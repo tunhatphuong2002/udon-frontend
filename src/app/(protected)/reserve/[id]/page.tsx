@@ -22,11 +22,21 @@ export default function VaultPage() {
 
   const { reserve, isLoading, error } = useReserveData(params.id as string);
 
-  if (error || !reserve) {
+  if (error) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
         <Typography variant="h3" className="text-destructive">
           Error loading reserve data
+        </Typography>
+      </div>
+    );
+  }
+
+  if (!reserve) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Typography variant="h3" className="text-destructive">
+          Reserve not found
         </Typography>
       </div>
     );
