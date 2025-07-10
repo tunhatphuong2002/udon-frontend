@@ -1,4 +1,4 @@
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 import { admin_kp, user_a_kp } from '../configs/key-pair';
 // import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../clients';
@@ -39,6 +39,10 @@ async function initSupply() {
     await adminSession.call(op('initialize_emode_logic'));
     console.log(chalk.green('✅ Asset factories initialized'));
 
+    // Create fee manager
+    await adminSession.call(op('create_fee_collector_account_op'));
+    console.log(chalk.green('✅ Fee collector account created:'));
+
     // Set interest rate strategy parameters (will be used for all tokens)
     const interestRateParams = {
       optimalUsageRatio: BigNumber.from(RAY).mul(80).div(100), // 0.8 in RAY
@@ -70,14 +74,22 @@ async function initSupply() {
 
       // Create price asset
       await adminSession.call(
-        op('create_price_asset', admin_kp.pubKey, token.symbol, underlyingAssetId)
+        op('create_price_asset', admin_kp.pubKey, token.storkAssetId, underlyingAssetId)
       );
       console.log(chalk.green('✅ Price asset oracle created:'));
 
       // TODO: Uncomment this when we have a price asset oracle
       // update price asset
-      await adminSession.call(op('update_price_update_op', token.symbol, BigInt(token.price)));
+      await adminSession.call(
+        op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
+      );
       console.log(chalk.green('✅ Price asset updated:'));
+
+      // Create fee manager
+      await adminSession.call(
+        op('set_fee_percentage_op', underlyingAssetId, createAmount(100, 0).value)
+      );
+      console.log(chalk.green('✅ Fee manager created:'));
 
       // Set interest rate strategy
       await adminSession.call(
@@ -94,14 +106,14 @@ async function initSupply() {
 
       // Configure reserve with a-asset
       const aAsset = {
-        name: `A ${token.name}`,
-        symbol: `A${token.symbol}`,
+        name: `a${token.name}`,
+        symbol: `a${token.symbol}`,
         decimals: token.decimals,
       };
 
       const vAsset = {
-        name: `V ${token.name}`,
-        symbol: `V${token.symbol}`,
+        name: `v${token.name}`,
+        symbol: `v${token.symbol}`,
         decimals: token.decimals,
       };
 

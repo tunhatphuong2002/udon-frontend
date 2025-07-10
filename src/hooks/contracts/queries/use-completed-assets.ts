@@ -37,9 +37,6 @@ export function useCompletedAssets() {
       reserves.map(r => assetIds.push(r.assetId));
 
       console.log('assetIds', Buffer.from(assetIds[0], 'hex'));
-      // const pricesResult = await client.query('get_latest_price_by_asset_ids', {
-      //   asset_ids: assetIds,
-      // });
       const pricesResult = (await client.query('get_latest_price_by_asset_ids', {
         asset_ids: assetIds,
       })) as unknown as AssetPrice[];
@@ -52,7 +49,7 @@ export function useCompletedAssets() {
       // 2. Format Ray for all big number fields and convert to number
       /* eslint-disable @typescript-eslint/no-explicit-any */
       reserves = reserves.map((r: any) => {
-        const priceObj = prices.find(p => p.stork_asset_id === r.symbol);
+        const priceObj = prices.find(p => p.asset_symbol === r.symbol);
         console.log(
           'symbol, reserveCurrentLiquidityRate, reserveCurrentVariableBorrowRate',
           r.symbol,
