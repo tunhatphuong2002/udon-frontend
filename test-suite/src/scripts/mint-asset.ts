@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { getSessionOrRegister } from '../helpers';
 import { ensureBuffer } from '../helpers/buffer';
 import { formatUnits, parseUnits } from 'ethers/lib/utils';
-import { TOKENS } from '../configs/tokens';
+import { TOKENS, TOKENS_TCHR } from '../configs/tokens';
 
 // hippo: A8A05014A795D77C4FA12FDF08776FD70799549530F27ABB3B3331FB4D0A2AC8
 // nathan: 5D3D574FA59149FE64E7495907FA047A2AC80EA0524D66373D12770104A0B0FA
@@ -82,6 +82,18 @@ async function mintAsset() {
     console.log(
       chalk.bold.green('\n✅✅✅ Asset minting completed successfully for all tokens ✅✅✅')
     );
+
+    const underlyingAssetResult = await adminSession.getAssetsBySymbol(TOKENS_TCHR.symbol);
+    const underlyingAssetId = underlyingAssetResult.data[0]?.id;
+    await adminSession.call(
+      op(
+        'set_using_as_collateral_op',
+        ASSET_CONFIG.TARGET_USER_ID,
+        underlyingAssetId,
+        true // enable collateral
+      )
+    );
+    console.log(chalk.green(`✅ Collateral enabled for ${TOKENS_TCHR.symbol}`));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN MINT ASSET ❌❌❌'));
     console.error(chalk.red(error));

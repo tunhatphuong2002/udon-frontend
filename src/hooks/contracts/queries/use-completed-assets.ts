@@ -46,7 +46,17 @@ export function useCompletedAssets() {
       const prices: AssetPrice[] = Array.isArray(pricesResult) ? pricesResult : [];
       console.log('prices', prices);
 
-      // 2. Format Ray for all big number fields and convert to number
+      // 4. get get_lsd_asset to know if the asset is lsd
+      // const lsdRawAssets = (await client.query(
+      //   'get_lsd_asset',
+      //   {}
+      // )) as unknown as Buffer<ArrayBufferLike>[];
+
+      // const lsdAssets = lsdRawAssets.map(a => a.toString('hex'));
+
+      // console.log('lsdAssets', lsdAssets);
+
+      // Format Ray for all big number fields and convert to number
       /* eslint-disable @typescript-eslint/no-explicit-any */
       reserves = reserves.map((r: any) => {
         const priceObj = prices.find(p => p.asset_symbol === r.symbol);
@@ -58,8 +68,8 @@ export function useCompletedAssets() {
         );
         return {
           // asset
-
           ...r,
+          // isLsd: lsdAssets.includes(r.assetId.toString('hex')),
           // replace USD with empty string at end of string
           symbol: r.symbol.replace(/USD$/, ''),
           assetId: Buffer.from(r.assetId, 'hex'),
@@ -130,9 +140,35 @@ export function useCompletedAssets() {
 
   // For compatibility with old API, split supply/borrow positions
   const supplyPositions = useMemo(
-    () => userReserves.filter(r => r.currentATokenBalance > 0),
+    // filter if currentATokenBalance > 0 and symbol is sttCHR we replace with tCHR
+    () => {
+      const filteredReserves = userReserves.filter(r => r.currentATokenBalance > 0);
+      return filteredReserves.map(r => {
+        if (r.symbol === 'sttCHR') {
+          const tCHR = userReserves.find(r => r.symbol === 'tCHR');
+          return {
+            ...r,
+            symbol: 'tCHR',
+            assetId: tCHR?.assetId,
+            name: tCHR?.name,
+            decimals: tCHR?.decimals,
+            iconUrl: tCHR?.iconUrl,
+            type: tCHR?.type,
+          };
+        }
+        return r;
+      });
+    },
     [userReserves]
   );
+
+  const supplyReserves = useMemo(() => {
+    return userReserves.filter(r => r.symbol !== 'sttCHR'); // because sttCHR is not supplyable
+  }, [userReserves]);
+
+  const borrowReserves = useMemo(() => {
+    return userReserves.filter(r => r.symbol !== 'tCHR'); // because tCHR is not borrowable
+  }, [userReserves]);
 
   const borrowPositions = useMemo(
     () => userReserves.filter(r => r.currentVariableDebt > 0),
@@ -236,8 +272,10 @@ export function useCompletedAssets() {
 
   return {
     assets: userReserves,
-    supplyPositions,
-    borrowPositions,
+    supplyPositions: supplyPositions as UserReserveData[],
+    borrowPositions: borrowPositions as UserReserveData[],
+    supplyReserves,
+    borrowReserves,
     yourSupplyBalancePosition,
     yourSupplyCollateralPosition,
     yourSupplyAPYPosition,

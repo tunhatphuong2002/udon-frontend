@@ -25,7 +25,7 @@ async function initSupply() {
     console.log(chalk.green('✅ Sessions created successfully'));
 
     // Initialize ACL module
-    console.log(chalk.blue('🔄 Initializing ACL module...'));
+    // console.log(chalk.blue('🔄 Initializing ACL module...'));
     await adminSession.call(op('initialize', admin_kp.pubKey));
     await adminSession.call(op('grant_role', 'POOL_ADMIN', adminAccountId, admin_kp.pubKey));
     console.log(chalk.green('✅ ACL module initialized'));

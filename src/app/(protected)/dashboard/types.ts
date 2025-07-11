@@ -66,7 +66,7 @@ export interface UserReserveData {
   type: string;
   totalSupply: number;
   balance: number;
-
+  // isLsd: boolean;
   // Reserve fields
   reserveUnbacked: number;
   reserveAccruedToTreasury: number;
