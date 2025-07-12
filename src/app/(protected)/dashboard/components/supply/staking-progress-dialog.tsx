@@ -169,7 +169,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
   if (!supplyRecords || supplyRecords.length === 0) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[50vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle>Staking Progress</DialogTitle>
           </DialogHeader>
@@ -186,13 +186,12 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
   // Get current active record
   const currentRecordIndex = parseInt(activeTab);
   const supplyRecord = supplyRecords[currentRecordIndex];
-  const position = positions[0]; // Position is shared across records
   const reward = rewards[0]; // Rewards are accumulated across all records
 
   if (!supplyRecord) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[50vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle>Staking Progress</DialogTitle>
           </DialogHeader>
@@ -206,7 +205,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
     );
   }
 
-  // Convert string status to enum number
+  // Convert string status to enum number for step calculation
   const currentStatusString = supplyRecord.stakingStatus;
   const currentStatus =
     typeof currentStatusString === 'string'
@@ -214,11 +213,11 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
       : (currentStatusString as number);
 
   // Convert position status from string to enum number
-  const positionStatusString = position.status;
+  const positionStatusString = positions[0]?.status;
   const positionStatus =
     typeof positionStatusString === 'string'
       ? (LSD_FAILURE_STAGE_MAP[positionStatusString as string] ?? LsdFailureStage.NO_FAILURE)
-      : (positionStatusString as number);
+      : (positionStatusString as number) || LsdFailureStage.NO_FAILURE;
 
   const hasError = positionStatus !== LsdFailureStage.NO_FAILURE;
   const isStaked = currentStatus === StakingStatus.STAKED;
@@ -231,7 +230,8 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
   // Calculate staking APY for current record
   let stakingAPY = 0;
   if (isStaked && reward && reward.totalStakingRewards > 0 && reward.bscStakeAmount > 0) {
-    stakingAPY = (reward.totalStakingRewards / reward.bscStakeAmount) * 100 * 365; // Annualized
+    // stakingAPY = (reward.totalStakingRewards / reward.bscStakeAmount) * 100 * 365; // Annualized
+    stakingAPY = 3;
   }
 
   // Format supply record info
@@ -240,8 +240,9 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
     return (numAmount / 1e6).toFixed(2); // Convert from microunits
   };
 
-  const formatDate = (timestamp: string) => {
-    return new Date(Number(timestamp)).toLocaleDateString();
+  const formatDate = (timestamp: string | number) => {
+    const timestampNumber = typeof timestamp === 'string' ? Number(timestamp) : timestamp;
+    return new Date(timestampNumber).toLocaleDateString();
   };
 
   const getStepIcon = (step: (typeof STAKING_STEPS)[0], stepStatus: StakingStatus) => {
@@ -250,7 +251,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
       return <AlertCircle className="w-4 h-4 text-white" />;
     }
     if (stepStatus < currentStatus || (stepStatus === currentStatus && isStaked)) {
-      return <Icon className="w-4 h-4 text-white" />;
+      return <Icon className="w-4 h-4 text-black" />;
     }
     if (stepStatus === currentStatus) {
       return <Loader2 className="w-4 h-4 text-white animate-spin" />;
@@ -273,7 +274,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[50vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
@@ -283,18 +284,27 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
 
         <div className="space-y-6 py-4">
           {/* Staking Summary - Always show */}
-          <Card className="bg-gradient-to-br from-card to-emerald-500/5 border-emerald-200/30 dark:border-emerald-800/30">
-            <CardHeader>
+          <Card className="relative bg-background border-transparent overflow-hidden">
+            {/* Outline gradient border */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-background"
+            />
+            <CardHeader className="relative z-20">
               <CardTitle className="flex items-center gap-2">
-                <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-green-500">
-                  <Coins className="w-4 h-4 text-white" />
+                <div className="p-2 rounded-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]">
+                  <Coins className="w-4 h-4 text-black" />
                 </div>
                 Staking Summary
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-20">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1 p-3 rounded-lg border border-border/50 bg-gradient-to-br from-card to-primary/5">
+                <div className="space-y-1 p-3 rounded-lg bg-card border border-border/50">
                   <Typography variant="small" className="text-muted-foreground font-medium">
                     Total Staked
                   </Typography>
@@ -307,7 +317,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                   />
                 </div>
 
-                <div className="space-y-1 p-3 rounded-lg border border-emerald-200/30 bg-gradient-to-br from-card to-emerald-500/10">
+                <div className="space-y-1 p-3 rounded-lg bg-card border">
                   <Typography variant="small" className="text-muted-foreground font-medium">
                     Total Rewards
                   </Typography>
@@ -316,11 +326,11 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     value={0}
                     suffix=" CHR"
                     decimals={4}
-                    className="text-xl font-bold text-emerald-600 dark:text-emerald-400"
+                    className="text-xl font-bold"
                   />
                 </div>
 
-                <div className="space-y-1 p-3 rounded-lg border border-blue-200/30 bg-gradient-to-br from-card to-blue-500/10">
+                <div className="space-y-1 p-3 rounded-lg bg-card border">
                   <Typography variant="small" className="text-muted-foreground font-medium">
                     Current Rewards
                   </Typography>
@@ -329,22 +339,22 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     value={0}
                     suffix=" CHR"
                     decimals={4}
-                    className="text-xl font-bold text-blue-600 dark:text-blue-400"
+                    className="text-xl font-bold"
                   />
                 </div>
 
-                <div className="space-y-1 p-3 rounded-lg border border-border/50 bg-gradient-to-br from-card to-muted/10">
+                <div className="space-y-1 p-3 rounded-lg bg-card border border-border/50">
                   <Typography variant="small" className="text-muted-foreground font-medium">
                     Last Update
                   </Typography>
-                  <Typography className="text-sm font-medium">
+                  <Typography className="text-xl font-bold">
                     {reward ? new Date(Number(reward.lastUpdateTimestamp)).toLocaleString() : 'N/A'}
                   </Typography>
                 </div>
               </div>
 
               {reward && reward.bscStakingAddress && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-lg border border-border/50">
+                <div className="mt-4 p-4 bg-card rounded-lg border border-border/50">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <Typography
@@ -358,7 +368,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                       </Typography>
                     </div>
                     <Button
-                      variant="outline"
+                      variant="gradient"
                       size="sm"
                       className="ml-3 flex-shrink-0"
                       onClick={() =>
@@ -398,7 +408,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
 
           {/* Supply Records - Always show with improved layout */}
           {supplyRecords.length > 1 ? (
-            <Card className="border-primary/20">
+            <Card className="bg-card border-border/50">
               <CardHeader>
                 <CardTitle>Supply Records</CardTitle>
                 <CardDescription>
@@ -413,7 +423,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                       <TabsTrigger
                         key={index}
                         value={index.toString()}
-                        className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-primary"
+                        className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-[#52E5FF]"
                       >
                         Supply #{index + 1}
                       </TabsTrigger>
@@ -425,12 +435,12 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     <TabsContent key={index} value={index.toString()} className="mt-6">
                       <div className="space-y-4">
                         {/* Main info in a clean grid */}
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-muted/20 rounded-lg border">
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
                           <div>
                             <Typography variant="small" className="text-muted-foreground mb-1">
                               Amount
                             </Typography>
-                            <Typography weight="semibold" className="text-lg">
+                            <Typography weight="semibold" className="text-base">
                               {formatSupplyAmount(record.netAmount)} CHR
                             </Typography>
                           </div>
@@ -438,29 +448,29 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                             <Typography variant="small" className="text-muted-foreground mb-1">
                               Supply Date
                             </Typography>
-                            <Typography weight="semibold" className="text-lg">
-                              {formatDate(record.createdAt)}
+                            <Typography weight="semibold" className="text-base">
+                              {new Date(Number(record.createdAt)).toLocaleString()}
                             </Typography>
                           </div>
                           <div>
                             <Typography variant="small" className="text-muted-foreground mb-1">
                               Status
                             </Typography>
-                            <Badge variant="outline" className="text-sm">
+                            <Typography weight="semibold" className="text-base">
                               {typeof record.stakingStatus === 'string'
                                 ? record.stakingStatus.replace(/_/g, ' ')
                                 : 'Unknown'}
-                            </Badge>
+                            </Typography>
                           </div>
                         </div>
 
                         {/* Additional details in a 2-column grid */}
-                        <div className="grid grid-cols-2 gap-4 p-4 bg-muted/10 rounded-lg border">
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-card rounded-lg border border-border/50">
                           <div>
                             <Typography variant="small" className="text-muted-foreground mb-1">
                               Expected Amount
                             </Typography>
-                            <Typography weight="medium" className="text-base">
+                            <Typography weight="semibold" className="text-base">
                               {formatSupplyAmount(record.expectedAmount)} CHR
                             </Typography>
                           </div>
@@ -468,7 +478,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                             <Typography variant="small" className="text-muted-foreground mb-1">
                               Supply Fee
                             </Typography>
-                            <Typography weight="medium" className="text-base">
+                            <Typography weight="semibold" className="text-base">
                               {formatSupplyAmount(record.supplyFee)} CHR
                             </Typography>
                           </div>
@@ -481,14 +491,14 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
             </Card>
           ) : (
             /* Single supply record with proper grid */
-            <Card className="border-primary/20">
+            <Card className="bg-card border-border/50">
               <CardHeader>
                 <CardTitle>Supply Record</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {/* Main info in a clean grid */}
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-muted/20 rounded-lg border">
+                  <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
                     <div>
                       <Typography variant="small" className="text-muted-foreground mb-1">
                         Amount
@@ -509,7 +519,10 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                       <Typography variant="small" className="text-muted-foreground mb-1">
                         Status
                       </Typography>
-                      <Badge variant="outline" className="text-sm">
+                      <Badge
+                        variant="outline"
+                        className="text-sm border-[#52E5FF]/30 text-[#52E5FF]"
+                      >
                         {typeof supplyRecord.stakingStatus === 'string'
                           ? supplyRecord.stakingStatus.replace(/_/g, ' ')
                           : 'Unknown'}
@@ -518,7 +531,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                   </div>
 
                   {/* Additional details in a 2-column grid */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/10 rounded-lg border">
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-card rounded-lg border border-border/50">
                     <div>
                       <Typography variant="small" className="text-muted-foreground mb-1">
                         Expected Amount
@@ -542,7 +555,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
           )}
 
           {/* Progress Overview */}
-          <Card className="border-primary/20 bg-gradient-to-r from-card via-card to-primary/5">
+          <Card className="bg-card border-border/50">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -552,14 +565,10 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                   </CardDescription>
                 </div>
                 <Badge
-                  variant={isStaked ? 'default' : hasError ? 'destructive' : 'secondary'}
-                  className={cn(
-                    'h-8 px-3',
-                    isStaked &&
-                      'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
-                  )}
+                  variant={isStaked ? 'secondary' : hasError ? 'destructive' : 'outline'}
+                  className="h-8 px-3"
                 >
-                  {isStaked ? '✨ Staked' : hasError ? 'Error' : 'Processing'}
+                  {isStaked ? 'Staked' : hasError ? 'Error' : 'Processing'}
                 </Badge>
               </div>
             </CardHeader>
@@ -577,7 +586,9 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     <div
                       className={cn(
                         'h-full transition-all duration-500 ease-in-out rounded-full',
-                        isStaked ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-primary'
+                        isStaked
+                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                          : 'bg-primary'
                       )}
                       style={{ width: `${progressPercentage}%` }}
                     />
@@ -585,9 +596,9 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                 </div>
 
                 {isStaked && stakingAPY > 0 && (
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      <TrendingUp className="w-4 h-4 text-[#52E5FF]" />
                       <Typography variant="small" className="text-muted-foreground font-medium">
                         Estimated Staking APY
                       </Typography>
@@ -596,7 +607,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                       value={stakingAPY}
                       suffix="%"
                       decimals={2}
-                      className="text-lg font-bold text-emerald-600 dark:text-emerald-400"
+                      className="text-lg font-bold text-[#52E5FF]"
                     />
                   </div>
                 )}
@@ -633,95 +644,84 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                       <div
                         className={cn(
                           'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
-                          stepStatusType === 'completed'
-                            ? 'bg-gradient-to-b from-emerald-500 to-green-500'
-                            : 'bg-border/30'
+                          stepStatusType === 'completed' ? 'bg-[#52E5FF]' : 'bg-border/30'
                         )}
                       />
                     )}
 
                     <div
                       className={cn(
-                        'flex items-start gap-4 p-4 rounded-lg border-2 transition-all relative z-10',
-                        stepStatusType === 'completed' &&
-                          'bg-gradient-to-r from-emerald-50/50 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/20 border-emerald-200/50 dark:border-emerald-800/50',
+                        'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
+                        stepStatusType === 'completed' && 'border-transparent',
                         stepStatusType === 'current' &&
                           !hasError &&
-                          'bg-gradient-to-r from-primary/5 to-blue-500/5 border-primary/30 shadow-sm ring-1 ring-primary/10',
-                        stepStatusType === 'error' &&
-                          'bg-gradient-to-r from-destructive/5 to-red-500/5 border-destructive/30',
-                        stepStatusType === 'pending' && 'bg-muted/10 border-muted/20'
+                          'border border-orange-500/30 shadow-sm',
+                        stepStatusType === 'error' && 'border border-destructive/30',
+                        stepStatusType === 'pending' && 'border border-muted/20'
                       )}
                     >
-                      <div
-                        className={cn(
-                          'flex-shrink-0 mt-0.5 rounded-full p-2 ring-2 ring-offset-2',
-                          stepStatusType === 'completed' &&
-                            'bg-gradient-to-r from-emerald-500 to-green-500 ring-emerald-500/30 ring-offset-card',
-                          stepStatusType === 'current' &&
-                            !hasError &&
-                            'bg-gradient-to-r from-primary to-blue-500 ring-primary/30 ring-offset-card',
-                          stepStatusType === 'error' &&
-                            'bg-gradient-to-r from-destructive to-red-500 ring-destructive/30 ring-offset-card',
-                          stepStatusType === 'pending' && 'bg-muted ring-muted/30 ring-offset-card'
-                        )}
-                      >
-                        {getStepIcon(step, step.status)}
-                      </div>
+                      {/* Outline gradient border for completed steps */}
+                      {stepStatusType === 'completed' && (
+                        <>
+                          <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
+                          />
+                          <div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
+                          />
+                        </>
+                      )}
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <Typography
-                            weight="semibold"
-                            className={cn(
-                              stepStatusType === 'completed' &&
-                                'text-emerald-700 dark:text-emerald-400',
-                              stepStatusType === 'current' && !hasError && 'text-primary',
-                              stepStatusType === 'error' && 'text-destructive',
-                              stepStatusType === 'pending' && 'text-muted-foreground'
-                            )}
-                          >
-                            {step.label}
-                          </Typography>
-
-                          <Badge
-                            variant={
-                              stepStatusType === 'completed'
-                                ? 'default'
-                                : stepStatusType === 'current' && !hasError
-                                  ? 'secondary'
-                                  : stepStatusType === 'error'
-                                    ? 'destructive'
-                                    : 'outline'
-                            }
-                            className={cn(
-                              'text-xs h-5 font-medium',
-                              stepStatusType === 'completed' &&
-                                'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-none'
-                            )}
-                          >
-                            {stepStatusType === 'completed'
-                              ? '✓ Complete'
-                              : stepStatusType === 'current' && !hasError
-                                ? 'In Progress'
-                                : stepStatusType === 'error'
-                                  ? '✗ Failed'
-                                  : `Step ${index + 1}`}
-                          </Badge>
-                        </div>
-
-                        <Typography
-                          variant="small"
+                      <div className="flex items-start gap-4 p-4 relative z-20">
+                        <div
                           className={cn(
+                            'flex-shrink-0 mt-0.5 rounded-full p-2',
                             stepStatusType === 'completed' &&
-                              'text-emerald-600/80 dark:text-emerald-400/80',
-                            stepStatusType === 'current' && !hasError && 'text-primary/70',
-                            stepStatusType === 'error' && 'text-destructive/70',
-                            stepStatusType === 'pending' && 'text-muted-foreground/70'
+                              'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
+                            stepStatusType === 'current' && !hasError && 'bg-orange-500',
+                            stepStatusType === 'error' && 'bg-destructive',
+                            stepStatusType === 'pending' && 'bg-muted'
                           )}
                         >
-                          {step.description}
-                        </Typography>
+                          {getStepIcon(step, step.status)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <Typography weight="semibold" className="text-embossed">
+                              {step.label}
+                            </Typography>
+
+                            <div
+                              className={cn(
+                                'text-xs h-5 px-2 rounded-full flex items-center font-medium',
+                                stepStatusType === 'completed' &&
+                                  'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
+                                stepStatusType === 'current' &&
+                                  !hasError &&
+                                  'border border-orange-500/30 text-orange-500 bg-orange-500/10',
+                                stepStatusType === 'error' &&
+                                  'border border-destructive/30 text-destructive bg-destructive/10',
+                                stepStatusType === 'pending' &&
+                                  'border border-muted/30 text-muted-foreground bg-muted/10'
+                              )}
+                            >
+                              {stepStatusType === 'completed'
+                                ? 'Complete'
+                                : stepStatusType === 'current' && !hasError
+                                  ? 'In Progress'
+                                  : stepStatusType === 'error'
+                                    ? '✗ Failed'
+                                    : `Step ${index + 1}`}
+                            </div>
+                          </div>
+
+                          <Typography variant="small" className="text-submerged">
+                            {step.description}
+                          </Typography>
+                        </div>
                       </div>
                     </div>
                   </div>

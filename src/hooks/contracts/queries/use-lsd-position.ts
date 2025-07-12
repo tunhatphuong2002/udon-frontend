@@ -195,7 +195,8 @@ export function getStakingStatusForAsset(
   if (isStaked && reward && reward.totalStakingRewards > 0 && reward.bscStakeAmount > 0) {
     // This is a simplified calculation - in real implementation you might want to
     // calculate based on time periods and compound interest
-    stakingAPY = (reward.totalStakingRewards / reward.bscStakeAmount) * 100;
+    // stakingAPY = (reward.totalStakingRewards / reward.bscStakeAmount) * 100;
+    stakingAPY = 3;
   }
 
   return {

@@ -15,8 +15,11 @@ import {
 } from '@/components/common/tooltip';
 import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
+import { LsdWithdrawDialog } from './lsd-withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
 import { StakingProgressDialog } from './staking-progress-dialog';
+import { SlowWithdrawProgressDialog } from './slow-withdraw-progress-dialog';
+import { QuickWithdrawProgressDialog } from './quick-withdraw-progress-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
@@ -24,11 +27,30 @@ import {
   useLsdPosition,
   getStakingStatusForAsset,
   StakingStatus,
+  LsdFailureStage,
   UserSupplyRecord,
 } from '@/hooks/contracts/queries/use-lsd-position';
+import {
+  useSlowWithdrawPositions,
+  getSlowWithdrawStatusForAsset,
+} from '@/hooks/contracts/queries/use-slow-withdraw-positions';
+import {
+  useQuickWithdrawPositions,
+  getQuickWithdrawStatusForAsset,
+  getQuickWithdrawPositionStatus,
+} from '@/hooks/contracts/queries/use-quick-withdraw-positions';
 import { cn } from '@/utils/tailwind';
-import { CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
-
+import {
+  ChevronDown,
+  Coins,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Zap,
+  Timer,
+  Target,
+} from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 // Import mapping from staking dialog
 const STAKING_STATUS_MAP: Record<string, StakingStatus> = {
   PENDING_STAKING: StakingStatus.PENDING_STAKING,
@@ -61,12 +83,31 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   const router = useRouter();
 
   // LSD data fetching
-  const { data: lsdData, isLoading: lsdLoading } = useLsdPosition();
+  const {
+    data: lsdData,
+    // isLoading: lsdLoading
+  } = useLsdPosition();
+
+  // LSD Withdraw data fetching
+  const {
+    data: slowWithdrawData,
+    // isLoading: slowWithdrawLoading
+  } = useSlowWithdrawPositions();
+
+  console.log('slowWithdrawData in position', slowWithdrawData);
+
+  const {
+    data: quickWithdrawData,
+    // isLoading: quickWithdrawLoading
+  } = useQuickWithdrawPositions();
+
+  console.log('quickWithdrawData in position', quickWithdrawData);
 
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
   const [supplyDialogOpen, setSupplyDialogOpen] = useState(false);
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [lsdWithdrawDialogOpen, setLsdWithdrawDialogOpen] = useState(false);
   // Collateral dialog state
   const [collateralDialogOpen, setCollateralDialogOpen] = useState(false);
   const [selectedCollateral, setSelectedCollateral] = useState<UserReserveData | null>(null);
@@ -74,6 +115,12 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   const [stakingProgressDialogOpen, setStakingProgressDialogOpen] = useState(false);
   const [selectedStakingAsset, setSelectedStakingAsset] = useState<string>('');
   const [selectedRecordIndex, setSelectedRecordIndex] = useState<number>(0);
+  // LSD Withdraw progress dialog states
+  const [slowWithdrawProgressDialogOpen, setSlowWithdrawProgressDialogOpen] = useState(false);
+  const [quickWithdrawProgressDialogOpen, setQuickWithdrawProgressDialogOpen] = useState(false);
+  const [selectedWithdrawAsset, setSelectedWithdrawAsset] = useState<string>('');
+  // Expandable rows state
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   // Handle supply button click for a position
   const handleSupplyClick = (position: UserReserveData) => {
@@ -85,25 +132,19 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   // Handle withdraw button click for a position
   const handleWithdrawClick = (position: UserReserveData) => {
     setSelectedPosition(position);
-    setWithdrawDialogOpen(true);
+
+    // For tCHR (LSD), open LSD withdraw dialog, otherwise open normal withdraw dialog
+    if (position.symbol === 'tCHR') {
+      setLsdWithdrawDialogOpen(true);
+    } else {
+      setWithdrawDialogOpen(true);
+    }
   };
 
   // Handle collateral switch click
   const handleCollateralSwitch = (position: UserReserveData) => {
     setSelectedCollateral(position);
     setCollateralDialogOpen(true);
-  };
-
-  // Handle asset click
-  const handleAssetClick = (asset: string, symbol: string) => {
-    // For tCHR, open staking progress dialog instead of navigating to reserve page
-    if (symbol === 'tCHR') {
-      setSelectedStakingAsset(symbol);
-      setSelectedRecordIndex(0); // Default to first record
-      setStakingProgressDialogOpen(true);
-    } else {
-      router.push(`/reserve/${asset}`);
-    }
   };
 
   // Handle staking progress pill click
@@ -113,254 +154,254 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setStakingProgressDialogOpen(true);
   };
 
-  // Helper function to get short status text
-  const getShortStatus = (status: string): string => {
-    switch (status) {
-      case 'STAKED':
-        return 'Staking';
-      case 'PENDING_STAKING':
-        return 'Pending';
-      case 'CROSS_CHAIN_TRANSFERRING_TO_ECONOMY':
-        return 'Transferring';
-      case 'BRIDGING_TO_BSC':
-        return 'Bridging';
-      case 'TRANSFER_TO_USER':
-        return 'Processing';
-      case 'APPROVE_ERC20':
-        return 'Approving';
-      default:
-        return 'Unknown';
-    }
+  // Handle slow withdraw progress pill click
+  const handleSlowWithdrawProgressClick = (symbol: string) => {
+    setSelectedWithdrawAsset(symbol);
+    setSlowWithdrawProgressDialogOpen(true);
   };
 
-  // Render staking progress pills for multiple records
-  const renderStakingProgressPills = (symbol: string, records: UserSupplyRecord[]) => {
-    if (!records || records.length === 0) {
+  // Handle quick withdraw progress pill click
+  const handleQuickWithdrawProgressClick = (symbol: string) => {
+    setSelectedWithdrawAsset(symbol);
+    setQuickWithdrawProgressDialogOpen(true);
+  };
+
+  // Handle expand/collapse row
+  const handleExpandRow = (assetSymbol: string) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(assetSymbol)) {
+      newExpandedRows.delete(assetSymbol);
+    } else {
+      newExpandedRows.add(assetSymbol);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
+  // Helper function to format supply record info
+  const formatSupplyAmount = (amount: number | bigint): string => {
+    const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
+    return (numAmount / 1e6).toFixed(2); // Convert from microunits
+  };
+
+  // Render slow withdraw progress pill
+  const renderSlowWithdrawProgressPill = (symbol: string) => {
+    const withdrawInfo = getSlowWithdrawStatusForAsset(symbol, slowWithdrawData);
+    const { hasError, isCompleted, canCompleteWithdraw, position } = withdrawInfo;
+
+    // Base card structure with fixed height
+    const baseCardClasses =
+      'group relative h-36 p-3 rounded-xl border border-border/30 bg-gradient-to-br from-card via-card/95 to-muted/20 hover:shadow-lg hover:shadow-[#52E5FF]/10 transition-all duration-300 hover:border-[#52E5FF]/40';
+
+    if (!position) {
       return (
-        <TooltipProvider>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-3 hover:bg-muted/30 transition-all duration-300 border border-border/30 rounded-lg min-w-[120px] bg-gradient-to-r from-muted/10 to-muted/5"
-                onClick={() => handleStakingProgressClick(symbol)}
+        <div className={baseCardClasses}>
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-muted/20 group-hover:bg-[#52E5FF]/10 transition-colors duration-300">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#52E5FF] transition-colors duration-300" />
+              </div>
+              <div className="flex flex-col">
+                <Typography
+                  variant="small"
+                  className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
+                >
+                  Slow Withdraw
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground/60 text-xs">
+                  14-day period
+                </Typography>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <Typography
+                variant="small"
+                className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
               >
-                <div className="flex items-center gap-3 w-full">
-                  <div className="relative">
-                    <div className="w-3 h-3 bg-muted-foreground/40 rounded-full" />
-                  </div>
-                  <div className="flex flex-col items-start flex-1">
-                    <Typography variant="small" className="text-muted-foreground/80 font-medium">
-                      Not staking
-                    </Typography>
-                    <Typography variant="small" className="text-muted-foreground/60 text-xs">
-                      Click to start
-                    </Typography>
-                  </div>
-                  <div className="p-1 rounded-full text-muted-foreground/60">
-                    <ArrowRight className="w-3 h-3" />
-                  </div>
-                </div>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p>Start staking to earn additional rewards</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+                No active withdrawals
+              </Typography>
+            </div>
+
+            {/* Empty Progress */}
+            <div className="mt-2">
+              <div className="h-1.5 rounded-full bg-muted/20 overflow-hidden">
+                <div className="w-0 h-full bg-[#52E5FF]/30 transition-all duration-300" />
+              </div>
+            </div>
+          </div>
+        </div>
       );
     }
 
-    // Single record case
-    if (records.length === 1) {
-      const stakingInfo = getStakingStatusForAsset(symbol, lsdData);
+    const amount = formatSupplyAmount(position.stAssetAmount);
+    const expectedAmount = formatSupplyAmount(position.assetAmount);
 
-      const getStatusDisplay = () => {
-        if (stakingInfo.hasError) {
-          return {
-            icon: <XCircle className="w-4 h-4" />,
-            text: 'Failed',
-            textColor: 'text-destructive',
-            bgColor: 'bg-gradient-to-r from-destructive/10 to-red-500/10',
-            borderColor: 'border-destructive/30',
-            dotColor: 'bg-destructive',
-          };
-        }
+    // Calculate remaining time for display
+    const unstakingAvailableTime = position.unstakingAvailableAt;
+    const remainingTime = Math.max(0, unstakingAvailableTime - Date.now());
+    const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
 
-        if (stakingInfo.isStaked) {
-          return {
-            icon: <CheckCircle2 className="w-4 h-4" />,
-            text: 'Staked',
-            textColor: 'text-emerald-600 dark:text-emerald-400',
-            bgColor: 'bg-gradient-to-r from-emerald-500/10 to-green-500/10',
-            borderColor: 'border-emerald-500/30',
-            dotColor: 'bg-gradient-to-r from-emerald-500 to-green-500',
-          };
-        }
-
-        return {
-          icon: <Loader2 className="w-4 h-4 animate-spin" />,
-          text: 'Processing',
-          textColor: 'text-primary',
-          bgColor: 'bg-gradient-to-r from-primary/10 to-blue-500/10',
-          borderColor: 'border-primary/30',
-          dotColor: 'bg-gradient-to-r from-primary to-blue-500',
-          isAnimated: true,
-        };
-      };
-
-      const status = getStatusDisplay();
-
-      return (
-        <TooltipProvider>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  'h-auto p-3 transition-all duration-300 hover:scale-[1.02] hover:shadow-sm',
-                  status.bgColor,
-                  status.borderColor,
-                  'border rounded-lg min-w-[120px]'
-                )}
-                onClick={() => handleStakingProgressClick(symbol, 0)}
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <div className="relative flex items-center justify-center">
-                    <div className={cn('w-3 h-3 rounded-full', status.dotColor)} />
-                    {status.isAnimated && (
-                      <div
-                        className={cn(
-                          'absolute inset-0 w-3 h-3 rounded-full animate-ping opacity-40',
-                          'bg-primary'
-                        )}
-                      />
-                    )}
-                  </div>
-                  <div className="flex flex-col items-start flex-1">
-                    <Typography variant="small" weight="medium" className={status.textColor}>
-                      {status.text}
-                    </Typography>
-                    {stakingInfo.hasError && (
-                      <Typography variant="small" className="text-muted-foreground text-xs">
-                        Click for details
-                      </Typography>
-                    )}
-                  </div>
-                  <div className={cn('p-1 rounded-full', status.textColor)}>{status.icon}</div>
-                </div>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p>
-                {stakingInfo.hasError
-                  ? 'Click to view error details'
-                  : stakingInfo.isStaked
-                    ? 'View staking progress and rewards'
-                    : 'View staking progress'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-
-    // Helper function to safely convert BigInt to number and format
-    const formatSupplyAmount = (amount: number | bigint): string => {
-      const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
-      return (numAmount / 1e6).toFixed(2);
-    };
-
-    // Multiple records case - render single pill with segments
     return (
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <div className="relative cursor-pointer">
-              {/* Single pill container */}
-              <div className="flex items-center h-5 rounded-full border border-border/30 bg-muted/20 overflow-hidden min-w-auto">
-                {records.map((record, index) => {
-                  const recordStatus =
-                    typeof record.stakingStatus === 'string'
-                      ? (STAKING_STATUS_MAP[record.stakingStatus] ?? StakingStatus.PENDING_STAKING)
-                      : record.stakingStatus;
+            <div
+              className={cn(baseCardClasses, 'cursor-pointer hover:scale-[1.02]')}
+              onClick={() => handleSlowWithdrawProgressClick(symbol)}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                  const isStaked = recordStatus === StakingStatus.STAKED;
-                  const isProcessing =
-                    recordStatus !== StakingStatus.STAKED &&
-                    recordStatus !== StakingStatus.PENDING_STAKING;
-
-                  let segmentColor = 'bg-muted-foreground/30'; // pending
-                  if (isStaked) segmentColor = 'bg-gradient-to-r from-emerald-500 to-green-500';
-                  else if (isProcessing) segmentColor = 'bg-gradient-to-r from-primary to-blue-500';
-
-                  return (
-                    <div
-                      key={index}
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={cn(
+                      'p-1.5 rounded-lg transition-all duration-300',
+                      hasError
+                        ? 'bg-red-500/10 group-hover:bg-red-500/20'
+                        : isCompleted
+                          ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
+                          : canCompleteWithdraw
+                            ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
+                            : 'bg-orange-500/10 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    <Clock
                       className={cn(
-                        'flex-1 h-full transition-all duration-300 hover:brightness-110 relative group',
-                        segmentColor,
-                        'first:rounded-l-full last:rounded-r-full'
+                        'w-3.5 h-3.5 transition-colors duration-300',
+                        hasError
+                          ? 'text-red-500'
+                          : isCompleted || canCompleteWithdraw
+                            ? 'text-[#52E5FF]'
+                            : 'text-orange-500'
                       )}
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleStakingProgressClick(symbol, index);
-                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <Typography
+                      variant="small"
+                      className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
                     >
-                      {/* Hover effect */}
-                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300 first:rounded-l-full last:rounded-r-full" />
+                      Slow Withdraw
+                    </Typography>
+                    <Typography
+                      variant="small"
+                      className="text-muted-foreground/70 text-xs truncate"
+                    >
+                      {hasError
+                        ? 'Error'
+                        : isCompleted
+                          ? 'Done'
+                          : canCompleteWithdraw
+                            ? 'Ready'
+                            : `${remainingDays}d left`}
+                    </Typography>
+                  </div>
+                </div>
 
-                      {/* Processing animation */}
-                      {isProcessing && (
-                        <div className="absolute inset-0 bg-white/20 animate-pulse first:rounded-l-full last:rounded-r-full" />
+                {/* Amount Info */}
+                <div className="space-y-1 mb-2">
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Amount:
+                    </Typography>
+                    <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
+                      {amount}
+                    </Typography>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Expected:
+                    </Typography>
+                    <Typography variant="small" className="text-muted-foreground text-xs">
+                      {expectedAmount} CHR
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Status Badge */}
+                <div className="mb-2">
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 w-full justify-center',
+                      hasError
+                        ? 'bg-red-500/10 text-red-500 group-hover:bg-red-500/20'
+                        : isCompleted
+                          ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
+                          : canCompleteWithdraw
+                            ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
+                            : 'bg-orange-500/10 text-orange-500 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    {hasError ? (
+                      <AlertTriangle className="w-3 h-3" />
+                    ) : isCompleted ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : canCompleteWithdraw ? (
+                      <Target className="w-3 h-3" />
+                    ) : (
+                      <Timer className="w-3 h-3" />
+                    )}
+                    <span className="truncate">
+                      {hasError
+                        ? 'Failed'
+                        : isCompleted
+                          ? 'Completed'
+                          : canCompleteWithdraw
+                            ? 'Ready'
+                            : 'Processing'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="relative">
+                  <div className="h-1.5 rounded-full border border-border/20 bg-muted/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'w-full h-full transition-all duration-500 rounded-full',
+                        hasError
+                          ? 'bg-gradient-to-r from-red-500 to-red-600'
+                          : isCompleted
+                            ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                            : canCompleteWithdraw
+                              ? 'bg-gradient-to-r from-[#52E5FF]/80 via-[#36B1FF]/80 to-[#E4F5FF]/80'
+                              : 'bg-gradient-to-r from-orange-400 to-orange-500'
                       )}
-
-                      {/* Segment divider */}
-                      {index < records.length - 1 && (
-                        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-4 bg-black/20" />
+                    >
+                      {!isCompleted && !hasError && !canCompleteWithdraw && (
+                        <div className="w-full h-full bg-white/30 animate-pulse rounded-full" />
                       )}
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Records count label */}
-              <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2">
-                <Typography variant="small" className="text-muted-foreground text-xs">
-                  {records.length} stakings
-                </Typography>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF]/20 via-[#36B1FF]/20 to-[#E4F5FF]/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                </div>
               </div>
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Typography variant="small" weight="semibold">
-                Multiple Staking Records ({records.length})
+                Slow Withdraw Details
               </Typography>
-              {records.slice(0, 3).map((record, index) => {
-                const amount = formatSupplyAmount(record.netAmount);
-                const shortStatus = getShortStatus(
-                  typeof record.stakingStatus === 'string' ? record.stakingStatus : 'UNKNOWN'
-                );
-                return (
-                  <div key={index} className="flex justify-between text-xs">
-                    <span>Supply #{index + 1}:</span>
-                    <span>
-                      {amount} CHR - {shortStatus}
-                    </span>
-                  </div>
-                );
-              })}
-              {records.length > 3 && (
-                <Typography variant="small" className="text-muted-foreground">
-                  +{records.length - 3} more...
-                </Typography>
-              )}
-              <Typography variant="small" className="text-primary mt-2 font-medium">
-                Click any segment to view details
-              </Typography>
+              <div className="text-xs space-y-1.5">
+                <div>
+                  Amount: {amount} stCHR → {expectedAmount} CHR
+                </div>
+                <div>
+                  Status:{' '}
+                  {hasError
+                    ? 'Failed'
+                    : isCompleted
+                      ? 'Completed'
+                      : canCompleteWithdraw
+                        ? 'Ready to claim'
+                        : `${remainingDays} days remaining`}
+                </div>
+              </div>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -368,26 +409,573 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     );
   };
 
+  // Render quick withdraw progress pill
+  const renderQuickWithdrawProgressPill = (symbol: string) => {
+    const withdrawInfo = getQuickWithdrawStatusForAsset(symbol, quickWithdrawData);
+    const { withdrawPositions } = withdrawInfo;
+
+    // Base card structure with fixed height
+    const baseCardClasses =
+      'group relative h-36 p-3 rounded-xl border border-border/30 bg-gradient-to-br from-card via-card/95 to-muted/20 hover:shadow-lg hover:shadow-[#52E5FF]/10 transition-all duration-300 hover:border-[#52E5FF]/40';
+
+    if (withdrawPositions.length === 0) {
+      return (
+        <div className={baseCardClasses}>
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-muted/20 group-hover:bg-[#52E5FF]/10 transition-colors duration-300">
+                <Zap className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#52E5FF] transition-colors duration-300" />
+              </div>
+              <div className="flex flex-col">
+                <Typography
+                  variant="small"
+                  className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
+                >
+                  Quick Withdraw
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground/60 text-xs">
+                  Instant via DEX
+                </Typography>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <Typography
+                variant="small"
+                className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
+              >
+                No active withdrawals
+              </Typography>
+            </div>
+
+            {/* Empty Progress */}
+            <div className="mt-2">
+              <div className="h-1.5 rounded-full bg-muted/20 overflow-hidden">
+                <div className="w-0 h-full bg-[#52E5FF]/30 transition-all duration-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Calculate summary stats
+    const totalStAssetAmount = withdrawPositions.reduce((sum, position) => {
+      const amount =
+        typeof position.stAssetAmount === 'bigint'
+          ? Number(position.stAssetAmount)
+          : position.stAssetAmount;
+      return sum + amount / 1e6;
+    }, 0);
+
+    const completedCount = withdrawPositions.filter(position => {
+      const positionStatus = getQuickWithdrawPositionStatus(position);
+      return positionStatus.isCompleted;
+    }).length;
+
+    const readyCount = withdrawPositions.filter(position => {
+      const positionStatus = getQuickWithdrawPositionStatus(position);
+      return positionStatus.canComplete && !positionStatus.isCompleted;
+    }).length;
+
+    const errorCount = withdrawPositions.filter(position => {
+      const positionStatus = getQuickWithdrawPositionStatus(position);
+      return positionStatus.hasError;
+    }).length;
+
+    const pendingCount = withdrawPositions.length - completedCount - readyCount - errorCount;
+
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(baseCardClasses, 'cursor-pointer hover:scale-[1.02]')}
+              onClick={() => handleQuickWithdrawProgressClick(symbol)}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={cn(
+                      'p-1.5 rounded-lg transition-all duration-300',
+                      errorCount > 0
+                        ? 'bg-red-500/10 group-hover:bg-red-500/20'
+                        : completedCount > 0
+                          ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
+                          : readyCount > 0
+                            ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
+                            : 'bg-orange-500/10 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    <Zap
+                      className={cn(
+                        'w-3.5 h-3.5 transition-colors duration-300',
+                        errorCount > 0
+                          ? 'text-red-500'
+                          : completedCount > 0 || readyCount > 0
+                            ? 'text-[#52E5FF]'
+                            : 'text-orange-500'
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <Typography
+                      variant="small"
+                      className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
+                    >
+                      Quick Withdraw
+                    </Typography>
+                    <Typography
+                      variant="small"
+                      className="text-muted-foreground/70 text-xs truncate"
+                    >
+                      {withdrawPositions.length} position{withdrawPositions.length > 1 ? 's' : ''}
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-1 mb-2">
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Total:
+                    </Typography>
+                    <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
+                      {totalStAssetAmount.toFixed(2)}
+                    </Typography>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Status:
+                    </Typography>
+                    <div className="flex items-center gap-1">
+                      {completedCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-[#52E5FF]" />
+                          <Typography
+                            variant="small"
+                            className="text-[#52E5FF] font-medium text-xs"
+                          >
+                            {completedCount}
+                          </Typography>
+                        </div>
+                      )}
+                      {readyCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <Target className="w-2.5 h-2.5 text-[#52E5FF]" />
+                          <Typography
+                            variant="small"
+                            className="text-[#52E5FF] font-medium text-xs"
+                          >
+                            {readyCount}
+                          </Typography>
+                        </div>
+                      )}
+                      {pendingCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <Clock className="w-2.5 h-2.5 text-orange-500" />
+                          <Typography
+                            variant="small"
+                            className="text-orange-500 font-medium text-xs"
+                          >
+                            {pendingCount}
+                          </Typography>
+                        </div>
+                      )}
+                      {errorCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <AlertTriangle className="w-2.5 h-2.5 text-red-500" />
+                          <Typography variant="small" className="text-red-500 font-medium text-xs">
+                            {errorCount}
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary Badge */}
+                <div className="mb-2">
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 w-full justify-center',
+                      errorCount > 0
+                        ? 'bg-red-500/10 text-red-500 group-hover:bg-red-500/20'
+                        : completedCount > 0
+                          ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
+                          : readyCount > 0
+                            ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
+                            : 'bg-orange-500/10 text-orange-500 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    {errorCount > 0 ? (
+                      <>
+                        <AlertTriangle className="w-3 h-3" />
+                        <span className="truncate">Some Failed</span>
+                      </>
+                    ) : completedCount > 0 ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span className="truncate">Some Done</span>
+                      </>
+                    ) : readyCount > 0 ? (
+                      <>
+                        <Target className="w-3 h-3" />
+                        <span className="truncate">Some Ready</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3 h-3" />
+                        <span className="truncate">Processing</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Bar - Segmented */}
+                <div className="relative">
+                  <div className="flex h-1.5 rounded-full border border-border/20 bg-muted/10 overflow-hidden">
+                    {withdrawPositions.map((position, index) => {
+                      const positionStatus = getQuickWithdrawPositionStatus(position);
+                      const { isCompleted, hasError, canComplete } = positionStatus;
+                      const isProcessing = !isCompleted && !hasError && !canComplete;
+
+                      let segmentColor = 'bg-orange-500/40';
+                      if (hasError) segmentColor = 'bg-red-500';
+                      else if (isCompleted) segmentColor = 'bg-[#52E5FF]';
+                      else if (canComplete) segmentColor = 'bg-[#52E5FF]/80';
+                      else if (isProcessing) segmentColor = 'bg-orange-500';
+
+                      return (
+                        <div
+                          key={index}
+                          className={cn(
+                            'flex-1 h-full transition-all duration-500',
+                            segmentColor,
+                            'first:rounded-l-full last:rounded-r-full'
+                          )}
+                        >
+                          {isProcessing && (
+                            <div className="w-full h-full bg-white/30 animate-pulse first:rounded-l-full last:rounded-r-full" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF]/20 via-[#36B1FF]/20 to-[#E4F5FF]/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                </div>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="space-y-2">
+              <Typography variant="small" weight="semibold">
+                Quick Withdraw Overview
+              </Typography>
+              <div className="text-xs space-y-1.5">
+                <div>Total: {totalStAssetAmount.toFixed(2)} stCHR</div>
+                <div>Positions: {withdrawPositions.length}</div>
+                {completedCount > 0 && <div>Completed: {completedCount}</div>}
+                {readyCount > 0 && <div>Ready: {readyCount}</div>}
+                {pendingCount > 0 && <div>Pending: {pendingCount}</div>}
+                {errorCount > 0 && <div>Failed: {errorCount}</div>}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  // Render staking progress pills for multiple records
+  const renderStakingProgressPills = (symbol: string, records: UserSupplyRecord[]) => {
+    // Base card structure with fixed height
+    const baseCardClasses =
+      'group relative h-36 p-3 rounded-xl border border-border/30 bg-gradient-to-br from-card via-card/95 to-muted/20 hover:shadow-lg hover:shadow-[#52E5FF]/10 transition-all duration-300 hover:border-[#52E5FF]/40';
+
+    if (!records || records.length === 0) {
+      return (
+        <div className={baseCardClasses}>
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-muted/20 group-hover:bg-[#52E5FF]/10 transition-colors duration-300">
+                <Coins className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#52E5FF] transition-colors duration-300" />
+              </div>
+              <div className="flex flex-col">
+                <Typography
+                  variant="small"
+                  className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
+                >
+                  Staking
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground/60 text-xs">
+                  Earn rewards
+                </Typography>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <Typography
+                variant="small"
+                className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
+              >
+                No active staking
+              </Typography>
+            </div>
+
+            {/* Empty Progress */}
+            <div className="mt-2">
+              <div className="h-1.5 rounded-full bg-muted/20 overflow-hidden">
+                <div className="w-0 h-full bg-[#52E5FF]/30 transition-all duration-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Calculate summary stats
+    const totalAmount = records.reduce((sum, record) => {
+      const amount =
+        typeof record.netAmount === 'bigint' ? Number(record.netAmount) : record.netAmount;
+      return sum + amount / 1e6;
+    }, 0);
+
+    const stakedCount = records.filter(record => {
+      const stakingStatus =
+        typeof record.stakingStatus === 'string'
+          ? (STAKING_STATUS_MAP[record.stakingStatus] ?? StakingStatus.PENDING_STAKING)
+          : record.stakingStatus;
+      return stakingStatus === StakingStatus.STAKED;
+    }).length;
+
+    const hasError =
+      lsdData?.positions?.[0]?.status !== LsdFailureStage.NO_FAILURE &&
+      lsdData?.positions?.[0]?.status !== 'NO_FAILURE';
+    const pendingCount = records.length - stakedCount;
+
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(baseCardClasses, 'cursor-pointer hover:scale-[1.02]')}
+              onClick={() => handleStakingProgressClick(symbol, 0)}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={cn(
+                      'p-1.5 rounded-lg transition-all duration-300',
+                      hasError
+                        ? 'bg-red-500/10 group-hover:bg-red-500/20'
+                        : stakedCount > 0
+                          ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
+                          : 'bg-orange-500/10 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    <Coins
+                      className={cn(
+                        'w-3.5 h-3.5 transition-colors duration-300',
+                        hasError
+                          ? 'text-red-500'
+                          : stakedCount > 0
+                            ? 'text-[#52E5FF]'
+                            : 'text-orange-500'
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <Typography
+                      variant="small"
+                      className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
+                    >
+                      Staking
+                    </Typography>
+                    <Typography
+                      variant="small"
+                      className="text-muted-foreground/70 text-xs truncate"
+                    >
+                      {records.length} position{records.length > 1 ? 's' : ''}
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-1 mb-2">
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Total:
+                    </Typography>
+                    <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
+                      {totalAmount.toFixed(2)}
+                    </Typography>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                      Status:
+                    </Typography>
+                    <div className="flex items-center gap-1">
+                      {stakedCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-[#52E5FF]" />
+                          <Typography
+                            variant="small"
+                            className="text-[#52E5FF] font-medium text-xs"
+                          >
+                            {stakedCount}
+                          </Typography>
+                        </div>
+                      )}
+                      {pendingCount > 0 && (
+                        <div className="flex items-center gap-0.5">
+                          <Clock className="w-2.5 h-2.5 text-orange-500" />
+                          <Typography
+                            variant="small"
+                            className="text-orange-500 font-medium text-xs"
+                          >
+                            {pendingCount}
+                          </Typography>
+                        </div>
+                      )}
+                      {hasError && (
+                        <div className="flex items-center gap-0.5">
+                          <AlertTriangle className="w-2.5 h-2.5 text-red-500" />
+                          <Typography variant="small" className="text-red-500 font-medium text-xs">
+                            Error
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Badge */}
+                <div className="mb-2">
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 w-full justify-center',
+                      hasError
+                        ? 'bg-red-500/10 text-red-500 group-hover:bg-red-500/20'
+                        : stakedCount > 0
+                          ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
+                          : 'bg-orange-500/10 text-orange-500 group-hover:bg-orange-500/20'
+                    )}
+                  >
+                    {hasError ? (
+                      <>
+                        <AlertTriangle className="w-3 h-3" />
+                        <span className="truncate">Error Detected</span>
+                      </>
+                    ) : stakedCount > 0 ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span className="truncate">Active Staking</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3 h-3" />
+                        <span className="truncate">Processing</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Bar - Segmented */}
+                <div className="relative">
+                  <div className="flex h-1.5 rounded-full border border-border/20 bg-muted/10 overflow-hidden">
+                    {records.map((record, index) => {
+                      const stakingStatus =
+                        typeof record.stakingStatus === 'string'
+                          ? (STAKING_STATUS_MAP[record.stakingStatus] ??
+                            StakingStatus.PENDING_STAKING)
+                          : record.stakingStatus;
+
+                      const isStaked = stakingStatus === StakingStatus.STAKED;
+                      const isProcessing = !isStaked && !hasError;
+
+                      let segmentColor = 'bg-orange-500/40';
+                      if (hasError) segmentColor = 'bg-red-500';
+                      else if (isStaked) segmentColor = 'bg-[#52E5FF]';
+                      else if (isProcessing) segmentColor = 'bg-orange-500';
+
+                      return (
+                        <div
+                          key={index}
+                          className={cn(
+                            'flex-1 h-full transition-all duration-500',
+                            segmentColor,
+                            'first:rounded-l-full last:rounded-r-full'
+                          )}
+                        >
+                          {isProcessing && (
+                            <div className="w-full h-full bg-white/30 animate-pulse first:rounded-l-full last:rounded-r-full" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF]/20 via-[#36B1FF]/20 to-[#E4F5FF]/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                </div>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="space-y-2">
+              <Typography variant="small" weight="semibold">
+                Staking Overview
+              </Typography>
+              <div className="text-xs space-y-1.5">
+                <div>Total: {totalAmount.toFixed(2)} CHR</div>
+                <div>Positions: {records.length}</div>
+                {stakedCount > 0 && <div>Staked: {stakedCount}</div>}
+                {pendingCount > 0 && <div>Pending: {pendingCount}</div>}
+                {hasError && <div>Error detected</div>}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  // Handle asset click
+  const handleAssetClick = (asset: string) => {
+    router.push(`/reserve/${asset}`);
+  };
+
   // Render asset icon and symbol
-  const renderAssetCell = (row: UserReserveData) => {
+  // Render reserve. icon and symbol
+  const renderAssetCell = (reserve: UserReserveData) => {
     return (
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <div
               className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(row.assetId.toString('hex'), row.symbol)}
+              onClick={() => handleAssetClick(reserve.assetId.toString('hex'))}
             >
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Typography variant="small" weight="bold" className="text-primary">
-                  {row.symbol.charAt(0)}
-                </Typography>
-              </div>
-              <Typography weight="medium">{row.symbol}</Typography>
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <Typography weight="medium">{reserve.symbol}</Typography>
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>{row.name}</p>
+            <p>{reserve.name}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -507,24 +1095,6 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       },
     },
     {
-      header: 'Staking Progress',
-      accessorKey: 'symbol',
-      cell: ({ row }) => {
-        // Only show staking progress for tCHR
-        if (row.symbol !== 'tCHR') {
-          return <Typography className="text-muted-foreground text-sm">—</Typography>;
-        }
-
-        // Get supply records for this asset from lsdData
-        const supplyRecords = lsdData?.supplyRecords || [];
-
-        return renderStakingProgressPills(row.symbol, supplyRecords);
-      },
-      meta: {
-        skeleton: <Skeleton className="w-32 h-10 rounded-md" />,
-      },
-    },
-    {
       header: 'Collateral',
       accessorKey: 'usageAsCollateralEnabled',
       cell: ({ row }) => (
@@ -535,6 +1105,36 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       ),
       meta: {
         skeleton: <Skeleton className="w-10 h-5 rounded-full" />,
+      },
+    },
+    {
+      header: 'LSD',
+      accessorKey: 'symbol',
+      cell: ({ row }) => {
+        // Only show for tCHR
+        if (row.symbol !== 'tCHR') {
+          return <Typography>_</Typography>;
+        }
+
+        const isExpanded = expandedRows.has(row.symbol);
+
+        return (
+          <div
+            onClick={() => handleExpandRow(row.symbol)}
+            className="flex flex-row justify-center items-center cursor-pointer gap-1"
+          >
+            <Typography className="text-embossed">View More</Typography>
+            <ChevronDown
+              className={cn(
+                'w-4 h-4 text-white transition-transform duration-200 ease-out',
+                isExpanded ? 'animate-chevron-rotate-up' : 'animate-chevron-rotate-down'
+              )}
+            />
+          </div>
+        );
+      },
+      meta: {
+        skeleton: <Skeleton className="w-8 h-8 rounded-full" />,
       },
     },
     {
@@ -575,9 +1175,46 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     },
   ];
 
+  // Render expandable row content
+  const renderExpandableContent = (symbol: string) => {
+    if (symbol !== 'tCHR') return null;
+
+    const supplyRecords = lsdData?.supplyRecords || [];
+
+    return (
+      <div className="px-4 py-4">
+        <div className="grid grid-cols-3 gap-2">
+          {/* Staking Progress */}
+          <div className="space-y-2">
+            <Typography variant="small" weight="semibold" className="text-muted-foreground">
+              Staking Progress
+            </Typography>
+            {renderStakingProgressPills(symbol, supplyRecords)}
+          </div>
+
+          {/* Slow Withdraw */}
+          <div className="space-y-2">
+            <Typography variant="small" weight="semibold" className="text-muted-foreground">
+              Slow Withdraw
+            </Typography>
+            {renderSlowWithdrawProgressPill(symbol)}
+          </div>
+
+          {/* Quick Withdraw */}
+          <div className="space-y-2">
+            <Typography variant="small" weight="semibold" className="text-muted-foreground">
+              Quick Withdraw
+            </Typography>
+            {renderQuickWithdrawProgressPill(symbol)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
-      {isLoading || lsdLoading ? (
+      {isLoading ? (
         <Skeleton className="h-8 w-48 mb-4" />
       ) : (
         <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
@@ -643,10 +1280,13 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                   )}
                 </Badge>
               </div>
+
               <SortableTable<UserReserveData>
                 data={positions}
                 columns={columns}
                 className="bg-transparent border-none"
+                expandedRows={expandedRows}
+                renderExpandableContent={renderExpandableContent}
               />
             </>
           ) : (
@@ -682,6 +1322,17 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         />
       )}
 
+      {/* LSD Withdraw Dialog */}
+      {selectedPosition && lsdWithdrawDialogOpen && (
+        <LsdWithdrawDialog
+          open={lsdWithdrawDialogOpen}
+          onOpenChange={setLsdWithdrawDialogOpen}
+          reserve={selectedPosition}
+          mutateAssets={mutateAssets}
+          accountData={accountData}
+        />
+      )}
+
       {/* Collateral Dialog */}
       {selectedCollateral && (
         <CollateralDialog
@@ -701,6 +1352,26 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           assetSymbol={selectedStakingAsset}
           selectedRecordIndex={selectedRecordIndex}
           lsdData={lsdData}
+        />
+      )}
+
+      {/* Slow Withdraw Progress Dialog */}
+      {selectedWithdrawAsset && (
+        <SlowWithdrawProgressDialog
+          open={slowWithdrawProgressDialogOpen}
+          onOpenChange={setSlowWithdrawProgressDialogOpen}
+          assetSymbol={selectedWithdrawAsset}
+          slowWithdrawData={slowWithdrawData}
+        />
+      )}
+
+      {/* Quick Withdraw Progress Dialog */}
+      {selectedWithdrawAsset && (
+        <QuickWithdrawProgressDialog
+          open={quickWithdrawProgressDialogOpen}
+          onOpenChange={setQuickWithdrawProgressDialogOpen}
+          assetSymbol={selectedWithdrawAsset}
+          quickWithdrawData={quickWithdrawData}
         />
       )}
     </div>
