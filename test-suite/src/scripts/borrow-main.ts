@@ -1,11 +1,11 @@
 import { createAmount, op } from '@chromia/ft4';
-import { admin_kp, user_a_kp } from '../configs/key-pair';
+import { admin_kp } from '../configs/key-pair';
 // import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../clients';
 import chalk from 'chalk';
 import { RAY } from '../helpers/wadraymath';
 import { BigNumber } from 'ethers';
-import { formatUnits, parseUnits } from 'ethers/lib/utils';
+// import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { TOKENS } from '../configs/tokens';
 import { getSessionOrRegister } from '../helpers';
 
@@ -19,13 +19,15 @@ async function initSupply() {
     const adminSession = await getSessionOrRegister(client, admin_kp);
     const adminAccountId = adminSession.account.id;
 
-    const userSession = await getSessionOrRegister(client, user_a_kp);
-    const userAccountId = userSession.account.id;
+    // const userSession = await getSessionOrRegister(client, user_a_kp);
+    // const userAccountId = userSession.account.id;
 
     console.log(chalk.green('✅ Sessions created successfully'));
 
+    console.log('adminSession', adminSession);
+
     // Initialize ACL module
-    // console.log(chalk.blue('🔄 Initializing ACL module...'));
+    console.log(chalk.blue('🔄 Initializing ACL module...'));
     await adminSession.call(op('initialize', admin_kp.pubKey));
     await adminSession.call(op('grant_role', 'POOL_ADMIN', adminAccountId, admin_kp.pubKey));
     console.log(chalk.green('✅ ACL module initialized'));
@@ -172,15 +174,15 @@ async function initSupply() {
       console.log(chalk.green(`✅ Set field for set_reserve_borrowing`));
 
       // Mint underlying tokens to user
-      const mintAmount = parseUnits('1000', token.decimals); // 1000 * 10ˆdecimal
-      await adminSession.call(
-        op('mint_underlying_asset', userAccountId, BigInt(mintAmount.toString()), underlyingAssetId)
-      );
-      console.log(
-        chalk.green(
-          `✅ Minted ${chalk.yellow(formatUnits(mintAmount, token.decimals))} ${token.symbol} tokens to user`
-        )
-      );
+      // const mintAmount = parseUnits('1000', token.decimals); // 1000 * 10ˆdecimal
+      // await adminSession.call(
+      //   op('mint_underlying_asset', userAccountId, BigInt(mintAmount.toString()), underlyingAssetId)
+      // );
+      // console.log(
+      //   chalk.green(
+      //     `✅ Minted ${chalk.yellow(formatUnits(mintAmount, token.decimals))} ${token.symbol} tokens to user`
+      //   )
+      // );
 
       createdTokens.push({
         underlying: {

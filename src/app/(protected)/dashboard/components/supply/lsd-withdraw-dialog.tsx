@@ -30,6 +30,7 @@ import { calculateHFAfterWithdraw } from '@/utils/hf';
 import { cn } from '@/utils/tailwind';
 import { useSlowWithdraw } from '@/hooks/contracts/operations/use-slow-withdraw';
 import { useQuickWithdraw } from '@/hooks/contracts/operations/use-quick-withdraw';
+import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 
 const lsdWithdrawFormSchema = z.object({
   amount: z
@@ -90,14 +91,16 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  //   const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
-  //     reserve.assetId,
-  //     reserve.decimals,
-  //     'get_max_withdraw_amount'
-  //   );
+  const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
+    reserve.assetId,
+    reserve.decimals,
+    withdrawType === 'slow'
+      ? 'get_max_slow_withdraw_amount_query'
+      : 'get_max_quick_withdraw_amount_query'
+  );
 
-  const maxWithdrawAmount = reserve.currentATokenBalance || 0;
-  const isMaxWithdrawFetching = false;
+  // const maxWithdrawAmount = reserve.currentATokenBalance || 0;
+  // const isMaxWithdrawFetching = false;
 
   // Use the withdraw hooks
   const slowWithdraw = useSlowWithdraw({

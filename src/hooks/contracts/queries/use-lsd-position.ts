@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { keysToCamelCase } from '@/utils/object';
+import { normalizeBN } from '@/utils/bignumber';
 
 // Enum staking status từ Rell
 export enum StakingStatus {
@@ -83,8 +84,6 @@ export function useLsdPosition() {
         throw new Error('Missing client or account');
       }
 
-      console.log('Fetching LSD position for user:', account.id);
-
       // Fetch user LSD position
       const positionResult = await client.query('get_user_lsd_position', {
         user_account_id: account.id,
@@ -100,23 +99,59 @@ export function useLsdPosition() {
         user_account_id: account.id,
       });
 
-      console.log('LSD Position raw results:', {
-        position: positionResult,
-        supplyRecords: supplyRecordsResult,
-        rewards: rewardsResult,
-      });
-
-      const positions = (Array.isArray(positionResult) ? positionResult : []).map(p =>
+      const rawPositions = (Array.isArray(positionResult) ? positionResult : []).map(p =>
         keysToCamelCase(p)
       ) as UserLsdPosition[];
 
-      const supplyRecords = (Array.isArray(supplyRecordsResult) ? supplyRecordsResult : []).map(s =>
-        keysToCamelCase(s)
+      // Format positions with proper number conversion
+      const positions = rawPositions.map(p => ({
+        ...p,
+        userAccountId: p.userAccountId,
+        underlyingAssetId: p.underlyingAssetId,
+        totalStAssetStaking: Number(normalizeBN(p.totalStAssetStaking.toString(), 6)),
+        totalStAssetStakingAndReward: Number(
+          normalizeBN(p.totalStAssetStakingAndReward.toString(), 6)
+        ),
+        currentTotalStAssetStaking: Number(normalizeBN(p.currentTotalStAssetStaking.toString(), 6)),
+        currentTotalStAssetStakingAndReward: Number(
+          normalizeBN(p.currentTotalStAssetStakingAndReward.toString(), 6)
+        ),
+        availableForWithdraw: Number(normalizeBN(p.availableForWithdraw.toString(), 6)),
+        pendingWithdrawals: Number(normalizeBN(p.pendingWithdrawals.toString(), 6)),
+      }));
+
+      const rawSupplyRecords = (Array.isArray(supplyRecordsResult) ? supplyRecordsResult : []).map(
+        s => keysToCamelCase(s)
       ) as UserSupplyRecord[];
 
-      const rewards = (Array.isArray(rewardsResult) ? rewardsResult : []).map(r =>
+      // Format supply records with proper number conversion
+      const supplyRecords = rawSupplyRecords.map(s => ({
+        ...s,
+        positionId: s.positionId,
+        userAccountId: s.userAccountId,
+        underlyingAssetId: s.underlyingAssetId,
+        expectedAmount: Number(normalizeBN(s.expectedAmount.toString(), 6)),
+        netAmount: Number(normalizeBN(s.netAmount.toString(), 6)),
+        stAssetAmount: Number(normalizeBN(s.stAssetAmount.toString(), 6)),
+        supplyFee: Number(normalizeBN(s.supplyFee.toString(), 6)),
+      }));
+
+      const rawRewards = (Array.isArray(rewardsResult) ? rewardsResult : []).map(r =>
         keysToCamelCase(r)
       ) as UserAccumulatedRewards[];
+
+      // Format rewards with proper number conversion
+      const rewards = rawRewards.map(r => ({
+        ...r,
+        userAccountId: r.userAccountId,
+        underlyingAssetId: r.underlyingAssetId,
+        totalAssetCollected: Number(normalizeBN(r.totalAssetCollected.toString(), 6)),
+        totalLendingRewards: Number(normalizeBN(r.totalLendingRewards.toString(), 6)),
+        currentStakingRewards: Number(normalizeBN(r.currentStakingRewards.toString(), 6)),
+        totalStakingRewards: Number(normalizeBN(r.totalStakingRewards.toString(), 6)),
+        bscStakeAmount: Number(normalizeBN(r.bscStakeAmount.toString(), 6)),
+        bscRewardAmount: Number(normalizeBN(r.bscRewardAmount.toString(), 6)),
+      }));
 
       return {
         positions,
@@ -125,8 +160,8 @@ export function useLsdPosition() {
       };
     },
     enabled: !!client && !!account?.id,
-    refetchInterval: 3000, // Refetch every 3 seconds to track staking progress
-    staleTime: 2000, // 2 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds to track staking progress
+    staleTime: 10000, // 10 seconds
     retry: 2,
   });
 

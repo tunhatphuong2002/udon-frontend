@@ -29,6 +29,7 @@ import {
   StakingStatus,
   LsdFailureStage,
   UserSupplyRecord,
+  UserAccumulatedRewards,
 } from '@/hooks/contracts/queries/use-lsd-position';
 import {
   useSlowWithdrawPositions,
@@ -177,12 +178,6 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setExpandedRows(newExpandedRows);
   };
 
-  // Helper function to format supply record info
-  const formatSupplyAmount = (amount: number | bigint): string => {
-    const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
-    return (numAmount / 1e6).toFixed(2); // Convert from microunits
-  };
-
   // Render slow withdraw progress pill
   const renderSlowWithdrawProgressPill = (symbol: string) => {
     const withdrawInfo = getSlowWithdrawStatusForAsset(symbol, slowWithdrawData);
@@ -236,12 +231,13 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       );
     }
 
-    const amount = formatSupplyAmount(position.stAssetAmount);
-    const expectedAmount = formatSupplyAmount(position.assetAmount);
+    const amount = position.stAssetAmount;
+    const expectedAmount = position.assetAmount;
 
     // Calculate remaining time for display
     const unstakingAvailableTime = position.unstakingAvailableAt;
-    const remainingTime = Math.max(0, unstakingAvailableTime - Date.now());
+    const remainingTime =
+      unstakingAvailableTime === 0 ? 0 : Math.max(0, unstakingAvailableTime - Date.now());
     const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
 
     return (
@@ -297,7 +293,9 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                           ? 'Done'
                           : canCompleteWithdraw
                             ? 'Ready'
-                            : `${remainingDays}d left`}
+                            : unstakingAvailableTime === 0
+                              ? 'Request Pending'
+                              : `${remainingDays}d left`}
                     </Typography>
                   </div>
                 </div>
@@ -464,11 +462,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
 
     // Calculate summary stats
     const totalStAssetAmount = withdrawPositions.reduce((sum, position) => {
-      const amount =
-        typeof position.stAssetAmount === 'bigint'
-          ? Number(position.stAssetAmount)
-          : position.stAssetAmount;
-      return sum + amount / 1e6;
+      return sum + position.stAssetAmount;
     }, 0);
 
     const completedCount = withdrawPositions.filter(position => {
@@ -547,7 +541,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                       Total:
                     </Typography>
                     <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
-                      {totalStAssetAmount.toFixed(2)}
+                      {totalStAssetAmount}
                     </Typography>
                   </div>
                   <div className="flex justify-between items-center">
@@ -679,7 +673,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                 Quick Withdraw Overview
               </Typography>
               <div className="text-xs space-y-1.5">
-                <div>Total: {totalStAssetAmount.toFixed(2)} stCHR</div>
+                <div>Total: {totalStAssetAmount} stCHR</div>
                 <div>Positions: {withdrawPositions.length}</div>
                 {completedCount > 0 && <div>Completed: {completedCount}</div>}
                 {readyCount > 0 && <div>Ready: {readyCount}</div>}
@@ -694,7 +688,11 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   };
 
   // Render staking progress pills for multiple records
-  const renderStakingProgressPills = (symbol: string, records: UserSupplyRecord[]) => {
+  const renderStakingProgressPills = (
+    symbol: string,
+    records: UserSupplyRecord[],
+    accumulatedRewards: UserAccumulatedRewards[]
+  ) => {
     // Base card structure with fixed height
     const baseCardClasses =
       'group relative h-36 p-3 rounded-xl border border-border/30 bg-gradient-to-br from-card via-card/95 to-muted/20 hover:shadow-lg hover:shadow-[#52E5FF]/10 transition-all duration-300 hover:border-[#52E5FF]/40';
@@ -744,11 +742,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     }
 
     // Calculate summary stats
-    const totalAmount = records.reduce((sum, record) => {
-      const amount =
-        typeof record.netAmount === 'bigint' ? Number(record.netAmount) : record.netAmount;
-      return sum + amount / 1e6;
-    }, 0);
+    const totalAmount = accumulatedRewards[0]?.totalAssetCollected || 0;
 
     const stakedCount = records.filter(record => {
       const stakingStatus =
@@ -819,9 +813,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                     <Typography variant="small" className="text-muted-foreground/70 text-xs">
                       Total:
                     </Typography>
-                    <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
-                      {totalAmount.toFixed(2)}
-                    </Typography>
+                    <CountUp value={totalAmount} className="text-sm text-primary" />
                   </div>
                   <div className="flex justify-between items-center">
                     <Typography variant="small" className="text-muted-foreground/70 text-xs">
@@ -1180,6 +1172,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     if (symbol !== 'tCHR') return null;
 
     const supplyRecords = lsdData?.supplyRecords || [];
+    const accumulatedRewards = lsdData?.rewards || [];
 
     return (
       <div className="px-4 py-4">
@@ -1189,7 +1182,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
             <Typography variant="small" weight="semibold" className="text-muted-foreground">
               Staking Progress
             </Typography>
-            {renderStakingProgressPills(symbol, supplyRecords)}
+            {renderStakingProgressPills(symbol, supplyRecords, accumulatedRewards)}
           </div>
 
           {/* Slow Withdraw */}

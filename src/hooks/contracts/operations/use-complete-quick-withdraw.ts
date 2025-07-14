@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
@@ -7,7 +7,7 @@ import { useFtSession } from '@chromia/react';
 interface CompleteQuickWithdrawParams {
   positionId: Buffer<ArrayBufferLike>;
   underlyingAssetId: Buffer<ArrayBufferLike>;
-  stAssetAmount: bigint;
+  stAssetAmount: number;
 }
 
 interface CompleteQuickWithdrawResult {
@@ -51,7 +51,7 @@ export function useCompleteQuickWithdraw({
               'complete_quick_withdraw_operation',
               params.positionId,
               params.underlyingAssetId,
-              params.stAssetAmount,
+              createAmount(params.stAssetAmount, 6).value,
               0n, // Additional amount (not used in basic implementation)
               Date.now()
             )

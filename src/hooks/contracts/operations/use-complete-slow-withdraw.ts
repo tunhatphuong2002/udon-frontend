@@ -7,7 +7,7 @@ import { useFtSession } from '@chromia/react';
 interface CompleteSlowWithdrawParams {
   positionId: Buffer<ArrayBufferLike>;
   underlyingAssetId: Buffer<ArrayBufferLike>;
-  stAssetAmount: bigint;
+  stAssetAmount: number;
 }
 
 interface CompleteSlowWithdrawResult {

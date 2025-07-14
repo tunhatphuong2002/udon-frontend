@@ -12,6 +12,7 @@ import {
   Link,
   Coins,
   ExternalLink,
+  Copy,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/common/dialog';
 import { Typography } from '@/components/common/typography';
@@ -26,7 +27,7 @@ import {
   CardTitle,
 } from '@/components/common/card';
 import { Button } from '@/components/common/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-slider';
 import {
   StakingStatus,
   LsdFailureStage,
@@ -36,6 +37,7 @@ import {
 } from '@/hooks/contracts/queries/use-lsd-position';
 import { cn } from '@/utils/tailwind';
 import { isTestnet } from '@/utils/env';
+import { copyToClipboard, truncateAddress } from '@/utils/string';
 
 interface StakingProgressDialogProps {
   open: boolean;
@@ -150,6 +152,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
   lsdData,
 }) => {
   const [activeTab, setActiveTab] = useState(selectedRecordIndex.toString());
+  const [copiedChromia, setCopiedChromia] = useState(false);
 
   // Sync activeTab with selectedRecordIndex when dialog opens or selectedRecordIndex changes
   React.useEffect(() => {
@@ -164,6 +167,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
 
   const { positions, supplyRecords, rewards } = lsdData;
   console.log('lsdData', lsdData);
+  console.log('rewards', rewards);
 
   // If no supply records found
   if (!supplyRecords || supplyRecords.length === 0) {
@@ -234,17 +238,6 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
     stakingAPY = 3;
   }
 
-  // Format supply record info
-  const formatSupplyAmount = (amount: number | bigint): string => {
-    const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
-    return (numAmount / 1e6).toFixed(2); // Convert from microunits
-  };
-
-  const formatDate = (timestamp: string | number) => {
-    const timestampNumber = typeof timestamp === 'string' ? Number(timestamp) : timestamp;
-    return new Date(timestampNumber).toLocaleDateString();
-  };
-
   const getStepIcon = (step: (typeof STAKING_STEPS)[0], stepStatus: StakingStatus) => {
     const Icon = step.icon;
     if (hasError && stepStatus === currentStatus) {
@@ -272,6 +265,13 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
     return 'pending';
   };
 
+  // Add copy handler
+  const handleCopyChromia = async (address: string) => {
+    await copyToClipboard(address);
+    setCopiedChromia(true);
+    setTimeout(() => setCopiedChromia(false), 2000);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[50vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
@@ -288,7 +288,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
             {/* Outline gradient border */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
+              className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]"
             />
             <div
               aria-hidden
@@ -296,7 +296,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
             />
             <CardHeader className="relative z-20">
               <CardTitle className="flex items-center gap-2">
-                <div className="p-2 rounded-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]">
+                <div className="p-2 rounded-full bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]">
                   <Coins className="w-4 h-4 text-black" />
                 </div>
                 Staking Summary
@@ -306,11 +306,22 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 p-3 rounded-lg bg-card border border-border/50">
                   <Typography variant="small" className="text-muted-foreground font-medium">
+                    Total Collected
+                  </Typography>
+                  <CountUp
+                    value={reward?.totalAssetCollected || 0}
+                    suffix=" CHR"
+                    decimals={2}
+                    className="text-xl font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1 p-3 rounded-lg bg-card border border-border/50">
+                  <Typography variant="small" className="text-muted-foreground font-medium">
                     Total Staked
                   </Typography>
                   <CountUp
-                    // value={reward.bscStakeAmount}
-                    value={0}
+                    value={reward?.totalLendingRewards || 0}
                     suffix=" CHR"
                     decimals={2}
                     className="text-xl font-bold"
@@ -322,8 +333,8 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     Total Rewards
                   </Typography>
                   <CountUp
-                    // value={reward.totalStakingRewards}
-                    value={0}
+                    value={reward?.totalStakingRewards || 0}
+                    // value={0}
                     suffix=" CHR"
                     decimals={4}
                     className="text-xl font-bold"
@@ -335,8 +346,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     Current Rewards
                   </Typography>
                   <CountUp
-                    // value={reward.currentStakingRewards}
-                    value={0}
+                    value={reward?.currentStakingRewards || 0}
                     suffix=" CHR"
                     decimals={4}
                     className="text-xl font-bold"
@@ -351,28 +361,37 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     {reward ? new Date(Number(reward.lastUpdateTimestamp)).toLocaleString() : 'N/A'}
                   </Typography>
                 </div>
-              </div>
 
-              {reward && reward.bscStakingAddress && (
-                <div className="mt-4 p-4 bg-card rounded-lg border border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <Typography
-                        variant="small"
-                        className="text-muted-foreground mb-1 font-medium"
-                      >
-                        BSC Staking Address
+                <div className="p-3 rounded-lg bg-card border border-border/50">
+                  <div className="flex flex-row items-center justify-between mt-1">
+                    <div className="flex flex-col space-y-1">
+                      <Typography variant="small" className="text-muted-foreground font-medium">
+                        BSC Address Staking
                       </Typography>
-                      <Typography className="text-xs font-mono break-all text-foreground/80">
-                        {reward.bscStakingAddress}
-                      </Typography>
+                      <div className="flex flex-row gap-1">
+                        <Typography variant="p" className="text-xl font-bold">
+                          {reward?.bscStakingAddress
+                            ? truncateAddress(reward?.bscStakingAddress)
+                            : 'N/A'}
+                        </Typography>
+                        <button
+                          onClick={() => handleCopyChromia(reward?.bscStakingAddress || '')}
+                          className="text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                        >
+                          {copiedChromia ? (
+                            <Check className="h-4 w-4 text-success" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <Button
                       variant="gradient"
                       size="sm"
-                      className="ml-3 flex-shrink-0"
+                      className="max-w-[100px] flex-shrink-0"
                       onClick={() =>
-                        window.open(getBscExplorerUrl(reward.bscStakingAddress), '_blank')
+                        window.open(getBscExplorerUrl(reward?.bscStakingAddress || ''), '_blank')
                       }
                     >
                       <ExternalLink className="mr-1 h-3 w-3" />
@@ -380,7 +399,7 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
                     </Button>
                   </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
@@ -407,328 +426,278 @@ export const StakingProgressDialog: React.FC<StakingProgressDialogProps> = ({
           </Alert>
 
           {/* Supply Records - Always show with improved layout */}
-          {supplyRecords.length > 1 ? (
-            <Card className="bg-card border-border/50">
-              <CardHeader>
+          <Card className="relative bg-background overflow-hidden border border-border">
+            <CardHeader className="relative z-20">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-full bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]">
+                  <ArrowRight className="w-4 h-4 text-black" />
+                </div>
                 <CardTitle>Supply Records</CardTitle>
-                <CardDescription>
-                  Select a supply record to view its staking progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  {/* Tabs with primary underline */}
-                  <TabsList className="justify-center bg-transparent p-0 h-auto border-b border-border">
-                    {supplyRecords.map((record, index) => (
-                      <TabsTrigger
-                        key={index}
-                        value={index.toString()}
-                        className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-[#52E5FF]"
-                      >
-                        Supply #{index + 1}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-
-                  {/* Tab Contents with proper grid layout */}
+              </div>
+              <CardDescription>Select a supply record to view its staking progress</CardDescription>
+            </CardHeader>
+            <CardContent className="relative z-20">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                {/* Tabs with primary underline */}
+                <TabsList className="justify-center bg-transparent p-0 h-auto border-b border-border">
                   {supplyRecords.map((record, index) => (
-                    <TabsContent key={index} value={index.toString()} className="mt-6">
-                      <div className="space-y-4">
-                        {/* Main info in a clean grid */}
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
-                              Amount
-                            </Typography>
-                            <Typography weight="semibold" className="text-base">
-                              {formatSupplyAmount(record.netAmount)} CHR
-                            </Typography>
-                          </div>
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
-                              Supply Date
-                            </Typography>
-                            <Typography weight="semibold" className="text-base">
-                              {new Date(Number(record.createdAt)).toLocaleString()}
-                            </Typography>
-                          </div>
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
-                              Status
-                            </Typography>
-                            <Typography weight="semibold" className="text-base">
-                              {typeof record.stakingStatus === 'string'
-                                ? record.stakingStatus.replace(/_/g, ' ')
-                                : 'Unknown'}
-                            </Typography>
-                          </div>
-                        </div>
+                    <TabsTrigger
+                      key={index}
+                      value={index.toString()}
+                      className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-primary"
+                    >
+                      Supply #{index + 1}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-                        {/* Additional details in a 2-column grid */}
-                        <div className="grid grid-cols-2 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
-                              Expected Amount
-                            </Typography>
-                            <Typography weight="semibold" className="text-base">
-                              {formatSupplyAmount(record.expectedAmount)} CHR
-                            </Typography>
-                          </div>
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
-                              Supply Fee
-                            </Typography>
-                            <Typography weight="semibold" className="text-base">
-                              {formatSupplyAmount(record.supplyFee)} CHR
-                            </Typography>
-                          </div>
+                {/* Tab Contents with proper grid layout */}
+                {supplyRecords.map((record, index) => (
+                  <TabsContent key={index} value={index.toString()} className="mt-6">
+                    <div className="space-y-6">
+                      {/* Main info in a clean grid */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                          <Typography variant="small" className="text-muted-foreground font-medium">
+                            Amount
+                          </Typography>
+                          <Typography className="text-xl font-bold">
+                            {record.netAmount} {assetSymbol}
+                          </Typography>
+                        </div>
+                        <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                          <Typography variant="small" className="text-muted-foreground font-medium">
+                            Supply Date
+                          </Typography>
+                          <Typography className="text-xl font-bold">
+                            {new Date(Number(record.createdAt)).toLocaleString()}
+                          </Typography>
+                        </div>
+                        <div className="flex flex-col space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                          <Typography variant="small" className="text-muted-foreground font-medium">
+                            Status
+                          </Typography>
+                          <Badge
+                            variant="outline"
+                            className="text-sm border-primary/30 text-primary mt-1"
+                          >
+                            {typeof record.stakingStatus === 'string'
+                              ? record.stakingStatus.replace(/_/g, ' ')
+                              : 'Unknown'}
+                          </Badge>
                         </div>
                       </div>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </CardContent>
-            </Card>
-          ) : (
-            /* Single supply record with proper grid */
-            <Card className="bg-card border-border/50">
-              <CardHeader>
-                <CardTitle>Supply Record</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Main info in a clean grid */}
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Amount
-                      </Typography>
-                      <Typography weight="semibold" className="text-lg">
-                        {formatSupplyAmount(supplyRecord.netAmount)} CHR
-                      </Typography>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Supply Date
-                      </Typography>
-                      <Typography weight="semibold" className="text-lg">
-                        {formatDate(supplyRecord.createdAt)}
-                      </Typography>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Status
-                      </Typography>
-                      <Badge
-                        variant="outline"
-                        className="text-sm border-[#52E5FF]/30 text-[#52E5FF]"
-                      >
-                        {typeof supplyRecord.stakingStatus === 'string'
-                          ? supplyRecord.stakingStatus.replace(/_/g, ' ')
-                          : 'Unknown'}
-                      </Badge>
-                    </div>
-                  </div>
 
-                  {/* Additional details in a 2-column grid */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Expected Amount
-                      </Typography>
-                      <Typography weight="medium" className="text-base">
-                        {formatSupplyAmount(supplyRecord.expectedAmount)} CHR
-                      </Typography>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Supply Fee
-                      </Typography>
-                      <Typography weight="medium" className="text-base">
-                        {formatSupplyAmount(supplyRecord.supplyFee)} CHR
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Progress Overview */}
-          <Card className="bg-card border-border/50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Current Status</CardTitle>
-                  <CardDescription className="mt-1">
-                    {STAKING_STEPS.find(step => step.status === currentStatus)?.label || 'Unknown'}
-                  </CardDescription>
-                </div>
-                <Badge
-                  variant={isStaked ? 'secondary' : hasError ? 'destructive' : 'outline'}
-                  className="h-8 px-3"
-                >
-                  {isStaked ? 'Staked' : hasError ? 'Error' : 'Processing'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">
-                      {completedSteps} of {totalSteps} steps
-                    </span>
-                  </div>
-                  {/* Progress bar implementation */}
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn(
-                        'h-full transition-all duration-500 ease-in-out rounded-full',
-                        isStaked
-                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                          : 'bg-primary'
-                      )}
-                      style={{ width: `${progressPercentage}%` }}
-                    />
-                  </div>
-                </div>
-
-                {isStaked && stakingAPY > 0 && (
-                  <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-[#52E5FF]" />
-                      <Typography variant="small" className="text-muted-foreground font-medium">
-                        Estimated Staking APY
-                      </Typography>
-                    </div>
-                    <CountUp
-                      value={stakingAPY}
-                      suffix="%"
-                      decimals={2}
-                      className="text-lg font-bold text-[#52E5FF]"
-                    />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Error Alert */}
-          {hasError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Staking Error</AlertTitle>
-              <AlertDescription className="mt-2">
-                {FAILURE_STAGE_MESSAGES[positionStatus as LsdFailureStage] ||
-                  'An unknown error occurred during staking.'}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Progress Steps */}
-          <div className="space-y-4">
-            <Typography variant="h5" weight="semibold">
-              Staking Journey
-            </Typography>
-
-            <div className="space-y-3">
-              {STAKING_STEPS.map((step, index) => {
-                const stepStatusType = getStepStatus(step.status);
-                const isLast = index === STAKING_STEPS.length - 1;
-
-                return (
-                  <div key={step.status} className="relative">
-                    {!isLast && (
-                      <div
-                        className={cn(
-                          'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
-                          stepStatusType === 'completed' ? 'bg-[#52E5FF]' : 'bg-border/30'
-                        )}
-                      />
-                    )}
-
-                    <div
-                      className={cn(
-                        'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
-                        stepStatusType === 'completed' && 'border-transparent',
-                        stepStatusType === 'current' &&
-                          !hasError &&
-                          'border border-orange-500/30 shadow-sm',
-                        stepStatusType === 'error' && 'border border-destructive/30',
-                        stepStatusType === 'pending' && 'border border-muted/20'
-                      )}
-                    >
-                      {/* Outline gradient border for completed steps */}
-                      {stepStatusType === 'completed' && (
-                        <>
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
-                          />
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
-                          />
-                        </>
-                      )}
-
-                      <div className="flex items-start gap-4 p-4 relative z-20">
-                        <div
-                          className={cn(
-                            'flex-shrink-0 mt-0.5 rounded-full p-2',
-                            stepStatusType === 'completed' &&
-                              'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
-                            stepStatusType === 'current' && !hasError && 'bg-orange-500',
-                            stepStatusType === 'error' && 'bg-destructive',
-                            stepStatusType === 'pending' && 'bg-muted'
-                          )}
-                        >
-                          {getStepIcon(step, step.status)}
+                      {/* Additional details in a 2-column grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                          <Typography variant="small" className="text-muted-foreground font-medium">
+                            Amount
+                          </Typography>
+                          <Typography variant="p" className="text-lg font-bold">
+                            {record.netAmount} {assetSymbol}
+                          </Typography>
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <Typography weight="semibold" className="text-embossed">
-                              {step.label}
-                            </Typography>
-
-                            <div
-                              className={cn(
-                                'text-xs h-5 px-2 rounded-full flex items-center font-medium',
-                                stepStatusType === 'completed' &&
-                                  'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
-                                stepStatusType === 'current' &&
-                                  !hasError &&
-                                  'border border-orange-500/30 text-orange-500 bg-orange-500/10',
-                                stepStatusType === 'error' &&
-                                  'border border-destructive/30 text-destructive bg-destructive/10',
-                                stepStatusType === 'pending' &&
-                                  'border border-muted/30 text-muted-foreground bg-muted/10'
-                              )}
-                            >
-                              {stepStatusType === 'completed'
-                                ? 'Complete'
-                                : stepStatusType === 'current' && !hasError
-                                  ? 'In Progress'
-                                  : stepStatusType === 'error'
-                                    ? '✗ Failed'
-                                    : `Step ${index + 1}`}
-                            </div>
-                          </div>
-
-                          <Typography variant="small" className="text-submerged">
-                            {step.description}
+                        <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                          <Typography variant="small" className="text-muted-foreground font-medium">
+                            Supply Fee
+                          </Typography>
+                          <Typography variant="p" className="text-lg font-bold">
+                            {record.supplyFee} {assetSymbol}
                           </Typography>
                         </div>
                       </div>
+
+                      {/* Progress Overview */}
+                      <Card className="bg-card border-border/50">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle>Current Status</CardTitle>
+                              <CardDescription className="mt-1">
+                                {STAKING_STEPS.find(step => step.status === currentStatus)?.label ||
+                                  'Unknown'}
+                              </CardDescription>
+                            </div>
+                            <Badge
+                              variant={
+                                isStaked ? 'secondary' : hasError ? 'destructive' : 'outline'
+                              }
+                              className="h-8 px-3"
+                            >
+                              {isStaked ? 'Staked' : hasError ? 'Error' : 'Processing'}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex justify-between text-sm mb-2">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">
+                                  {completedSteps} of {totalSteps} steps
+                                </span>
+                              </div>
+                              {/* Progress bar implementation */}
+                              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                                <div
+                                  className={cn(
+                                    'h-full transition-all duration-500 ease-in-out rounded-full',
+                                    isStaked
+                                      ? 'bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]'
+                                      : 'bg-primary'
+                                  )}
+                                  style={{ width: `${progressPercentage}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {isStaked && stakingAPY > 0 && (
+                              <div className="flex items-center justify-between p-4 bg-card border border-primary/20 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <TrendingUp className="w-4 h-4 text-primary" />
+                                  <Typography
+                                    variant="small"
+                                    className="text-muted-foreground font-medium"
+                                  >
+                                    Estimated Staking APY
+                                  </Typography>
+                                </div>
+                                <CountUp
+                                  value={stakingAPY}
+                                  suffix="%"
+                                  decimals={2}
+                                  className="text-lg font-bold text-primary"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Error Alert */}
+                      {hasError && (
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Staking Error</AlertTitle>
+                          <AlertDescription className="mt-2">
+                            {FAILURE_STAGE_MESSAGES[positionStatus as LsdFailureStage] ||
+                              'An unknown error occurred during staking.'}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+
+                      {/* Progress Steps */}
+                      <div className="space-y-4">
+                        <Typography variant="h5" weight="semibold">
+                          Staking Journey
+                        </Typography>
+
+                        <div className="space-y-3">
+                          {STAKING_STEPS.map((step, index) => {
+                            const stepStatusType = getStepStatus(step.status);
+                            const isLast = index === STAKING_STEPS.length - 1;
+
+                            return (
+                              <div key={step.status} className="relative">
+                                {!isLast && (
+                                  <div
+                                    className={cn(
+                                      'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
+                                      stepStatusType === 'completed' ? 'bg-primary' : 'bg-border/30'
+                                    )}
+                                  />
+                                )}
+
+                                <div
+                                  className={cn(
+                                    'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
+                                    stepStatusType === 'completed' && 'border-transparent',
+                                    stepStatusType === 'current' &&
+                                      !hasError &&
+                                      'border border-orange-500/30 shadow-sm',
+                                    stepStatusType === 'error' && 'border border-destructive/30',
+                                    stepStatusType === 'pending' && 'border border-muted/20'
+                                  )}
+                                >
+                                  {/* Outline gradient border for completed steps */}
+                                  {stepStatusType === 'completed' && (
+                                    <>
+                                      <div
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]"
+                                      />
+                                      <div
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
+                                      />
+                                    </>
+                                  )}
+
+                                  <div className="flex items-start gap-4 p-4 relative z-20">
+                                    <div
+                                      className={cn(
+                                        'flex-shrink-0 mt-0.5 rounded-full p-2',
+                                        stepStatusType === 'completed' &&
+                                          'bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF]',
+                                        stepStatusType === 'current' &&
+                                          !hasError &&
+                                          'bg-orange-500',
+                                        stepStatusType === 'error' && 'bg-destructive',
+                                        stepStatusType === 'pending' && 'bg-muted'
+                                      )}
+                                    >
+                                      {getStepIcon(step, step.status)}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <Typography weight="semibold" className="text-embossed">
+                                          {step.label}
+                                        </Typography>
+
+                                        <div
+                                          className={cn(
+                                            'text-xs h-5 px-2 rounded-full flex items-center font-medium',
+                                            stepStatusType === 'completed' &&
+                                              'bg-gradient-to-r from-primary via-[#36B1FF] to-[#E4F5FF] text-black',
+                                            stepStatusType === 'current' &&
+                                              !hasError &&
+                                              'border border-orange-500/30 text-orange-500 bg-orange-500/10',
+                                            stepStatusType === 'error' &&
+                                              'border border-destructive/30 text-destructive bg-destructive/10',
+                                            stepStatusType === 'pending' &&
+                                              'border border-muted/30 text-muted-foreground bg-muted/10'
+                                          )}
+                                        >
+                                          {stepStatusType === 'completed'
+                                            ? 'Complete'
+                                            : stepStatusType === 'current' && !hasError
+                                              ? 'In Progress'
+                                              : stepStatusType === 'error'
+                                                ? '✗ Failed'
+                                                : `Step ${index + 1}`}
+                                        </div>
+                                      </div>
+
+                                      <Typography variant="small" className="text-submerged">
+                                        {step.description}
+                                      </Typography>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

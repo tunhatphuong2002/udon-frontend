@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { keysToCamelCase } from '@/utils/object';
+import { normalizeBN } from '@/utils/bignumber';
 
 // Enum slow withdraw status từ Rell
 export enum SlowWithdrawStatus {
@@ -26,8 +27,8 @@ export interface SlowWithdrawPosition {
   positionId: Buffer<ArrayBufferLike>;
   userAccountId: Buffer<ArrayBufferLike>;
   underlyingAssetId: Buffer<ArrayBufferLike>;
-  stAssetAmount: bigint;
-  assetAmount: bigint;
+  stAssetAmount: number;
+  assetAmount: number;
   slowWithdrawStatus: SlowWithdrawStatus | string;
   failureStage: SlowWithdrawFailureStage | string;
   withdrawTxHash: string;
@@ -58,17 +59,24 @@ export function useSlowWithdrawPositions() {
 
       console.log('Slow withdraw positions raw results:', positionsResult);
 
-      const positions = (Array.isArray(positionsResult) ? positionsResult : []).map(p =>
+      const rawPositions = (Array.isArray(positionsResult) ? positionsResult : []).map(p =>
         keysToCamelCase(p)
       ) as SlowWithdrawPosition[];
+
+      // Format positions with proper number conversion
+      const positions = rawPositions.map(p => ({
+        ...p,
+        stAssetAmount: Number(normalizeBN(p.stAssetAmount.toString(), 6)),
+        assetAmount: Number(normalizeBN(p.assetAmount.toString(), 6)),
+      }));
 
       return {
         positions,
       };
     },
     enabled: !!client && !!account?.id,
-    refetchInterval: 3000, // Refetch every 3 seconds to track withdraw progress
-    staleTime: 2000, // 2 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds to track withdraw progress
+    staleTime: 10000, // 10 seconds
     retry: 2,
   });
 

@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/common/card';
 import { Button } from '@/components/common/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-underline';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/tab/anim-slider';
 import {
   QuickWithdrawStatus,
   QuickWithdrawFailureStage,
@@ -150,12 +150,11 @@ export const QuickWithdrawProgressDialog: React.FC<QuickWithdrawProgressDialogPr
     );
   }
 
-  // Format amounts
-  const formatSupplyAmount = (amount: number | bigint): string => {
-    const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
-    return (numAmount / 1e6).toFixed(2); // Convert from microunits
-  };
+  // Calculate total amounts
+  const totalStAssetAmount = withdrawPositions.reduce((sum, pos) => sum + pos.stAssetAmount, 0);
+  const totalAssetAmount = withdrawPositions.reduce((sum, pos) => sum + pos.assetAmount, 0);
 
+  // Format date
   const formatDate = (timestamp: number | string) => {
     const timestampNumber = typeof timestamp === 'string' ? Number(timestamp) : timestamp;
     return new Date(timestampNumber).toLocaleDateString();
@@ -214,16 +213,6 @@ export const QuickWithdrawProgressDialog: React.FC<QuickWithdrawProgressDialogPr
     }
     return 'pending';
   };
-
-  // Calculate total amounts
-  const totalStAssetAmount = withdrawPositions.reduce(
-    (sum, pos) => sum + Number(formatSupplyAmount(pos.stAssetAmount)),
-    0
-  );
-  const totalAssetAmount = withdrawPositions.reduce(
-    (sum, pos) => sum + Number(formatSupplyAmount(pos.assetAmount)),
-    0
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -312,360 +301,334 @@ export const QuickWithdrawProgressDialog: React.FC<QuickWithdrawProgressDialogPr
             </AlertDescription>
           </Alert>
 
-          {/* Status Overview */}
-          {withdrawPositions.length > 1 ? (
-            <Card className="bg-card border-border/50">
-              <CardHeader>
+          {/* Status Overview with all status information */}
+          <Card className="relative bg-background overflow-hidden border border-border">
+            <CardHeader className="relative z-20">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]">
+                  <ArrowRight className="w-4 h-4 text-black" />
+                </div>
                 <CardTitle>Quick Withdraw Positions</CardTitle>
-                <CardDescription>Select a position to view its withdrawal progress</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  {/* Tabs with primary underline */}
-                  <TabsList className="justify-center bg-transparent p-0 h-auto border-b border-border">
-                    {withdrawPositions.map((position, index) => (
-                      <TabsTrigger
-                        key={index}
-                        value={index.toString()}
-                        className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-[#52E5FF]"
-                      >
-                        Position #{index + 1}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-
-                  {/* Tab Contents with proper grid layout */}
+              </div>
+              <CardDescription>Select a position to view its withdrawal progress</CardDescription>
+            </CardHeader>
+            <CardContent className="relative z-20">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                {/* Tabs with primary underline */}
+                <TabsList className="justify-center bg-transparent p-0 h-auto border-b border-border">
                   {withdrawPositions.map((position, index) => (
-                    <TabsContent key={index} value={index.toString()} className="mt-6">
+                    <TabsTrigger
+                      key={index}
+                      value={index.toString()}
+                      className="px-6 py-3 text-sm font-medium data-[state=active]:text-embossed data-[state=inactive]:text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent data-[state=active]:border-[#52E5FF]"
+                    >
+                      Position #{index + 1}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {/* Tab Contents with proper grid layout */}
+                {withdrawPositions.map((position, index) => {
+                  const positionStatus = getQuickWithdrawPositionStatus(position);
+                  const { isCompleted, hasError, canComplete, statusLabel } = positionStatus;
+
+                  // Convert string status to enum number
+                  const currentStatusString = position.quickWithdrawStatus;
+                  const currentStatus =
+                    typeof currentStatusString === 'string'
+                      ? (QUICK_WITHDRAW_STATUS_MAP[currentStatusString as string] ??
+                        QuickWithdrawStatus.PENDING_QUICK_WITHDRAW)
+                      : (currentStatusString as number);
+
+                  const failureStageString = position.failureStage;
+                  const failureStage =
+                    typeof failureStageString === 'string'
+                      ? (QUICK_WITHDRAW_FAILURE_STAGE_MAP[failureStageString as string] ??
+                        QuickWithdrawFailureStage.NO_FAILURE)
+                      : (failureStageString as number);
+
+                  const completedSteps = isCompleted
+                    ? QUICK_WITHDRAW_STEPS.length
+                    : QUICK_WITHDRAW_STEPS.filter(step => step.status < currentStatus).length;
+                  const totalSteps = QUICK_WITHDRAW_STEPS.length;
+                  const progressPercentage = (completedSteps / totalSteps) * 100;
+
+                  const positionKey = position.positionId.toString();
+
+                  return (
+                    <TabsContent key={index} value={index.toString()} className="mt-6 space-y-6">
+                      {/* Position Details */}
                       <div className="space-y-4">
                         {/* Main info in a clean grid */}
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
                               stCHR Amount
                             </Typography>
-                            <Typography weight="semibold" className="text-lg">
-                              {formatSupplyAmount(position.stAssetAmount)} stCHR
+                            <Typography className="text-xl font-bold">
+                              {position.stAssetAmount} stCHR
                             </Typography>
                           </div>
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
+                          <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
                               Expected CHR
                             </Typography>
-                            <Typography weight="semibold" className="text-lg">
-                              {formatSupplyAmount(position.assetAmount)} CHR
+                            <Typography className="text-xl font-bold">
+                              {position.assetAmount} CHR
                             </Typography>
                           </div>
-                          <div>
-                            <Typography variant="small" className="text-muted-foreground mb-1">
+                          <div className="flex flex-col space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
+                              Status
+                            </Typography>
+                            <Badge
+                              variant="outline"
+                              className="text-sm border-[#52E5FF]/30 text-[#52E5FF] mt-1"
+                            >
+                              {typeof position.quickWithdrawStatus === 'string'
+                                ? position.quickWithdrawStatus.replace(/_/g, ' ')
+                                : 'Unknown'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Additional details */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
                               Request Date
                             </Typography>
-                            <Typography weight="semibold" className="text-lg">
+                            <Typography className="text-xl font-bold">
                               {formatDate(position.createdAt)}
                             </Typography>
+                          </div>
+                          <div className="space-y-1 p-4 rounded-lg bg-card border border-border/50">
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
+                              Swap Timestamp
+                            </Typography>
+                            <Typography className="text-xl font-bold">
+                              {position.swapTimestamp ? formatDate(position.swapTimestamp) : 'N/A'}
+                            </Typography>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Current Status */}
+                      <div className="space-y-4 bg-card border border-border/50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography variant="h5" weight="semibold">
+                              Current Status
+                            </Typography>
+                            <Typography variant="small" className="text-muted-foreground mt-1">
+                              {QUICK_WITHDRAW_STEPS.find(step => step.status === currentStatus)
+                                ?.label || 'Unknown'}
+                            </Typography>
+                          </div>
+                          <Badge
+                            variant={
+                              isCompleted ? 'secondary' : hasError ? 'destructive' : 'outline'
+                            }
+                            className="h-8 px-3"
+                          >
+                            {statusLabel}
+                          </Badge>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span className="font-medium">
+                              {completedSteps} of {totalSteps} steps
+                            </span>
+                          </div>
+                          {/* Progress bar implementation */}
+                          <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                              className={cn(
+                                'h-full transition-all duration-500 ease-in-out rounded-full',
+                                isCompleted
+                                  ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                                  : 'bg-primary'
+                              )}
+                              style={{ width: `${progressPercentage}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Complete Withdraw Button */}
+                        {canComplete && !isCompleted && (
+                          <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-[#52E5FF]" />
+                              <Typography
+                                variant="small"
+                                className="text-muted-foreground font-medium"
+                              >
+                                CHR is ready to be claimed
+                              </Typography>
+                            </div>
+                            <Button
+                              onClick={() => handleCompleteWithdraw(position)}
+                              disabled={isCompleting[positionKey]}
+                              variant="gradient"
+                            >
+                              {isCompleting[positionKey] ? 'Claiming...' : 'Claim CHR'}
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Error Alert */}
+                        {hasError && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Withdrawal Error</AlertTitle>
+                            <AlertDescription className="mt-2">
+                              {FAILURE_STAGE_MESSAGES[failureStage as QuickWithdrawFailureStage] ||
+                                'An unknown error occurred during withdrawal.'}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* Quick Withdraw Journey */}
+                        <div className="space-y-4">
+                          <Typography variant="h5" weight="semibold">
+                            Quick Withdraw Journey
+                          </Typography>
+
+                          <div className="space-y-3">
+                            {QUICK_WITHDRAW_STEPS.map((step, stepIndex) => {
+                              const stepStatusType = getStepStatus(
+                                step.status,
+                                currentStatus,
+                                hasError,
+                                isCompleted
+                              );
+                              const isLast = stepIndex === QUICK_WITHDRAW_STEPS.length - 1;
+
+                              return (
+                                <div key={step.status} className="relative">
+                                  {!isLast && (
+                                    <div
+                                      className={cn(
+                                        'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
+                                        stepStatusType === 'completed'
+                                          ? 'bg-[#52E5FF]'
+                                          : 'bg-border/30'
+                                      )}
+                                    />
+                                  )}
+
+                                  <div
+                                    className={cn(
+                                      'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
+                                      stepStatusType === 'completed' && 'border-transparent',
+                                      stepStatusType === 'current' &&
+                                        !hasError &&
+                                        'border border-orange-500/30 shadow-sm',
+                                      stepStatusType === 'error' && 'border border-destructive/30',
+                                      stepStatusType === 'pending' && 'border border-muted/20'
+                                    )}
+                                  >
+                                    {/* Outline gradient border for completed steps */}
+                                    {stepStatusType === 'completed' && (
+                                      <>
+                                        <div
+                                          aria-hidden
+                                          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
+                                        />
+                                        <div
+                                          aria-hidden
+                                          className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
+                                        />
+                                      </>
+                                    )}
+
+                                    <div className="flex items-start gap-4 p-4 relative z-20">
+                                      <div
+                                        className={cn(
+                                          'flex-shrink-0 mt-0.5 rounded-full p-2',
+                                          stepStatusType === 'completed' &&
+                                            'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
+                                          stepStatusType === 'current' &&
+                                            !hasError &&
+                                            'bg-orange-500',
+                                          stepStatusType === 'error' && 'bg-destructive',
+                                          stepStatusType === 'pending' && 'bg-muted'
+                                        )}
+                                      >
+                                        {getStepIcon(
+                                          step,
+                                          step.status,
+                                          currentStatus,
+                                          hasError,
+                                          isCompleted
+                                        )}
+                                      </div>
+
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <Typography weight="semibold" className="text-embossed">
+                                            {step.label}
+                                          </Typography>
+
+                                          <div
+                                            className={cn(
+                                              'text-xs h-5 px-2 rounded-full flex items-center font-medium',
+                                              stepStatusType === 'completed' &&
+                                                'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
+                                              stepStatusType === 'current' &&
+                                                !hasError &&
+                                                'border border-orange-500/30 text-orange-500 bg-orange-500/10',
+                                              stepStatusType === 'error' &&
+                                                'border border-destructive/30 text-destructive bg-destructive/10',
+                                              stepStatusType === 'pending' &&
+                                                'border border-muted/30 text-muted-foreground bg-muted/10'
+                                            )}
+                                          >
+                                            {stepStatusType === 'completed'
+                                              ? 'Complete'
+                                              : stepStatusType === 'current' && !hasError
+                                                ? 'In Progress'
+                                                : stepStatusType === 'error'
+                                                  ? '✗ Failed'
+                                                  : `Step ${stepIndex + 1}`}
+                                          </div>
+                                        </div>
+
+                                        <Typography variant="small" className="text-submerged">
+                                          {step.description}
+                                        </Typography>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
                     </TabsContent>
-                  ))}
-                </Tabs>
-              </CardContent>
-            </Card>
-          ) : (
-            /* Single position record with proper grid */
-            <Card className="bg-card border-border/50">
-              <CardHeader>
-                <CardTitle>Quick Withdraw Position</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Main info in a clean grid */}
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-card rounded-lg border border-border/50">
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        stCHR Amount
-                      </Typography>
-                      <Typography weight="semibold" className="text-lg">
-                        {formatSupplyAmount(withdrawPositions[0].stAssetAmount)} stCHR
-                      </Typography>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Expected CHR
-                      </Typography>
-                      <Typography weight="semibold" className="text-lg">
-                        {formatSupplyAmount(withdrawPositions[0].assetAmount)} CHR
-                      </Typography>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-muted-foreground mb-1">
-                        Request Date
-                      </Typography>
-                      <Typography weight="semibold" className="text-lg">
-                        {formatDate(withdrawPositions[0].createdAt)}
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Current Status - Based on active tab */}
-          {(() => {
-            const currentPositionIndex = parseInt(activeTab);
-            const currentPosition = withdrawPositions[currentPositionIndex];
-            if (!currentPosition) return null;
-
-            const positionStatus = getQuickWithdrawPositionStatus(currentPosition);
-            const { isCompleted, hasError, canComplete, statusLabel } = positionStatus;
-
-            // Convert string status to enum number
-            const currentStatusString = currentPosition.quickWithdrawStatus;
-            const currentStatus =
-              typeof currentStatusString === 'string'
-                ? (QUICK_WITHDRAW_STATUS_MAP[currentStatusString as string] ??
-                  QuickWithdrawStatus.PENDING_QUICK_WITHDRAW)
-                : (currentStatusString as number);
-
-            // Convert position failure stage from string to enum number
-            // const failureStageString = currentPosition.failureStage;
-            // const failureStage =
-            //   typeof failureStageString === 'string'
-            //     ? (QUICK_WITHDRAW_FAILURE_STAGE_MAP[failureStageString as string] ??
-            //       QuickWithdrawFailureStage.NO_FAILURE)
-            //     : (failureStageString as number);
-
-            const completedSteps = isCompleted
-              ? QUICK_WITHDRAW_STEPS.length
-              : QUICK_WITHDRAW_STEPS.filter(step => step.status < currentStatus).length;
-            const totalSteps = QUICK_WITHDRAW_STEPS.length;
-            const progressPercentage = (completedSteps / totalSteps) * 100;
-
-            const positionKey = currentPosition.positionId.toString();
-
-            return (
-              <Card className="bg-card border-border/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Current Status</CardTitle>
-                      <CardDescription className="mt-1">
-                        {QUICK_WITHDRAW_STEPS.find(step => step.status === currentStatus)?.label ||
-                          'Unknown'}
-                      </CardDescription>
-                    </div>
-                    <Badge
-                      variant={isCompleted ? 'secondary' : hasError ? 'destructive' : 'outline'}
-                      className="h-8 px-3"
-                    >
-                      {statusLabel}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">
-                          {completedSteps} of {totalSteps} steps
-                        </span>
-                      </div>
-                      {/* Progress bar implementation */}
-                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className={cn(
-                            'h-full transition-all duration-500 ease-in-out rounded-full',
-                            isCompleted
-                              ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                              : 'bg-primary'
-                          )}
-                          style={{ width: `${progressPercentage}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Complete Withdraw Button */}
-                    {canComplete && !isCompleted && (
-                      <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Wallet className="w-4 h-4 text-[#52E5FF]" />
-                          <Typography variant="small" className="text-muted-foreground font-medium">
-                            CHR is ready to be claimed
-                          </Typography>
-                        </div>
-                        <Button
-                          onClick={() => handleCompleteWithdraw(currentPosition)}
-                          disabled={isCompleting[positionKey]}
-                          variant="gradient"
-                        >
-                          {isCompleting[positionKey] ? 'Claiming...' : 'Claim CHR'}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
-
-          {/* Error Alert - Based on current position */}
-          {(() => {
-            const currentPositionIndex = parseInt(activeTab);
-            const currentPosition = withdrawPositions[currentPositionIndex];
-            if (!currentPosition) return null;
-
-            const positionStatus = getQuickWithdrawPositionStatus(currentPosition);
-            const { hasError } = positionStatus;
-
-            if (!hasError) return null;
-
-            const failureStageString = currentPosition.failureStage;
-            const failureStage =
-              typeof failureStageString === 'string'
-                ? (QUICK_WITHDRAW_FAILURE_STAGE_MAP[failureStageString as string] ??
-                  QuickWithdrawFailureStage.NO_FAILURE)
-                : (failureStageString as number);
-
-            return (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Withdrawal Error</AlertTitle>
-                <AlertDescription className="mt-2">
-                  {FAILURE_STAGE_MESSAGES[failureStage as QuickWithdrawFailureStage] ||
-                    'An unknown error occurred during withdrawal.'}
-                </AlertDescription>
-              </Alert>
-            );
-          })()}
-
-          {/* Quick Withdraw Journey - Based on current position */}
-          {(() => {
-            const currentPositionIndex = parseInt(activeTab);
-            const currentPosition = withdrawPositions[currentPositionIndex];
-            if (!currentPosition) return null;
-
-            const positionStatus = getQuickWithdrawPositionStatus(currentPosition);
-            const { isCompleted, hasError } = positionStatus;
-
-            // Convert string status to enum number
-            const currentStatusString = currentPosition.quickWithdrawStatus;
-            const currentStatus =
-              typeof currentStatusString === 'string'
-                ? (QUICK_WITHDRAW_STATUS_MAP[currentStatusString as string] ??
-                  QuickWithdrawStatus.PENDING_QUICK_WITHDRAW)
-                : (currentStatusString as number);
-
-            return (
-              <div className="space-y-4">
-                <Typography variant="h5" weight="semibold">
-                  Quick Withdraw Journey
-                </Typography>
-
-                <div className="space-y-3">
-                  {QUICK_WITHDRAW_STEPS.map((step, index) => {
-                    const stepStatusType = getStepStatus(
-                      step.status,
-                      currentStatus,
-                      hasError,
-                      isCompleted
-                    );
-                    const isLast = index === QUICK_WITHDRAW_STEPS.length - 1;
-
-                    return (
-                      <div key={step.status} className="relative">
-                        {!isLast && (
-                          <div
-                            className={cn(
-                              'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
-                              stepStatusType === 'completed' ? 'bg-[#52E5FF]' : 'bg-border/30'
-                            )}
-                          />
-                        )}
-
-                        <div
-                          className={cn(
-                            'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
-                            stepStatusType === 'completed' && 'border-transparent',
-                            stepStatusType === 'current' &&
-                              !hasError &&
-                              'border border-orange-500/30 shadow-sm',
-                            stepStatusType === 'error' && 'border border-destructive/30',
-                            stepStatusType === 'pending' && 'border border-muted/20'
-                          )}
-                        >
-                          {/* Outline gradient border for completed steps */}
-                          {stepStatusType === 'completed' && (
-                            <>
-                              <div
-                                aria-hidden
-                                className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
-                              />
-                              <div
-                                aria-hidden
-                                className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
-                              />
-                            </>
-                          )}
-
-                          <div className="flex items-start gap-4 p-4 relative z-20">
-                            <div
-                              className={cn(
-                                'flex-shrink-0 mt-0.5 rounded-full p-2',
-                                stepStatusType === 'completed' &&
-                                  'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
-                                stepStatusType === 'current' && !hasError && 'bg-orange-500',
-                                stepStatusType === 'error' && 'bg-destructive',
-                                stepStatusType === 'pending' && 'bg-muted'
-                              )}
-                            >
-                              {getStepIcon(step, step.status, currentStatus, hasError, isCompleted)}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <Typography weight="semibold" className="text-embossed">
-                                  {step.label}
-                                </Typography>
-
-                                <div
-                                  className={cn(
-                                    'text-xs h-5 px-2 rounded-full flex items-center font-medium',
-                                    stepStatusType === 'completed' &&
-                                      'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
-                                    stepStatusType === 'current' &&
-                                      !hasError &&
-                                      'border border-orange-500/30 text-orange-500 bg-orange-500/10',
-                                    stepStatusType === 'error' &&
-                                      'border border-destructive/30 text-destructive bg-destructive/10',
-                                    stepStatusType === 'pending' &&
-                                      'border border-muted/30 text-muted-foreground bg-muted/10'
-                                  )}
-                                >
-                                  {stepStatusType === 'completed'
-                                    ? 'Complete'
-                                    : stepStatusType === 'current' && !hasError
-                                      ? 'In Progress'
-                                      : stepStatusType === 'error'
-                                        ? '✗ Failed'
-                                        : `Step ${index + 1}`}
-                                </div>
-                              </div>
-
-                              <Typography variant="small" className="text-submerged">
-                                {step.description}
-                              </Typography>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+                  );
+                })}
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

@@ -193,12 +193,7 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
   const remainingTime = Math.max(0, unstakingAvailableTime - Date.now());
   const remainingDays = Math.ceil(remainingTime / (1000 * 60 * 60 * 24));
 
-  // Format amounts
-  const formatSupplyAmount = (amount: number | bigint): string => {
-    const numAmount = typeof amount === 'bigint' ? Number(amount) : amount;
-    return (numAmount / 1e6).toFixed(2); // Convert from microunits
-  };
-
+  // Format date
   const formatDate = (timestamp: number | string) => {
     const timestampNumber = typeof timestamp === 'string' ? Number(timestamp) : timestamp;
     return new Date(timestampNumber).toLocaleDateString();
@@ -279,7 +274,7 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
                     Withdraw Amount
                   </Typography>
                   <CountUp
-                    value={Number(formatSupplyAmount(position.stAssetAmount))}
+                    value={position.stAssetAmount}
                     suffix=" stCHR"
                     decimals={2}
                     className="text-xl font-bold"
@@ -291,7 +286,7 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
                     Expected CHR
                   </Typography>
                   <CountUp
-                    value={Number(formatSupplyAmount(position.assetAmount))}
+                    value={position.assetAmount}
                     suffix=" CHR"
                     decimals={2}
                     className="text-xl font-bold"
@@ -303,7 +298,9 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
                     Request Date
                   </Typography>
                   <Typography className="text-xl font-bold">
-                    {formatDate(position.unstakingRequestedAt)}
+                    {position.unstakingRequestedAt
+                      ? formatDate(position.unstakingRequestedAt)
+                      : 'N/A'}
                   </Typography>
                 </div>
 
@@ -315,7 +312,7 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
                     {isReadyToWithdraw ? (
                       <span className="text-[#52E5FF]">Ready Now</span>
                     ) : (
-                      <span>{remainingDays} days remaining</span>
+                      <span>{remainingDays > 0 ? `${remainingDays} days remaining` : 'N/A'}</span>
                     )}
                   </Typography>
                 </div>
@@ -345,202 +342,223 @@ export const SlowWithdrawProgressDialog: React.FC<SlowWithdrawProgressDialogProp
             </AlertDescription>
           </Alert>
 
-          {/* Current Status Overview - Updated to match staking dialog */}
-          <Card className="bg-card border-border/50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Current Status</CardTitle>
-                  <CardDescription className="mt-1">
-                    {SLOW_WITHDRAW_STEPS.find(step => step.status === currentStatus)?.label ||
-                      'Unknown'}
-                  </CardDescription>
+          {/* Slow Withdraw Positions */}
+          <Card className="relative bg-background overflow-hidden border border-border">
+            <CardHeader className="relative z-20">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]">
+                  <ArrowRight className="w-4 h-4 text-black" />
                 </div>
-                <Badge
-                  variant={isCompleted ? 'secondary' : hasError ? 'destructive' : 'outline'}
-                  className="h-8 px-3"
-                >
-                  {isCompleted
-                    ? 'Completed'
-                    : hasError
-                      ? 'Error'
-                      : canCompleteWithdraw
-                        ? 'Ready'
-                        : 'Processing'}
-                </Badge>
+                <CardTitle>Slow Withdraw Positions</CardTitle>
               </div>
+              <CardDescription>
+                View your slow withdraw positions and their progress
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium">
-                      {completedSteps} of {totalSteps} steps
-                    </span>
-                  </div>
-                  {/* Progress bar implementation - Match staking dialog colors */}
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn(
-                        'h-full transition-all duration-500 ease-in-out rounded-full',
-                        isCompleted
-                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                          : 'bg-primary'
+            <CardContent className="relative z-20">
+              <div className="space-y-6">
+                {/* Current Status Overview */}
+                <Card className="bg-card border-border/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Current Status</CardTitle>
+                        <CardDescription className="mt-1">
+                          {SLOW_WITHDRAW_STEPS.find(step => step.status === currentStatus)?.label ||
+                            'Unknown'}
+                        </CardDescription>
+                      </div>
+                      <Badge
+                        variant={isCompleted ? 'secondary' : hasError ? 'destructive' : 'outline'}
+                        className="h-8 px-3"
+                      >
+                        {isCompleted
+                          ? 'Completed'
+                          : hasError
+                            ? 'Error'
+                            : canCompleteWithdraw
+                              ? 'Ready'
+                              : 'Processing'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span className="font-medium">
+                            {completedSteps} of {totalSteps} steps
+                          </span>
+                        </div>
+                        {/* Progress bar implementation */}
+                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className={cn(
+                              'h-full transition-all duration-500 ease-in-out rounded-full',
+                              isCompleted
+                                ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                                : 'bg-primary'
+                            )}
+                            style={{ width: `${progressPercentage}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Complete Withdraw Button */}
+                      {canCompleteWithdraw && !isCompleted && (
+                        <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="w-4 h-4 text-[#52E5FF]" />
+                            <Typography
+                              variant="small"
+                              className="text-muted-foreground font-medium"
+                            >
+                              Your CHR is ready to be claimed
+                            </Typography>
+                          </div>
+                          <Button
+                            onClick={handleCompleteWithdraw}
+                            disabled={isCompleting}
+                            variant="gradient"
+                          >
+                            {isCompleting ? 'Claiming...' : 'Claim CHR'}
+                          </Button>
+                        </div>
                       )}
-                      style={{ width: `${progressPercentage}%` }}
-                    />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Error Alert */}
+                {hasError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Withdrawal Error</AlertTitle>
+                    <AlertDescription className="mt-2">
+                      {FAILURE_STAGE_MESSAGES[failureStage as SlowWithdrawFailureStage] ||
+                        'An unknown error occurred during withdrawal.'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Progress Steps */}
+                <div className="space-y-4">
+                  <Typography variant="h5" weight="semibold">
+                    Slow Withdraw Journey
+                  </Typography>
+
+                  <div className="space-y-3">
+                    {SLOW_WITHDRAW_STEPS.map((step, index) => {
+                      const stepStatusType = getStepStatus(step.status);
+                      const isLast = index === SLOW_WITHDRAW_STEPS.length - 1;
+
+                      return (
+                        <div key={step.status} className="relative">
+                          {!isLast && (
+                            <div
+                              className={cn(
+                                'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
+                                stepStatusType === 'completed' ? 'bg-[#52E5FF]' : 'bg-border/30'
+                              )}
+                            />
+                          )}
+
+                          <div
+                            className={cn(
+                              'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
+                              stepStatusType === 'completed' && 'border-transparent',
+                              stepStatusType === 'current' &&
+                                !hasError &&
+                                'border border-orange-500/30 shadow-sm',
+                              stepStatusType === 'error' && 'border border-destructive/30',
+                              stepStatusType === 'pending' && 'border border-muted/20'
+                            )}
+                          >
+                            {/* Outline gradient border for completed steps */}
+                            {stepStatusType === 'completed' && (
+                              <>
+                                <div
+                                  aria-hidden
+                                  className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
+                                />
+                                <div
+                                  aria-hidden
+                                  className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
+                                />
+                              </>
+                            )}
+
+                            <div className="flex items-start gap-4 p-4 relative z-20">
+                              <div
+                                className={cn(
+                                  'flex-shrink-0 mt-0.5 rounded-full p-2',
+                                  stepStatusType === 'completed' &&
+                                    'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
+                                  stepStatusType === 'current' && !hasError && 'bg-orange-500',
+                                  stepStatusType === 'error' && 'bg-destructive',
+                                  stepStatusType === 'pending' && 'bg-muted'
+                                )}
+                              >
+                                {getStepIcon(step, step.status)}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <Typography weight="semibold" className="text-embossed">
+                                    {step.label}
+                                  </Typography>
+
+                                  <div
+                                    className={cn(
+                                      'text-xs h-5 px-2 rounded-full flex items-center font-medium',
+                                      stepStatusType === 'completed' &&
+                                        'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
+                                      stepStatusType === 'current' &&
+                                        !hasError &&
+                                        'border border-orange-500/30 text-orange-500 bg-orange-500/10',
+                                      stepStatusType === 'error' &&
+                                        'border border-destructive/30 text-destructive bg-destructive/10',
+                                      stepStatusType === 'pending' &&
+                                        'border border-muted/30 text-muted-foreground bg-muted/10'
+                                    )}
+                                  >
+                                    {stepStatusType === 'completed'
+                                      ? 'Complete'
+                                      : stepStatusType === 'current' && !hasError
+                                        ? 'In Progress'
+                                        : stepStatusType === 'error'
+                                          ? '✗ Failed'
+                                          : `Step ${index + 1}`}
+                                  </div>
+                                </div>
+
+                                <Typography variant="small" className="text-submerged">
+                                  {step.description}
+                                </Typography>
+
+                                {/* Special handling for unstaking period step */}
+                                {step.status === SlowWithdrawStatus.PENDING_WITHDRAW_REQUESTED &&
+                                  stepStatusType === 'current' && (
+                                    <div className="mt-2 p-2 bg-card border border-[#52E5FF]/20 rounded-md">
+                                      <Typography variant="small" className="text-[#52E5FF]">
+                                        {remainingDays > 0
+                                          ? `${remainingDays} days remaining`
+                                          : 'Unstaking period completed!'}
+                                      </Typography>
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-
-                {/* Complete Withdraw Button - Updated styling */}
-                {canCompleteWithdraw && !isCompleted && (
-                  <div className="flex items-center justify-between p-4 bg-card border border-[#52E5FF]/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Wallet className="w-4 h-4 text-[#52E5FF]" />
-                      <Typography variant="small" className="text-muted-foreground font-medium">
-                        Your CHR is ready to be claimed
-                      </Typography>
-                    </div>
-                    <Button
-                      onClick={handleCompleteWithdraw}
-                      disabled={isCompleting}
-                      variant="gradient"
-                    >
-                      {isCompleting ? 'Claiming...' : 'Claim CHR'}
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
-
-          {/* Error Alert */}
-          {hasError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Withdrawal Error</AlertTitle>
-              <AlertDescription className="mt-2">
-                {FAILURE_STAGE_MESSAGES[failureStage as SlowWithdrawFailureStage] ||
-                  'An unknown error occurred during withdrawal.'}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Progress Steps */}
-          <div className="space-y-4">
-            <Typography variant="h5" weight="semibold">
-              Slow Withdraw Journey
-            </Typography>
-
-            <div className="space-y-3">
-              {SLOW_WITHDRAW_STEPS.map((step, index) => {
-                const stepStatusType = getStepStatus(step.status);
-                const isLast = index === SLOW_WITHDRAW_STEPS.length - 1;
-
-                return (
-                  <div key={step.status} className="relative">
-                    {!isLast && (
-                      <div
-                        className={cn(
-                          'absolute left-[29px] top-[45px] w-0.5 h-[calc(80%)]',
-                          stepStatusType === 'completed' ? 'bg-[#52E5FF]' : 'bg-border/30'
-                        )}
-                      />
-                    )}
-
-                    <div
-                      className={cn(
-                        'relative overflow-hidden rounded-lg transition-all z-10 bg-card',
-                        stepStatusType === 'completed' && 'border-transparent',
-                        stepStatusType === 'current' &&
-                          !hasError &&
-                          'border border-orange-500/30 shadow-sm',
-                        stepStatusType === 'error' && 'border border-destructive/30',
-                        stepStatusType === 'pending' && 'border border-muted/20'
-                      )}
-                    >
-                      {/* Outline gradient border for completed steps */}
-                      {stepStatusType === 'completed' && (
-                        <>
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] p-[1px] bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]"
-                          />
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-[1px] z-10 rounded-[inherit] bg-card"
-                          />
-                        </>
-                      )}
-
-                      <div className="flex items-start gap-4 p-4 relative z-20">
-                        <div
-                          className={cn(
-                            'flex-shrink-0 mt-0.5 rounded-full p-2',
-                            stepStatusType === 'completed' &&
-                              'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]',
-                            stepStatusType === 'current' && !hasError && 'bg-orange-500',
-                            stepStatusType === 'error' && 'bg-destructive',
-                            stepStatusType === 'pending' && 'bg-muted'
-                          )}
-                        >
-                          {getStepIcon(step, step.status)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <Typography weight="semibold" className="text-embossed">
-                              {step.label}
-                            </Typography>
-
-                            <div
-                              className={cn(
-                                'text-xs h-5 px-2 rounded-full flex items-center font-medium',
-                                stepStatusType === 'completed' &&
-                                  'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] text-black',
-                                stepStatusType === 'current' &&
-                                  !hasError &&
-                                  'border border-orange-500/30 text-orange-500 bg-orange-500/10',
-                                stepStatusType === 'error' &&
-                                  'border border-destructive/30 text-destructive bg-destructive/10',
-                                stepStatusType === 'pending' &&
-                                  'border border-muted/30 text-muted-foreground bg-muted/10'
-                              )}
-                            >
-                              {stepStatusType === 'completed'
-                                ? 'Complete'
-                                : stepStatusType === 'current' && !hasError
-                                  ? 'In Progress'
-                                  : stepStatusType === 'error'
-                                    ? '✗ Failed'
-                                    : `Step ${index + 1}`}
-                            </div>
-                          </div>
-
-                          <Typography variant="small" className="text-submerged">
-                            {step.description}
-                          </Typography>
-
-                          {/* Special handling for unstaking period step */}
-                          {step.status === SlowWithdrawStatus.PENDING_WITHDRAW_REQUESTED &&
-                            stepStatusType === 'current' && (
-                              <div className="mt-2 p-2 bg-card border border-[#52E5FF]/20 rounded-md">
-                                <Typography variant="small" className="text-[#52E5FF]">
-                                  {remainingDays > 0
-                                    ? `${remainingDays} days remaining`
-                                    : 'Unstaking period completed!'}
-                                </Typography>
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
