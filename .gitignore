@@ -16,7 +16,7 @@
 # next.js
 /.next/
 /out/
-/udon-contracts/*
+/contract/*
 
 # production
 /build

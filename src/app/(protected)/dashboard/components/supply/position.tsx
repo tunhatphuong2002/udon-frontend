@@ -155,14 +155,14 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setStakingProgressDialogOpen(true);
   };
 
-  // Handle slow withdraw progress pill click
-  const handleSlowWithdrawProgressClick = (symbol: string) => {
+  // Handle CHR withdraw progress pill click
+  const handleChrWithdrawProgressClick = (symbol: string) => {
     setSelectedWithdrawAsset(symbol);
     setSlowWithdrawProgressDialogOpen(true);
   };
 
-  // Handle quick withdraw progress pill click
-  const handleQuickWithdrawProgressClick = (symbol: string) => {
+  // Handle stCHR withdraw transaction pill click
+  const handleStchrWithdrawTransactionClick = (symbol: string) => {
     setSelectedWithdrawAsset(symbol);
     setQuickWithdrawProgressDialogOpen(true);
   };
@@ -178,8 +178,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     setExpandedRows(newExpandedRows);
   };
 
-  // Render slow withdraw progress pill
-  const renderSlowWithdrawProgressPill = (symbol: string) => {
+  // Render CHR withdraw progress pill
+  const renderChrWithdrawProgressPill = (symbol: string) => {
     const withdrawInfo = getSlowWithdrawStatusForAsset(symbol, slowWithdrawData);
     const { hasError, isCompleted, canCompleteWithdraw, position } = withdrawInfo;
 
@@ -202,7 +202,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                   variant="small"
                   className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
                 >
-                  Slow Withdraw
+                  CHR Withdraw
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground/60 text-xs">
                   14-day period
@@ -246,7 +246,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div
               className={cn(baseCardClasses, 'cursor-pointer hover:scale-[1.02]')}
-              onClick={() => handleSlowWithdrawProgressClick(symbol)}
+              onClick={() => handleChrWithdrawProgressClick(symbol)}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -281,7 +281,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                       variant="small"
                       className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
                     >
-                      Slow Withdraw
+                      CHR Withdraw
                     </Typography>
                     <Typography
                       variant="small"
@@ -383,7 +383,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipContent side="top" className="max-w-xs">
             <div className="space-y-2">
               <Typography variant="small" weight="semibold">
-                Slow Withdraw Details
+                CHR Withdraw Details
               </Typography>
               <div className="text-xs space-y-1.5">
                 <div>
@@ -407,8 +407,8 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
     );
   };
 
-  // Render quick withdraw progress pill
-  const renderQuickWithdrawProgressPill = (symbol: string) => {
+  // Render stCHR withdraw transaction pill
+  const renderStchrWithdrawTransactionPill = (symbol: string) => {
     const withdrawInfo = getQuickWithdrawStatusForAsset(symbol, quickWithdrawData);
     const { withdrawPositions } = withdrawInfo;
 
@@ -431,10 +431,10 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                   variant="small"
                   className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
                 >
-                  Quick Withdraw
+                  stCHR Withdraw
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground/60 text-xs">
-                  Instant via DEX
+                  Transaction History
                 </Typography>
               </div>
             </div>
@@ -445,7 +445,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                 variant="small"
                 className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
               >
-                No active withdrawals
+                No stCHR transactions
               </Typography>
             </div>
 
@@ -488,7 +488,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipTrigger asChild>
             <div
               className={cn(baseCardClasses, 'cursor-pointer hover:scale-[1.02]')}
-              onClick={() => handleQuickWithdrawProgressClick(symbol)}
+              onClick={() => handleStchrWithdrawTransactionClick(symbol)}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -523,7 +523,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                       variant="small"
                       className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
                     >
-                      Quick Withdraw
+                      stCHR Withdraw
                     </Typography>
                     <Typography
                       variant="small"
@@ -670,11 +670,11 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
           <TooltipContent side="top" className="max-w-xs">
             <div className="space-y-2">
               <Typography variant="small" weight="semibold">
-                Quick Withdraw Overview
+                stCHR Transaction Overview
               </Typography>
               <div className="text-xs space-y-1.5">
                 <div>Total: {totalStAssetAmount} stCHR</div>
-                <div>Positions: {withdrawPositions.length}</div>
+                <div>Transactions: {withdrawPositions.length}</div>
                 {completedCount > 0 && <div>Completed: {completedCount}</div>}
                 {readyCount > 0 && <div>Ready: {readyCount}</div>}
                 {pendingCount > 0 && <div>Pending: {pendingCount}</div>}
@@ -1185,20 +1185,20 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
             {renderStakingProgressPills(symbol, supplyRecords, accumulatedRewards)}
           </div>
 
-          {/* Slow Withdraw */}
+          {/* CHR Withdraw Progress */}
           <div className="space-y-2">
             <Typography variant="small" weight="semibold" className="text-muted-foreground">
-              Slow Withdraw
+              CHR Withdraw Progress
             </Typography>
-            {renderSlowWithdrawProgressPill(symbol)}
+            {renderChrWithdrawProgressPill(symbol)}
           </div>
 
-          {/* Quick Withdraw */}
+          {/* stCHR Withdraw Transaction */}
           <div className="space-y-2">
             <Typography variant="small" weight="semibold" className="text-muted-foreground">
-              Quick Withdraw
+              stCHR Withdraw Transaction
             </Typography>
-            {renderQuickWithdrawProgressPill(symbol)}
+            {renderStchrWithdrawTransactionPill(symbol)}
           </div>
         </div>
       </div>

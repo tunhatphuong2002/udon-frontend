@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CircleX, Info, ArrowRight, Clock, Zap, AlertTriangle } from 'lucide-react';
+import { CircleX, Clock, Zap, AlertTriangle, ArrowLeftRight, Info, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,11 +28,15 @@ import CountUp from '@/components/common/count-up';
 import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 import { calculateHFAfterWithdraw } from '@/utils/hf';
 import { cn } from '@/utils/tailwind';
-import { useSlowWithdraw } from '@/hooks/contracts/operations/use-slow-withdraw';
-import { useQuickWithdraw } from '@/hooks/contracts/operations/use-quick-withdraw';
-import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 
-const lsdWithdrawFormSchema = z.object({
+// Import new hooks for 3-option system
+import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
+import { useStchrWithdraw } from '@/hooks/contracts/operations/use-lsd-stchr-withdraw';
+import { useHybridWithdraw } from '@/hooks/contracts/operations/use-lsd-hybrid-withdraw';
+import { useWithdrawDashboard } from '@/hooks/contracts/queries/use-lsd-withdraw-options';
+
+// Schema for single amount (CHR or stCHR options)
+const singleWithdrawFormSchema = z.object({
   amount: z
     .string()
     .min(1, 'Amount is required!')
@@ -47,7 +51,44 @@ const lsdWithdrawFormSchema = z.object({
     ),
 });
 
-type LsdWithdrawFormValues = z.infer<typeof lsdWithdrawFormSchema>;
+// Schema for hybrid option (both CHR and stCHR)
+const hybridWithdrawFormSchema = z
+  .object({
+    chrAmount: z.string().refine(
+      val => {
+        if (!val) return true; // Allow empty
+        const num = Number(val);
+        return !isNaN(num) && num >= 0;
+      },
+      {
+        message: 'Please enter a valid number',
+      }
+    ),
+    stchrAmount: z.string().refine(
+      val => {
+        if (!val) return true; // Allow empty
+        const num = Number(val);
+        return !isNaN(num) && num >= 0;
+      },
+      {
+        message: 'Please enter a valid number',
+      }
+    ),
+  })
+  .refine(
+    data => {
+      const chrAmount = Number(data.chrAmount) || 0;
+      const stchrAmount = Number(data.stchrAmount) || 0;
+      return chrAmount > 0 || stchrAmount > 0;
+    },
+    {
+      message: 'At least one amount must be greater than 0',
+      path: ['chrAmount'], // Show error on chrAmount field
+    }
+  );
+
+type SingleWithdrawFormValues = z.infer<typeof singleWithdrawFormSchema>;
+type HybridWithdrawFormValues = z.infer<typeof hybridWithdrawFormSchema>;
 
 export interface LsdWithdrawDialogProps {
   open: boolean;
@@ -57,7 +98,7 @@ export interface LsdWithdrawDialogProps {
   mutateAssets: () => void;
 }
 
-type WithdrawType = 'slow' | 'quick';
+type WithdrawType = 'chr' | 'stchr' | 'hybrid';
 
 // Create a debounced fetch function with lodash
 const debouncedFn = debounce((callback: () => void) => {
@@ -75,12 +116,21 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
   const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
-  const [withdrawType, setWithdrawType] = useState<WithdrawType>('slow');
+  const [withdrawType, setWithdrawType] = useState<WithdrawType>('chr');
 
-  const form = useForm<LsdWithdrawFormValues>({
-    resolver: zodResolver(lsdWithdrawFormSchema),
+  // Forms for different withdraw types
+  const singleForm = useForm<SingleWithdrawFormValues>({
+    resolver: zodResolver(singleWithdrawFormSchema),
     defaultValues: {
       amount: '',
+    },
+  });
+
+  const hybridForm = useForm<HybridWithdrawFormValues>({
+    resolver: zodResolver(hybridWithdrawFormSchema),
+    defaultValues: {
+      chrAmount: '',
+      stchrAmount: '',
     },
   });
 
@@ -91,37 +141,59 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
+  // Fetch withdraw dashboard data
+  const { data: withdrawDashboard, isLoading: isDashboardLoading } = useWithdrawDashboard(
     reserve.assetId,
     reserve.decimals,
-    withdrawType === 'slow'
-      ? 'get_max_slow_withdraw_amount_query'
-      : 'get_max_quick_withdraw_amount_query'
+    open // Only fetch when dialog is open
   );
 
-  // const maxWithdrawAmount = reserve.currentATokenBalance || 0;
-  // const isMaxWithdrawFetching = false;
-
-  // Use the withdraw hooks
-  const slowWithdraw = useSlowWithdraw({
+  // Use the new withdraw hooks
+  const chrWithdraw = useChrWithdraw({
     onSuccess: (result, params) => {
-      console.log('Slow withdraw success:', { result, params });
+      console.log('CHR withdraw success:', { result, params });
       mutateAssets();
     },
     onError: (error, params) => {
-      console.error('Slow withdraw error:', { error, params });
+      console.error('CHR withdraw error:', { error, params });
     },
   });
 
-  const quickWithdraw = useQuickWithdraw({
+  const stchrWithdraw = useStchrWithdraw({
     onSuccess: (result, params) => {
-      console.log('Quick withdraw success:', { result, params });
+      console.log('stCHR withdraw success:', { result, params });
       mutateAssets();
     },
     onError: (error, params) => {
-      console.error('Quick withdraw error:', { error, params });
+      console.error('stCHR withdraw error:', { error, params });
     },
   });
+
+  const hybridWithdrawOp = useHybridWithdraw({
+    onSuccess: (result, params) => {
+      console.log('Hybrid withdraw success:', { result, params });
+      mutateAssets();
+    },
+    onError: (error, params) => {
+      console.error('Hybrid withdraw error:', { error, params });
+    },
+  });
+
+  // Get current max amount based on withdraw type
+  const getCurrentMaxAmount = useCallback(() => {
+    if (!withdrawDashboard) return 0;
+
+    switch (withdrawType) {
+      case 'chr':
+        return withdrawDashboard.maxChrWithdraw;
+      case 'stchr':
+        return withdrawDashboard.maxStchrImmediateWithdraw;
+      case 'hybrid':
+        return withdrawDashboard.maxTotalValue;
+      default:
+        return 0;
+    }
+  }, [withdrawType, withdrawDashboard]);
 
   // Calculate health factor based on current input
   const calculateHealthFactor = useCallback(() => {
@@ -130,8 +202,17 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
       return;
     }
 
-    const amount = form.watch('amount');
-    if (!amount || Number(amount) <= 0) {
+    let withdrawAmount = 0;
+
+    if (withdrawType === 'hybrid') {
+      const chrAmount = Number(hybridForm.watch('chrAmount')) || 0;
+      const stchrAmount = Number(hybridForm.watch('stchrAmount')) || 0;
+      withdrawAmount = chrAmount + stchrAmount;
+    } else {
+      withdrawAmount = Number(singleForm.watch('amount')) || 0;
+    }
+
+    if (withdrawAmount <= 0) {
       setCalculatedHealthFactor(
         Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
       );
@@ -141,7 +222,7 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     const hf = calculateHFAfterWithdraw(
       valueToBigNumber(accountData.totalCollateralBase.toString()),
       valueToBigNumber(normalize(reserve.price.toString(), 18)).multipliedBy(
-        valueToBigNumber(amount)
+        valueToBigNumber(withdrawAmount.toString())
       ),
       (Number(accountData.currentLiquidationThreshold) / 100).toString(),
       reserve.liquidationThreshold.toString(),
@@ -150,11 +231,12 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
       reserve.usageAsCollateralEnabled
     );
 
-    console.log('hf after withdraw', hf.toString());
     setCalculatedHealthFactor(Number(hf));
   }, [
     accountData,
-    form,
+    singleForm,
+    hybridForm,
+    withdrawType,
     reserve.liquidationThreshold,
     reserve.price,
     reserve.usageAsCollateralEnabled,
@@ -163,27 +245,16 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
   // Handle price fetch with lodash debounce
   const handleFetchPrice = useCallback(() => {
     debouncedFn(() => {
-      // Don't allow value > supply balance
-      const valueWithBalance =
-        Number(form.watch('amount')) > Number(maxWithdrawAmount)
-          ? maxWithdrawAmount
-          : form.watch('amount');
-      const needToChangeValue = valueWithBalance !== form.watch('amount');
-      if (needToChangeValue) {
-        form.setValue('amount', valueWithBalance.toString());
-      }
       setIsRefetchEnabled(true);
       fetchPrice();
-      // Calculate health factor after debounce
       calculateHealthFactor();
     });
-  }, [fetchPrice, form, maxWithdrawAmount, calculateHealthFactor]);
+  }, [fetchPrice, calculateHealthFactor]);
 
   // Update price when data is fetched
   useEffect(() => {
     if (priceData !== null && priceData !== undefined) {
       setCurrentPrice(priceData);
-      // Disable refetching to prevent unnecessary calls
       setIsRefetchEnabled(false);
     }
   }, [priceData]);
@@ -194,24 +265,21 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     calculateHealthFactor();
   }, [reserve.price, calculateHealthFactor]);
 
-  // Watch for input changes and fetch price
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle amount change for single forms
+  const handleSingleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
-    // Only allow numbers and a single decimal point
     const regex = /^$|^[0-9]+\.?[0-9]*$/;
+
     if (!regex.test(value)) {
-      // if don't pass set input with 0
-      form.setValue('amount', '0');
+      singleForm.setValue('amount', '0');
       return;
     }
 
-    form.setValue('amount', value);
+    singleForm.setValue('amount', value);
 
     if (value && parseFloat(value) > 0) {
       handleFetchPrice();
     } else {
-      // If amount is empty or 0, reset health factor to current
       setCalculatedHealthFactor(
         accountData.healthFactor === -1
           ? -1
@@ -220,60 +288,98 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     }
   };
 
+  // Handle amount change for hybrid forms
+  const handleHybridAmountChange = (field: 'chrAmount' | 'stchrAmount', value: string) => {
+    const regex = /^$|^[0-9]+\.?[0-9]*$/;
+
+    if (!regex.test(value)) {
+      hybridForm.setValue(field, '0');
+      return;
+    }
+
+    hybridForm.setValue(field, value);
+
+    const chrAmount = field === 'chrAmount' ? value : hybridForm.watch('chrAmount');
+    const stchrAmount = field === 'stchrAmount' ? value : hybridForm.watch('stchrAmount');
+
+    if ((parseFloat(chrAmount) || 0) > 0 || (parseFloat(stchrAmount) || 0) > 0) {
+      handleFetchPrice();
+    } else {
+      setCalculatedHealthFactor(
+        accountData.healthFactor === -1
+          ? -1
+          : Number(normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18))
+      );
+    }
+  };
+
+  // Handle max amount click
   const handleMaxAmount = () => {
-    // Use supply balance as the max amount
-    form.setValue('amount', maxWithdrawAmount.toString());
+    const maxAmount = getCurrentMaxAmount();
+
+    if (withdrawType === 'hybrid') {
+      // For hybrid, set equal amounts for both
+      const halfAmount = (maxAmount / 2).toString();
+      hybridForm.setValue('chrAmount', halfAmount);
+      hybridForm.setValue('stchrAmount', halfAmount);
+    } else {
+      singleForm.setValue('amount', maxAmount.toString());
+    }
+
     handleFetchPrice();
   };
 
-  const onSubmit = async (data: LsdWithdrawFormValues) => {
+  // Handle max amount for specific field in hybrid
+  const handleHybridMaxAmount = (field: 'chrAmount' | 'stchrAmount') => {
+    if (!withdrawDashboard) return;
+
+    let maxAmount = 0;
+    if (field === 'chrAmount') {
+      maxAmount = withdrawDashboard.maxChrWithdraw;
+    } else {
+      maxAmount = withdrawDashboard.maxStchrImmediateWithdraw;
+    }
+
+    hybridForm.setValue(field, maxAmount.toString());
+    handleFetchPrice();
+  };
+
+  // Submit handlers
+  const onSingleSubmit = async (data: SingleWithdrawFormValues) => {
     try {
       const amount = Number(data.amount);
+      const maxAmount = getCurrentMaxAmount();
 
-      // Final validation checks before submission
       if (isNaN(amount) || amount <= 0) {
         toast.error('Please enter a valid positive number');
         return;
       }
 
-      const balance = Number(maxWithdrawAmount);
-      if (amount > balance) {
-        toast.error(
-          `Amount exceeds your supply balance of ${balance.toFixed(6)} ${reserve.symbol}`
-        );
+      if (amount > maxAmount) {
+        toast.error(`Amount exceeds maximum of ${maxAmount.toFixed(6)} ${reserve.symbol}`);
         return;
       }
 
       setIsSubmitting(true);
 
       let withdrawResult;
-      if (withdrawType === 'slow') {
-        withdrawResult = await slowWithdraw({
-          assetId: reserve.assetId,
-          amount: data.amount,
-          decimals: reserve.decimals,
-          isUserWithdrawMax: Number(form.watch('amount')) === Number(maxWithdrawAmount),
-        });
-      } else {
-        withdrawResult = await quickWithdraw({
-          assetId: reserve.assetId,
-          amount: data.amount,
-          decimals: reserve.decimals,
-          isUserWithdrawMax: Number(form.watch('amount')) === Number(maxWithdrawAmount),
-        });
-      }
-
-      console.log('LSD Withdraw submitted:', {
+      const params = {
+        assetId: reserve.assetId,
         amount: data.amount,
-        type: withdrawType,
-        result: withdrawResult,
-      });
+        decimals: reserve.decimals,
+        isUserWithdrawMax: Number(data.amount) === maxAmount,
+      };
+
+      if (withdrawType === 'chr') {
+        withdrawResult = await chrWithdraw(params);
+      } else {
+        withdrawResult = await stchrWithdraw(params);
+      }
 
       if (withdrawResult.success) {
         toast.success(
-          `Successfully initiated ${withdrawType} withdraw of ${data.amount} ${reserve.symbol}`
+          `Successfully initiated ${withdrawType.toUpperCase()} withdraw of ${data.amount} ${reserve.symbol}`
         );
-        // Close dialog after successful operation
         onOpenChange(false);
       } else {
         toast.error(`Failed to withdraw: ${withdrawResult.error?.message || 'Unknown error'}`);
@@ -286,14 +392,60 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     }
   };
 
+  const onHybridSubmit = async (data: HybridWithdrawFormValues) => {
+    try {
+      const chrAmount = Number(data.chrAmount) || 0;
+      const stchrAmount = Number(data.stchrAmount) || 0;
+
+      if (chrAmount <= 0 && stchrAmount <= 0) {
+        toast.error('At least one amount must be greater than 0');
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const withdrawResult = await hybridWithdrawOp({
+        assetId: reserve.assetId,
+        chrAmount: chrAmount.toString(),
+        stchrAmount: stchrAmount.toString(),
+        decimals: reserve.decimals,
+      });
+
+      if (withdrawResult.success) {
+        toast.success(
+          `Successfully initiated hybrid withdraw: ${chrAmount} CHR + ${stchrAmount} stCHR`
+        );
+        onOpenChange(false);
+      } else {
+        toast.error(`Failed to withdraw: ${withdrawResult.error?.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting hybrid withdraw:', error);
+      toast.error('Failed to submit hybrid withdraw transaction');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const currentHealthFactor =
     accountData.healthFactor === -1
       ? -1
       : normalizeBN(valueToBigNumber(accountData.healthFactor.toString()), 18);
 
+  // Get current withdraw amount for transaction overview
+  const getCurrentWithdrawAmount = () => {
+    if (withdrawType === 'hybrid') {
+      const chrAmount = Number(hybridForm.watch('chrAmount')) || 0;
+      const stchrAmount = Number(hybridForm.watch('stchrAmount')) || 0;
+      return chrAmount + stchrAmount;
+    } else {
+      return Number(singleForm.watch('amount')) || 0;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[40vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="sm:max-w-[50vw] w-auto max-h-[90vh] overflow-y-auto rounded-xl">
         <TooltipProvider delayDuration={300}>
           <DialogHeader>
             <div className="flex justify-between items-center">
@@ -303,384 +455,796 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
             </div>
           </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Typography className="flex items-center gap-1">Amount</Typography>
-                </div>
+          {/* Balance Breakdown Section */}
+          {withdrawDashboard && (
+            <div className="bg-muted/30 rounded-lg p-4">
+              <Typography weight="semibold" className="text-lg mb-3">
+                Your stCHR Balance
+              </Typography>
 
-                <div className="border px-3 py-2 rounded-lg">
-                  <div className="relative">
-                    <Input
-                      {...form.register('amount')}
-                      autoComplete="off"
-                      placeholder="0.00"
-                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.]?[0-9]*"
-                      min={0.0}
-                      max={maxWithdrawAmount}
-                      step="any"
-                      onChange={handleAmountChange}
-                    />
-                    <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
-                      {/* clear icon */}
-                      {form.watch('amount') && (
-                        <Button
-                          variant="none"
-                          size="icon"
-                          onClick={() => {
-                            form.setValue('amount', '');
-                            // Reset health factor when clearing input
-                            setCalculatedHealthFactor(
-                              accountData.healthFactor === -1
-                                ? -1
-                                : Number(
-                                    normalizeBN(
-                                      valueToBigNumber(accountData.healthFactor.toString()),
-                                      18
-                                    )
-                                  )
-                            );
-                          }}
-                          className="hover:opacity-70"
-                        >
-                          <CircleX className="h-6 w-6 text-embossed" />
-                        </Button>
-                      )}
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
-                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-row items-center gap-1">
-                        <span className="font-medium text-lg">{reserve.symbol}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-base">
-                    {isPriceFetching ? (
-                      <Skeleton className="h-5 w-20" />
-                    ) : (
-                      <CountUp
-                        value={(currentPrice || 0) * Number(form.watch('amount'))}
-                        prefix="$"
-                        className="text-base"
-                      />
-                    )}
-                    <div
-                      className="flex flex-row items-center gap-1 text-primary cursor-pointer"
-                      onClick={handleMaxAmount}
-                    >
-                      <div className="flex flex-row items-center gap-1 cursor-pointer">
-                        <Typography>Available: </Typography>
-                        {isMaxWithdrawFetching ? (
-                          <Skeleton className="h-5 w-20" />
-                        ) : (
-                          <Typography className="font-bold">{maxWithdrawAmount}</Typography>
-                        )}
-                        <Typography className="font-bold text-primary">MAX</Typography>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {form.formState.errors.amount && (
-                  <Typography className="text-destructive">
-                    {form.formState.errors.amount.message}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                <div className="flex justify-between">
+                  <Typography className="text-muted-foreground">• Principal:</Typography>
+                  <Typography weight="medium">
+                    {withdrawDashboard.stakingPrincipalStchr.toFixed(4)} stCHR
                   </Typography>
+                </div>
+                <div className="flex justify-between">
+                  <Typography className="text-muted-foreground">• Staking Rewards:</Typography>
+                  <Typography weight="medium">
+                    {withdrawDashboard.stakingRewardsStchr.toFixed(4)} stCHR
+                  </Typography>
+                </div>
+                <div className="flex justify-between">
+                  <Typography className="text-muted-foreground">• Lending Rewards:</Typography>
+                  <Typography weight="medium">
+                    {withdrawDashboard.lendingRewardsStchr.toFixed(4)} stCHR
+                  </Typography>
+                </div>
+              </div>
+
+              <div className="border-t border-border mt-3 pt-3">
+                <div className="flex justify-between">
+                  <Typography weight="semibold">Total stCHR:</Typography>
+                  <Typography weight="semibold">
+                    {withdrawDashboard.totalStchr.toFixed(4)} stCHR
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Withdraw Type Selection */}
+          <div className="space-y-4">
+            <Typography weight="semibold" className="text-lg">
+              Choose Withdraw Option
+            </Typography>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* CHR Withdraw Option */}
+              <div
+                className={cn(
+                  'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
+                  withdrawType === 'chr'
+                    ? 'border-transparent shadow-lg'
+                    : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
+                )}
+                onClick={() => setWithdrawType('chr')}
+              >
+                {withdrawType === 'chr' && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
+                    <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
+                      <div className="bg-background w-full h-full rounded-[10px]" />
+                    </div>
+                  </>
+                )}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className={cn(
+                        'p-2 rounded-lg',
+                        withdrawType === 'chr'
+                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <Clock
+                        className={cn(
+                          'w-5 h-5',
+                          withdrawType === 'chr' ? 'text-black' : 'text-muted-foreground'
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <Typography
+                        weight="semibold"
+                        className={cn(
+                          withdrawType === 'chr'
+                            ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
+                            : ''
+                        )}
+                      >
+                        CHR Only
+                      </Typography>
+                      <Typography variant="small" className="text-muted-foreground">
+                        Slow withdraw via BSC unstaking
+                      </Typography>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <Typography variant="small" className="text-muted-foreground">
+                      • Withdraw original CHR + staking rewards
+                    </Typography>
+                    <Typography variant="small" className="text-muted-foreground">
+                      • 14 days waiting period
+                    </Typography>
+                    {withdrawDashboard && (
+                      <Typography variant="small" className="text-primary font-medium">
+                        Max: {withdrawDashboard.maxChrWithdraw.toFixed(4)} CHR
+                      </Typography>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* stCHR Withdraw Option */}
+              <div
+                className={cn(
+                  'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
+                  withdrawType === 'stchr'
+                    ? 'border-transparent shadow-lg'
+                    : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
+                )}
+                onClick={() => setWithdrawType('stchr')}
+              >
+                {withdrawType === 'stchr' && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
+                    <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
+                      <div className="bg-background w-full h-full rounded-[10px]" />
+                    </div>
+                  </>
+                )}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className={cn(
+                        'p-2 rounded-lg',
+                        withdrawType === 'stchr'
+                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <Zap
+                        className={cn(
+                          'w-5 h-5',
+                          withdrawType === 'stchr' ? 'text-black' : 'text-muted-foreground'
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <Typography
+                        weight="semibold"
+                        className={cn(
+                          withdrawType === 'stchr'
+                            ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
+                            : ''
+                        )}
+                      >
+                        stCHR Only
+                      </Typography>
+                      <Typography variant="small" className="text-muted-foreground">
+                        Immediate from lending pool
+                      </Typography>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <Typography variant="small" className="text-muted-foreground">
+                      • Withdraw all available stCHR
+                    </Typography>
+                    <Typography variant="small" className="text-muted-foreground">
+                      • Instant withdrawal
+                    </Typography>
+                    {withdrawDashboard && (
+                      <Typography variant="small" className="text-primary font-medium">
+                        Max: {withdrawDashboard.maxStchrImmediateWithdraw.toFixed(4)} stCHR
+                      </Typography>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Hybrid Withdraw Option */}
+              <div
+                className={cn(
+                  'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
+                  withdrawType === 'hybrid'
+                    ? 'border-transparent shadow-lg'
+                    : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
+                )}
+                onClick={() => setWithdrawType('hybrid')}
+              >
+                {withdrawType === 'hybrid' && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
+                    <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
+                      <div className="bg-background w-full h-full rounded-[10px]" />
+                    </div>
+                  </>
+                )}
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className={cn(
+                        'p-2 rounded-lg',
+                        withdrawType === 'hybrid'
+                          ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                          : 'bg-muted'
+                      )}
+                    >
+                      <ArrowLeftRight
+                        className={cn(
+                          'w-5 h-5',
+                          withdrawType === 'hybrid' ? 'text-black' : 'text-muted-foreground'
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <Typography
+                        weight="semibold"
+                        className={cn(
+                          withdrawType === 'hybrid'
+                            ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
+                            : ''
+                        )}
+                      >
+                        Both CHR + stCHR
+                      </Typography>
+                      <Typography variant="small" className="text-muted-foreground">
+                        Flexible combination withdraw
+                      </Typography>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <Typography variant="small" className="text-muted-foreground">
+                      • CHR received after 14 days
+                    </Typography>
+                    <Typography variant="small" className="text-muted-foreground">
+                      • stCHR received immediately
+                    </Typography>
+                    {withdrawDashboard && (
+                      <Typography variant="small" className="text-primary font-medium">
+                        Max Total: {withdrawDashboard.maxTotalValue.toFixed(4)}
+                      </Typography>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Section */}
+          {withdrawType === 'hybrid' ? (
+            // Hybrid form with two inputs (similar style to single inputs)
+            <form onSubmit={hybridForm.handleSubmit(onHybridSubmit)} autoComplete="off">
+              <div className="space-y-6 py-4">
+                {/* CHR Amount Input */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Typography className="flex items-center gap-1">
+                      CHR Amount <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">(14 days)</span>
+                    </Typography>
+                  </div>
+
+                  <div className="border px-3 py-2 rounded-lg">
+                    <div className="relative">
+                      <Input
+                        {...hybridForm.register('chrAmount')}
+                        autoComplete="off"
+                        placeholder="0.00"
+                        className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                        min={0.0}
+                        step="any"
+                        onChange={e => handleHybridAmountChange('chrAmount', e.target.value)}
+                      />
+                      <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                        {hybridForm.watch('chrAmount') && (
+                          <Button
+                            variant="none"
+                            size="icon"
+                            onClick={() => {
+                              hybridForm.setValue('chrAmount', '');
+                              handleFetchPrice();
+                            }}
+                            className="hover:opacity-70"
+                          >
+                            <CircleX className="h-6 w-6 text-embossed" />
+                          </Button>
+                        )}
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={reserve.iconUrl} alt="CHR" />
+                          <AvatarFallback>CHR</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-row items-center gap-1">
+                          <span className="font-medium text-lg">CHR</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-base">
+                      {isPriceFetching ? (
+                        <Skeleton className="h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={(currentPrice || 0) * Number(hybridForm.watch('chrAmount'))}
+                          prefix="$"
+                          className="text-base"
+                        />
+                      )}
+                      <div
+                        className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                        onClick={() => handleHybridMaxAmount('chrAmount')}
+                      >
+                        <div className="flex flex-row items-center gap-1 cursor-pointer">
+                          <Typography>Available: </Typography>
+                          {isDashboardLoading ? (
+                            <Skeleton className="h-5 w-20" />
+                          ) : (
+                            <Typography className="font-bold">
+                              {withdrawDashboard?.maxChrWithdraw.toFixed(6) || '0'}
+                            </Typography>
+                          )}
+                          <Typography className="font-bold text-primary">MAX</Typography>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {hybridForm.formState.errors.chrAmount && (
+                    <Typography className="text-destructive">
+                      {hybridForm.formState.errors.chrAmount.message}
+                    </Typography>
+                  )}
+                </div>
+
+                {/* stCHR Amount Input */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Typography className="flex items-center gap-1">
+                      stCHR Amount <Zap className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">(Immediate)</span>
+                    </Typography>
+                  </div>
+
+                  <div className="border px-3 py-2 rounded-lg">
+                    <div className="relative">
+                      <Input
+                        {...hybridForm.register('stchrAmount')}
+                        autoComplete="off"
+                        placeholder="0.00"
+                        className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                        min={0.0}
+                        step="any"
+                        onChange={e => handleHybridAmountChange('stchrAmount', e.target.value)}
+                      />
+                      <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                        {hybridForm.watch('stchrAmount') && (
+                          <Button
+                            variant="none"
+                            size="icon"
+                            onClick={() => {
+                              hybridForm.setValue('stchrAmount', '');
+                              handleFetchPrice();
+                            }}
+                            className="hover:opacity-70"
+                          >
+                            <CircleX className="h-6 w-6 text-embossed" />
+                          </Button>
+                        )}
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={reserve.iconUrl} alt="stCHR" />
+                          <AvatarFallback>stCHR</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-row items-center gap-1">
+                          <span className="font-medium text-lg">stCHR</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-base">
+                      {isPriceFetching ? (
+                        <Skeleton className="h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={(currentPrice || 0) * Number(hybridForm.watch('stchrAmount'))}
+                          prefix="$"
+                          className="text-base"
+                        />
+                      )}
+                      <div
+                        className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                        onClick={() => handleHybridMaxAmount('stchrAmount')}
+                      >
+                        <div className="flex flex-row items-center gap-1 cursor-pointer">
+                          <Typography>Available: </Typography>
+                          {isDashboardLoading ? (
+                            <Skeleton className="h-5 w-20" />
+                          ) : (
+                            <Typography className="font-bold">
+                              {withdrawDashboard?.maxStchrImmediateWithdraw.toFixed(6) || '0'}
+                            </Typography>
+                          )}
+                          <Typography className="font-bold text-primary">MAX</Typography>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {hybridForm.formState.errors.stchrAmount && (
+                    <Typography className="text-destructive">
+                      {hybridForm.formState.errors.stchrAmount.message}
+                    </Typography>
+                  )}
+                </div>
+
+                {/* Important Notice for Hybrid */}
+                <Alert variant="warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Important Notice</AlertTitle>
+                  <AlertDescription>
+                    Hybrid withdraw combines both options: stCHR is immediate, CHR requires 14-day
+                    wait. Cross-constraints apply between the two amounts.
+                  </AlertDescription>
+                </Alert>
+
+                {/* Transaction Overview for Hybrid */}
+                <div className="space-y-4">
+                  <Typography weight="semibold" className="text-lg">
+                    Transaction overview
+                  </Typography>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">
+                      CHR amount (14 days)
+                    </Typography>
+                    <Typography weight="medium">
+                      <CountUp
+                        value={Number(hybridForm.watch('chrAmount')) || 0}
+                        suffix=" CHR"
+                        decimals={6}
+                      />
+                    </Typography>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">
+                      stCHR amount (immediate)
+                    </Typography>
+                    <Typography weight="medium">
+                      <CountUp
+                        value={Number(hybridForm.watch('stchrAmount')) || 0}
+                        suffix=" stCHR"
+                        decimals={6}
+                      />
+                    </Typography>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">
+                      Health factor
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger type="button">
+                          <Info className="h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Liquidation occurs when health factor is below 1.0</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Typography>
+
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      {Number(currentHealthFactor) === -1 ? (
+                        <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                      ) : (
+                        <CountUp
+                          value={Number(currentHealthFactor)}
+                          decimals={2}
+                          className={
+                            Number(currentHealthFactor) === -1
+                              ? 'text-green-500'
+                              : Number(currentHealthFactor) <= 1.25
+                                ? 'text-red-500'
+                                : Number(currentHealthFactor) <= 1.5
+                                  ? 'text-amber-500'
+                                  : 'text-green-500'
+                          }
+                        />
+                      )}
+
+                      <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                      {getCurrentWithdrawAmount() === 0 ? (
+                        <Typography className="text-muted-foreground font-medium">_</Typography>
+                      ) : calculatedHealthFactor === -1 ? (
+                        <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                      ) : (
+                        <CountUp
+                          value={calculatedHealthFactor}
+                          decimals={2}
+                          className={
+                            calculatedHealthFactor === -1
+                              ? 'text-green-500'
+                              : calculatedHealthFactor <= 1.25
+                                ? 'text-red-500'
+                                : calculatedHealthFactor <= 1.5
+                                  ? 'text-amber-500'
+                                  : 'text-green-500'
+                          }
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">
+                      Total withdraw value
+                    </Typography>
+                    <div className="font-medium text-base flex flex-row items-center gap-1">
+                      <CountUp value={getCurrentWithdrawAmount()} suffix=" tokens" decimals={6} />~{' '}
+                      {isPriceFetching ? (
+                        <Skeleton className="inline-block h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={(currentPrice || 0) * getCurrentWithdrawAmount()}
+                          prefix="$"
+                          className="text-base"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit button for hybrid */}
+              <div className="mt-4">
+                {isSubmitting ? (
+                  <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+                    Processing...
+                  </Button>
+                ) : !hybridForm.watch('chrAmount') && !hybridForm.watch('stchrAmount') ? (
+                  <Button disabled className="w-full text-lg py-6">
+                    Enter amounts
+                  </Button>
+                ) : (
+                  <Button variant="gradient" type="submit" className="w-full text-lg py-6">
+                    Withdraw Both CHR + stCHR
+                  </Button>
                 )}
               </div>
+            </form>
+          ) : (
+            // Single amount form for CHR or stCHR
+            <form onSubmit={singleForm.handleSubmit(onSingleSubmit)} autoComplete="off">
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Typography className="flex items-center gap-1">
+                      Amount ({withdrawType === 'chr' ? 'CHR' : 'stCHR'})
+                    </Typography>
+                  </div>
 
-              {/* Withdraw Type Selection */}
-              <div className="space-y-2">
-                <Typography weight="semibold" className="text-lg">
-                  Withdraw Method
-                </Typography>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Slow Withdraw Option */}
-                  <div
-                    className={cn(
-                      'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-                      withdrawType === 'slow'
-                        ? 'border-transparent shadow-lg'
-                        : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
-                    )}
-                    onClick={() => setWithdrawType('slow')}
-                  >
-                    {withdrawType === 'slow' && (
-                      <>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
-                        <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
-                          <div className="bg-background w-full h-full rounded-[10px]" />
-                        </div>
-                      </>
-                    )}
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div
-                          className={cn(
-                            'p-2 rounded-lg',
-                            withdrawType === 'slow'
-                              ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                              : 'bg-muted'
-                          )}
-                        >
-                          <Clock
-                            className={cn(
-                              'w-5 h-5',
-                              withdrawType === 'slow' ? 'text-black' : 'text-muted-foreground'
-                            )}
-                          />
-                        </div>
-                        <div>
-                          <Typography
-                            weight="semibold"
-                            className={cn(
-                              withdrawType === 'slow'
-                                ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
-                                : ''
-                            )}
+                  <div className="border px-3 py-2 rounded-lg">
+                    <div className="relative">
+                      <Input
+                        {...singleForm.register('amount')}
+                        autoComplete="off"
+                        placeholder="0.00"
+                        className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
+                        inputMode="decimal"
+                        pattern="[0-9]*[.]?[0-9]*"
+                        min={0.0}
+                        max={getCurrentMaxAmount()}
+                        step="any"
+                        onChange={handleSingleAmountChange}
+                      />
+                      <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                        {singleForm.watch('amount') && (
+                          <Button
+                            variant="none"
+                            size="icon"
+                            onClick={() => {
+                              singleForm.setValue('amount', '');
+                              setCalculatedHealthFactor(
+                                accountData.healthFactor === -1
+                                  ? -1
+                                  : Number(
+                                      normalizeBN(
+                                        valueToBigNumber(accountData.healthFactor.toString()),
+                                        18
+                                      )
+                                    )
+                              );
+                            }}
+                            className="hover:opacity-70"
                           >
-                            Slow Withdraw
-                          </Typography>
-                          <Typography variant="small" className="text-muted-foreground">
-                            14 days waiting period
-                          </Typography>
+                            <CircleX className="h-6 w-6 text-embossed" />
+                          </Button>
+                        )}
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                          <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-row items-center gap-1">
+                          <span className="font-medium text-lg">
+                            {withdrawType === 'chr' ? 'CHR' : 'stCHR'}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <Typography variant="small" className="text-muted-foreground">
-                          ✓ Lower fees
-                        </Typography>
-                        <Typography variant="small" className="text-muted-foreground">
-                          ✓ Full staking rewards
-                        </Typography>
+                    </div>
+
+                    <div className="flex justify-between items-center text-base">
+                      {isPriceFetching ? (
+                        <Skeleton className="h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={(currentPrice || 0) * Number(singleForm.watch('amount'))}
+                          prefix="$"
+                          className="text-base"
+                        />
+                      )}
+                      <div
+                        className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                        onClick={handleMaxAmount}
+                      >
+                        <div className="flex flex-row items-center gap-1 cursor-pointer">
+                          <Typography>Available: </Typography>
+                          {isDashboardLoading ? (
+                            <Skeleton className="h-5 w-20" />
+                          ) : (
+                            <Typography className="font-bold">
+                              {getCurrentMaxAmount().toFixed(6)}
+                            </Typography>
+                          )}
+                          <Typography className="font-bold text-primary">MAX</Typography>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Quick Withdraw Option */}
-                  <div
-                    className={cn(
-                      'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-                      withdrawType === 'quick'
-                        ? 'border-transparent shadow-lg'
-                        : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
-                    )}
-                    onClick={() => setWithdrawType('quick')}
-                  >
-                    {withdrawType === 'quick' && (
-                      <>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
-                        <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
-                          <div className="bg-background w-full h-full rounded-[10px]" />
-                        </div>
-                      </>
-                    )}
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div
-                          className={cn(
-                            'p-2 rounded-lg',
-                            withdrawType === 'quick'
-                              ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                              : 'bg-muted'
-                          )}
-                        >
-                          <Zap
-                            className={cn(
-                              'w-5 h-5',
-                              withdrawType === 'quick' ? 'text-black' : 'text-muted-foreground'
-                            )}
-                          />
-                        </div>
-                        <div>
-                          <Typography
-                            weight="semibold"
-                            className={cn(
-                              withdrawType === 'quick'
-                                ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
-                                : ''
-                            )}
-                          >
-                            Quick Withdraw
-                          </Typography>
-                          <Typography variant="small" className="text-muted-foreground">
-                            Instant withdrawal
-                          </Typography>
-                        </div>
-                      </div>
-                      <div className="flex flex-col space-y-1">
-                        <Typography variant="small" className="text-muted-foreground">
-                          • Higher fees
-                        </Typography>
-                        <Typography variant="small" className="text-muted-foreground">
-                          • Market-based rates
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Horizontal Divider */}
-              <div className="h-[1px] bg-border/50 rounded-full"></div>
-
-              <div className="space-y-4">
-                <Typography weight="semibold" className="text-lg">
-                  Transaction overview
-                </Typography>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Remaining supply</Typography>
-                  <Typography weight="medium">
-                    <CountUp
-                      value={maxWithdrawAmount - Number(form.watch('amount'))}
-                      suffix={` ${reserve.symbol}`}
-                      decimals={6}
-                    />
-                  </Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Withdraw method</Typography>
-                  <Typography weight="medium" className="capitalize">
-                    {withdrawType} withdraw
-                  </Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Processing time</Typography>
-                  <Typography weight="medium">
-                    {withdrawType === 'slow' ? '14 days' : 'Instant'}
-                  </Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Health factor
-                    <Tooltip delayDuration={100}>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Liquidation occurs when health factor is below 1.0</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </Typography>
-
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    {Number(currentHealthFactor) === -1 ? (
-                      <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
-                    ) : (
-                      <CountUp
-                        value={Number(currentHealthFactor)}
-                        decimals={2}
-                        className={
-                          Number(currentHealthFactor) === -1
-                            ? 'text-green-500'
-                            : Number(currentHealthFactor) <= 1.25
-                              ? 'text-red-500'
-                              : Number(currentHealthFactor) <= 1.5
-                                ? 'text-amber-500'
-                                : 'text-green-500'
-                        }
-                      />
-                    )}
-
-                    {/* icon arrow left to right */}
-                    <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
-
-                    {!form.watch('amount') || Number(form.watch('amount')) === 0 ? (
-                      <Typography className="text-muted-foreground font-medium">_</Typography>
-                    ) : calculatedHealthFactor === -1 ? (
-                      <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
-                    ) : (
-                      <CountUp
-                        value={calculatedHealthFactor}
-                        decimals={2}
-                        className={
-                          calculatedHealthFactor === -1
-                            ? 'text-green-500'
-                            : calculatedHealthFactor <= 1.25
-                              ? 'text-red-500'
-                              : calculatedHealthFactor <= 1.5
-                                ? 'text-amber-500'
-                                : 'text-green-500'
-                        }
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Withdraw amount</Typography>
-                  <div className="font-medium text-base flex flex-row items-center gap-1">
-                    <CountUp
-                      value={Number(form.watch('amount'))}
-                      suffix={` ${reserve.symbol}`}
-                      decimals={6}
-                    />
-                    ~{' '}
-                    {isPriceFetching ? (
-                      <Skeleton className="inline-block h-5 w-20" />
-                    ) : (
-                      <CountUp
-                        value={(currentPrice || 0) * Number(form.watch('amount'))}
-                        prefix="$"
-                        className="text-base"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Important Warning */}
-            <div className="my-6">
-              <Alert variant={withdrawType === 'slow' ? 'warning' : 'default'}>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Important Notice</AlertTitle>
-                <AlertDescription>
-                  {withdrawType === 'slow' ? (
-                    <>
-                      Slow withdraw requires a 14-day unbonding period. Your funds will be locked
-                      during this time but you&apos;ll receive full staking rewards.
-                    </>
-                  ) : (
-                    <>
-                      Quick withdraw uses DEX swaps for instant liquidity. Final amount may vary
-                      based on market conditions and slippage.
-                    </>
+                  {singleForm.formState.errors.amount && (
+                    <Typography className="text-destructive">
+                      {singleForm.formState.errors.amount.message}
+                    </Typography>
                   )}
-                </AlertDescription>
-              </Alert>
-            </div>
+                </div>
 
-            <div className="mt-4">
-              {isSubmitting ? (
-                <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-                  Processing...
-                </Button>
-              ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
-                <Button disabled className="w-full text-lg py-6">
-                  Enter an amount
-                </Button>
-              ) : (
-                <Button
-                  variant="gradient"
-                  type="submit"
-                  className="w-full text-lg py-6"
-                  disabled={!form.watch('amount')}
-                >
-                  {withdrawType === 'slow' ? 'Slow' : 'Quick'} Withdraw {reserve.symbol}
-                </Button>
-              )}
-            </div>
-          </form>
+                {/* Important Notice for Single */}
+                <Alert variant="warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Important Notice</AlertTitle>
+                  <AlertDescription>
+                    {withdrawType === 'chr' ? (
+                      <>
+                        CHR withdraw requires a 14-day unbonding period from BSC staking. Your funds
+                        will be locked during this time but you&apos;ll receive full staking
+                        rewards.
+                      </>
+                    ) : (
+                      <>
+                        stCHR withdraw is immediate from the lending pool. Amount may be limited by
+                        your collateral position.
+                      </>
+                    )}
+                  </AlertDescription>
+                </Alert>
+
+                {/* Transaction Overview for Single */}
+                <div className="space-y-4">
+                  <Typography weight="semibold" className="text-lg">
+                    Transaction overview
+                  </Typography>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">Remaining supply</Typography>
+                    <Typography weight="medium">
+                      <CountUp
+                        value={getCurrentMaxAmount() - Number(singleForm.watch('amount'))}
+                        suffix={` ${withdrawType === 'chr' ? 'CHR' : 'stCHR'}`}
+                        decimals={6}
+                      />
+                    </Typography>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">Withdraw method</Typography>
+                    <Typography weight="medium" className="capitalize">
+                      {withdrawType === 'chr' ? 'CHR (14 days)' : 'stCHR (immediate)'}
+                    </Typography>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">
+                      Health factor
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger type="button">
+                          <Info className="h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          <p>Liquidation occurs when health factor is below 1.0</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Typography>
+
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      {Number(currentHealthFactor) === -1 ? (
+                        <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                      ) : (
+                        <CountUp
+                          value={Number(currentHealthFactor)}
+                          decimals={2}
+                          className={
+                            Number(currentHealthFactor) === -1
+                              ? 'text-green-500'
+                              : Number(currentHealthFactor) <= 1.25
+                                ? 'text-red-500'
+                                : Number(currentHealthFactor) <= 1.5
+                                  ? 'text-amber-500'
+                                  : 'text-green-500'
+                          }
+                        />
+                      )}
+
+                      <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                      {!singleForm.watch('amount') || Number(singleForm.watch('amount')) === 0 ? (
+                        <Typography className="text-muted-foreground font-medium">_</Typography>
+                      ) : calculatedHealthFactor === -1 ? (
+                        <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                      ) : (
+                        <CountUp
+                          value={calculatedHealthFactor}
+                          decimals={2}
+                          className={
+                            calculatedHealthFactor === -1
+                              ? 'text-green-500'
+                              : calculatedHealthFactor <= 1.25
+                                ? 'text-red-500'
+                                : calculatedHealthFactor <= 1.5
+                                  ? 'text-amber-500'
+                                  : 'text-green-500'
+                          }
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <Typography className="flex items-center gap-1">Withdraw amount</Typography>
+                    <div className="font-medium text-base flex flex-row items-center gap-1">
+                      <CountUp
+                        value={Number(singleForm.watch('amount'))}
+                        suffix={` ${withdrawType === 'chr' ? 'CHR' : 'stCHR'}`}
+                        decimals={6}
+                      />
+                      ~{' '}
+                      {isPriceFetching ? (
+                        <Skeleton className="inline-block h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={(currentPrice || 0) * Number(singleForm.watch('amount'))}
+                          prefix="$"
+                          className="text-base"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit button for single */}
+              <div className="mt-4">
+                {isSubmitting ? (
+                  <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+                    Processing...
+                  </Button>
+                ) : !singleForm.watch('amount') || parseFloat(singleForm.watch('amount')) === 0 ? (
+                  <Button disabled className="w-full text-lg py-6">
+                    Enter an amount
+                  </Button>
+                ) : (
+                  <Button variant="gradient" type="submit" className="w-full text-lg py-6">
+                    Withdraw {withdrawType === 'chr' ? 'CHR' : 'stCHR'}
+                  </Button>
+                )}
+              </div>
+            </form>
+          )}
         </TooltipProvider>
       </DialogContent>
     </Dialog>
