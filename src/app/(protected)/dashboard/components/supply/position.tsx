@@ -461,7 +461,7 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                           Total Withdrawn:
                         </Typography>
                         <Typography variant="small" className="font-medium text-[#52E5FF] text-xs">
-                          {totalWithdrawn.toFixed(3)} stCHR
+                          <CountUp value={totalWithdrawn} decimals={3} /> stCHR
                         </Typography>
                       </div>
                       <div className="flex items-center justify-between">
@@ -502,7 +502,9 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                   <p>
                     <strong>stCHR Withdraw History</strong>
                   </p>
-                  <p>Total Withdrawn: {totalWithdrawn.toFixed(6)} stCHR</p>
+                  <p>
+                    Total Withdrawn: <CountUp value={totalWithdrawn} decimals={6} /> stCHR
+                  </p>
                   <p>Number of Transactions: {transactions.length}</p>
                   <p>Click to view detailed transaction history</p>
                 </>
@@ -765,7 +767,9 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                 Staking Overview
               </Typography>
               <div className="text-xs space-y-1.5">
-                <div>Total: {totalAmount.toFixed(2)} CHR</div>
+                <div>
+                  Total: <CountUp value={totalAmount} decimals={2} /> CHR
+                </div>
                 <div>Positions: {records.length}</div>
                 {stakedCount > 0 && <div>Staked: {stakedCount}</div>}
                 {pendingCount > 0 && <div>Pending: {pendingCount}</div>}
@@ -891,20 +895,21 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-blue-500" />
                       <Typography variant="small">
-                        Lending APY: {row.supplyAPY.toFixed(2)}%
+                        Lending APY: <CountUp value={row.supplyAPY} decimals={2} suffix="%" />
                       </Typography>
                     </div>
                     {hasStakingAPY && (
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         <Typography variant="small">
-                          Staking APY: {stakingInfo.stakingAPY.toFixed(2)}%
+                          Staking APY:{' '}
+                          <CountUp value={stakingInfo.stakingAPY} decimals={2} suffix="%" />
                         </Typography>
                       </div>
                     )}
                     <div className="border-t border-border pt-2 mt-2">
                       <Typography variant="small" weight="semibold">
-                        Total APY: {totalAPY.toFixed(2)}%
+                        Total APY: <CountUp value={totalAPY} decimals={2} suffix="%" />
                       </Typography>
                     </div>
                   </div>

@@ -315,7 +315,7 @@ export const QuickWithdrawProgressDialog: React.FC<QuickWithdrawProgressDialogPr
             <CardContent className="relative z-20">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 {/* Tabs with primary underline */}
-                <TabsList className="justify-center bg-transparent p-0 h-auto border-b border-border">
+                <TabsList className="justify-start bg-transparent p-0 h-auto border-b border-border overflow-x-auto scrollbar-none flex-nowrap w-full">
                   {withdrawPositions.map((position, index) => (
                     <TabsTrigger
                       key={index}

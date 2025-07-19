@@ -33,7 +33,9 @@ import { cn } from '@/utils/tailwind';
 import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
 import { useStchrWithdraw } from '@/hooks/contracts/operations/use-lsd-stchr-withdraw';
 import { useHybridWithdraw } from '@/hooks/contracts/operations/use-lsd-hybrid-withdraw';
-import { useWithdrawDashboard } from '@/hooks/contracts/queries/use-lsd-withdraw-options';
+
+import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
+import { useMaxStchrAmountWithChr } from '@/hooks/contracts/queries/use-max-stchr-amount-with-chr';
 
 // Schema for single amount (CHR or stCHR options)
 const singleWithdrawFormSchema = z.object({
@@ -118,6 +120,10 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
   const [calculatedHealthFactor, setCalculatedHealthFactor] = useState<number>(-1);
   const [withdrawType, setWithdrawType] = useState<WithdrawType>('chr');
 
+  // State for hybrid flow
+  const [currentChrAmount, setCurrentChrAmount] = useState<number>(0);
+  const [isStchrInputEnabled, setIsStchrInputEnabled] = useState(false);
+
   // Forms for different withdraw types
   const singleForm = useForm<SingleWithdrawFormValues>({
     resolver: zodResolver(singleWithdrawFormSchema),
@@ -141,11 +147,25 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  // Fetch withdraw dashboard data
-  const { data: withdrawDashboard, isLoading: isDashboardLoading } = useWithdrawDashboard(
+  // Fetch max amounts for different withdraw types
+  const { data: maxChrAmount } = useMaxAmount(
     reserve.assetId,
     reserve.decimals,
-    open // Only fetch when dialog is open
+    'get_max_chr_withdraw_amount_query'
+  );
+
+  const { data: maxStchrAmount } = useMaxAmount(
+    reserve.assetId,
+    reserve.decimals,
+    'get_max_stchr_withdraw_amount_query'
+  );
+
+  // Fetch max stCHR amount based on CHR amount (for hybrid mode)
+  const { data: maxStchrAmountWithChr, isLoading: isMaxStchrLoading } = useMaxStchrAmountWithChr(
+    reserve.assetId,
+    reserve.decimals,
+    currentChrAmount,
+    open && withdrawType === 'hybrid' && currentChrAmount > 0 && isStchrInputEnabled
   );
 
   // Use the new withdraw hooks
@@ -181,19 +201,17 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
 
   // Get current max amount based on withdraw type
   const getCurrentMaxAmount = useCallback(() => {
-    if (!withdrawDashboard) return 0;
-
     switch (withdrawType) {
       case 'chr':
-        return withdrawDashboard.maxChrWithdraw;
+        return maxChrAmount || 0;
       case 'stchr':
-        return withdrawDashboard.maxStchrImmediateWithdraw;
+        return maxStchrAmount || 0;
       case 'hybrid':
-        return withdrawDashboard.maxTotalValue;
+        return 0; // Hybrid mode doesn't use a single max value
       default:
         return 0;
     }
-  }, [withdrawType, withdrawDashboard]);
+  }, [withdrawType, maxChrAmount, maxStchrAmount]);
 
   // Calculate health factor based on current input
   const calculateHealthFactor = useCallback(() => {
@@ -265,6 +283,16 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
     calculateHealthFactor();
   }, [reserve.price, calculateHealthFactor]);
 
+  // Reset hybrid flow state when switching to hybrid mode
+  useEffect(() => {
+    if (withdrawType === 'hybrid') {
+      setCurrentChrAmount(0);
+      setIsStchrInputEnabled(false);
+      hybridForm.setValue('chrAmount', '');
+      hybridForm.setValue('stchrAmount', '');
+    }
+  }, [withdrawType, hybridForm]);
+
   // Handle amount change for single forms
   const handleSingleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -297,7 +325,36 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
       return;
     }
 
-    hybridForm.setValue(field, value);
+    // Handle CHR amount change
+    if (field === 'chrAmount') {
+      hybridForm.setValue(field, value);
+      const chrAmountNum = parseFloat(value) || 0;
+
+      // Update CHR amount state
+      setCurrentChrAmount(chrAmountNum);
+      console.log('Updated currentChrAmount:', chrAmountNum);
+
+      // Enable/disable stCHR input based on CHR amount
+      if (chrAmountNum > 0) {
+        setIsStchrInputEnabled(true);
+        console.log('stCHR input enabled');
+      } else {
+        setIsStchrInputEnabled(false);
+        console.log('stCHR input disabled');
+        // Reset stCHR amount when CHR is cleared
+        hybridForm.setValue('stchrAmount', '');
+      }
+
+      // If CHR amount changed and stCHR was previously entered, reset stCHR
+      if (chrAmountNum !== currentChrAmount && hybridForm.watch('stchrAmount')) {
+        hybridForm.setValue('stchrAmount', '');
+      }
+    }
+
+    // Handle stCHR amount change (only if enabled)
+    if (field === 'stchrAmount' && isStchrInputEnabled) {
+      hybridForm.setValue(field, value);
+    }
 
     const chrAmount = field === 'chrAmount' ? value : hybridForm.watch('chrAmount');
     const stchrAmount = field === 'stchrAmount' ? value : hybridForm.watch('stchrAmount');
@@ -331,13 +388,12 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
 
   // Handle max amount for specific field in hybrid
   const handleHybridMaxAmount = (field: 'chrAmount' | 'stchrAmount') => {
-    if (!withdrawDashboard) return;
-
     let maxAmount = 0;
     if (field === 'chrAmount') {
-      maxAmount = withdrawDashboard.maxChrWithdraw;
+      maxAmount = maxChrAmount || 0;
     } else {
-      maxAmount = withdrawDashboard.maxStchrImmediateWithdraw;
+      // Use the new max amount based on CHR input for stCHR
+      maxAmount = maxStchrAmountWithChr || 0;
     }
 
     hybridForm.setValue(field, maxAmount.toString());
@@ -455,45 +511,6 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
             </div>
           </DialogHeader>
 
-          {/* Balance Breakdown Section */}
-          {withdrawDashboard && (
-            <div className="bg-muted/30 rounded-lg p-4">
-              <Typography weight="semibold" className="text-lg mb-3">
-                Your stCHR Balance
-              </Typography>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                <div className="flex justify-between">
-                  <Typography className="text-muted-foreground">• Principal:</Typography>
-                  <Typography weight="medium">
-                    {withdrawDashboard.stakingPrincipalStchr.toFixed(4)} stCHR
-                  </Typography>
-                </div>
-                <div className="flex justify-between">
-                  <Typography className="text-muted-foreground">• Staking Rewards:</Typography>
-                  <Typography weight="medium">
-                    {withdrawDashboard.stakingRewardsStchr.toFixed(4)} stCHR
-                  </Typography>
-                </div>
-                <div className="flex justify-between">
-                  <Typography className="text-muted-foreground">• Lending Rewards:</Typography>
-                  <Typography weight="medium">
-                    {withdrawDashboard.lendingRewardsStchr.toFixed(4)} stCHR
-                  </Typography>
-                </div>
-              </div>
-
-              <div className="border-t border-border mt-3 pt-3">
-                <div className="flex justify-between">
-                  <Typography weight="semibold">Total stCHR:</Typography>
-                  <Typography weight="semibold">
-                    {withdrawDashboard.totalStchr.toFixed(4)} stCHR
-                  </Typography>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Withdraw Type Selection */}
           <div className="space-y-4">
             <Typography weight="semibold" className="text-lg">
@@ -547,23 +564,18 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       >
                         CHR Only
                       </Typography>
-                      <Typography variant="small" className="text-muted-foreground">
+                      <Typography className="text-muted-foreground" size="sm">
                         Slow withdraw via BSC unstaking
                       </Typography>
                     </div>
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • Withdraw original CHR + staking rewards
                     </Typography>
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • 14 days waiting period
                     </Typography>
-                    {withdrawDashboard && (
-                      <Typography variant="small" className="text-primary font-medium">
-                        Max: {withdrawDashboard.maxChrWithdraw.toFixed(4)} CHR
-                      </Typography>
-                    )}
                   </div>
                 </div>
               </div>
@@ -614,23 +626,18 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       >
                         stCHR Only
                       </Typography>
-                      <Typography variant="small" className="text-muted-foreground">
+                      <Typography size="sm" className="text-muted-foreground">
                         Immediate from lending pool
                       </Typography>
                     </div>
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • Withdraw all available stCHR
                     </Typography>
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • Instant withdrawal
                     </Typography>
-                    {withdrawDashboard && (
-                      <Typography variant="small" className="text-primary font-medium">
-                        Max: {withdrawDashboard.maxStchrImmediateWithdraw.toFixed(4)} stCHR
-                      </Typography>
-                    )}
                   </div>
                 </div>
               </div>
@@ -681,23 +688,18 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       >
                         Both CHR + stCHR
                       </Typography>
-                      <Typography variant="small" className="text-muted-foreground">
+                      <Typography size="sm" className="text-muted-foreground">
                         Flexible combination withdraw
                       </Typography>
                     </div>
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • CHR received after 14 days
                     </Typography>
-                    <Typography variant="small" className="text-muted-foreground">
+                    <Typography size="sm" className="text-muted-foreground">
                       • stCHR received immediately
                     </Typography>
-                    {withdrawDashboard && (
-                      <Typography variant="small" className="text-primary font-medium">
-                        Max Total: {withdrawDashboard.maxTotalValue.toFixed(4)}
-                      </Typography>
-                    )}
                   </div>
                 </div>
               </div>
@@ -771,13 +773,9 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       >
                         <div className="flex flex-row items-center gap-1 cursor-pointer">
                           <Typography>Available: </Typography>
-                          {isDashboardLoading ? (
-                            <Skeleton className="h-5 w-20" />
-                          ) : (
-                            <Typography className="font-bold">
-                              {withdrawDashboard?.maxChrWithdraw.toFixed(6) || '0'}
-                            </Typography>
-                          )}
+                          <Typography className="font-bold">
+                            <CountUp value={maxChrAmount || 0} decimals={6} />
+                          </Typography>
                           <Typography className="font-bold text-primary">MAX</Typography>
                         </div>
                       </div>
@@ -805,12 +803,16 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       <Input
                         {...hybridForm.register('stchrAmount')}
                         autoComplete="off"
-                        placeholder="0.00"
-                        className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
+                        placeholder={isStchrInputEnabled ? '0.00' : 'Enter CHR amount first'}
+                        className={cn(
+                          'p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]',
+                          !isStchrInputEnabled && 'opacity-50 cursor-not-allowed'
+                        )}
                         inputMode="decimal"
                         pattern="[0-9]*[.]?[0-9]*"
                         min={0.0}
                         step="any"
+                        disabled={!isStchrInputEnabled}
                         onChange={e => handleHybridAmountChange('stchrAmount', e.target.value)}
                       />
                       <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
@@ -848,19 +850,26 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                         />
                       )}
                       <div
-                        className="flex flex-row items-center gap-1 text-primary cursor-pointer"
-                        onClick={() => handleHybridMaxAmount('stchrAmount')}
+                        className={cn(
+                          'flex flex-row items-center gap-1 text-primary',
+                          isStchrInputEnabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+                        )}
+                        onClick={() => isStchrInputEnabled && handleHybridMaxAmount('stchrAmount')}
                       >
-                        <div className="flex flex-row items-center gap-1 cursor-pointer">
+                        <div className="flex flex-row items-center gap-1">
                           <Typography>Available: </Typography>
-                          {isDashboardLoading ? (
+                          {!isStchrInputEnabled ? (
+                            <Typography className="font-bold">_</Typography>
+                          ) : isMaxStchrLoading ? (
                             <Skeleton className="h-5 w-20" />
                           ) : (
                             <Typography className="font-bold">
-                              {withdrawDashboard?.maxStchrImmediateWithdraw.toFixed(6) || '0'}
+                              <CountUp value={maxStchrAmountWithChr || 0} decimals={6} />
                             </Typography>
                           )}
-                          <Typography className="font-bold text-primary">MAX</Typography>
+                          {isStchrInputEnabled && (
+                            <Typography className="font-bold text-primary">MAX</Typography>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1084,13 +1093,9 @@ export const LsdWithdrawDialog: React.FC<LsdWithdrawDialogProps> = ({
                       >
                         <div className="flex flex-row items-center gap-1 cursor-pointer">
                           <Typography>Available: </Typography>
-                          {isDashboardLoading ? (
-                            <Skeleton className="h-5 w-20" />
-                          ) : (
-                            <Typography className="font-bold">
-                              {getCurrentMaxAmount().toFixed(6)}
-                            </Typography>
-                          )}
+                          <Typography className="font-bold">
+                            <CountUp value={getCurrentMaxAmount()} decimals={6} />
+                          </Typography>
                           <Typography className="font-bold text-primary">MAX</Typography>
                         </div>
                       </div>

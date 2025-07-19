@@ -15,7 +15,7 @@ export interface StchrWithdrawTransaction {
   lendingRewardsBefore: number;
   totalStchrBefore: number;
   withdrawType: string; // "lending_only", "hybrid", "max"
-  createdAt: string;
+  createdAt: number;
 }
 
 /**
