@@ -28,7 +28,7 @@ export function useChrWithdraw({
   onSuccess?: (result: ChrWithdrawResult, params: ChrWithdrawParams) => void;
   onError?: (error: Error, params: ChrWithdrawParams) => void;
 } = {}) {
-  const { account } = useChromiaAccount();
+  const { account, client } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
@@ -44,18 +44,21 @@ export function useChrWithdraw({
       try {
         console.log('Starting CHR withdraw operation:', params);
 
+        let amountValue;
+        // Signal for rell to recognize we want to withdraw with max amount
+        if (params.isUserWithdrawMax) {
+          if (!client) {
+            throw new Error('Client not available');
+          }
+          amountValue = await client.query('get_u256_max_query', {});
+        } else {
+          amountValue = createAmount(params.amount, params.decimals).value;
+        }
+
         // Execute CHR withdraw operation
         const result = await session
           .transactionBuilder()
-          .add(
-            op(
-              'withdraw_chr',
-              params.assetId,
-              params.isUserWithdrawMax
-                ? createAmount('999999999999999999999', params.decimals).value // Max withdraw
-                : createAmount(params.amount, params.decimals).value
-            )
-          )
+          .add(op('withdraw_chr', params.assetId, amountValue))
           .buildAndSend();
 
         console.log('CHR withdraw transaction result:', result);
@@ -77,7 +80,7 @@ export function useChrWithdraw({
         return errorResult;
       }
     },
-    [session, account, onSuccess, onError]
+    [session, account, client, onSuccess, onError]
   );
 
   return withdrawChr;

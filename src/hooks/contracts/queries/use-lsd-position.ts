@@ -38,8 +38,8 @@ export interface UserLsdPosition {
   totalStAssetStakingAndReward: number;
   currentTotalStAssetStaking: number;
   currentTotalStAssetStakingAndReward: number;
-  availableForWithdraw: number;
-  pendingWithdrawals: number;
+  // availableForWithdraw: number;
+  // pendingWithdrawals: number;
   createdAt: string;
   lastSupplyAt: string;
 }
@@ -116,8 +116,8 @@ export function useLsdPosition() {
         currentTotalStAssetStakingAndReward: Number(
           normalizeBN(p.currentTotalStAssetStakingAndReward.toString(), 6)
         ),
-        availableForWithdraw: Number(normalizeBN(p.availableForWithdraw.toString(), 6)),
-        pendingWithdrawals: Number(normalizeBN(p.pendingWithdrawals.toString(), 6)),
+        // availableForWithdraw: Number(normalizeBN(p.availableForWithdraw.toString(), 6)),
+        // pendingWithdrawals: Number(normalizeBN(p.pendingWithdrawals.toString(), 6)),
       }));
 
       const rawSupplyRecords = (Array.isArray(supplyRecordsResult) ? supplyRecordsResult : []).map(

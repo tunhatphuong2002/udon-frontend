@@ -19,7 +19,7 @@ import { LsdWithdrawDialog } from './lsd-withdraw-dialog';
 import { CollateralDialog } from './collateral-dialog';
 import { StakingProgressDialog } from './staking-progress-dialog';
 import { SlowWithdrawProgressDialog } from './slow-withdraw-progress-dialog';
-import { QuickWithdrawProgressDialog } from './quick-withdraw-progress-dialog';
+import { StchrWithdrawTransactionDialog } from './stchr-withdraw-transaction-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
@@ -35,11 +35,11 @@ import {
   useSlowWithdrawPositions,
   getSlowWithdrawStatusForAsset,
 } from '@/hooks/contracts/queries/use-slow-withdraw-positions';
+
 import {
-  useQuickWithdrawPositions,
-  getQuickWithdrawStatusForAsset,
-  getQuickWithdrawPositionStatus,
-} from '@/hooks/contracts/queries/use-quick-withdraw-positions';
+  useStchrWithdrawTransactions,
+  getStchrWithdrawTransactionsForAsset,
+} from '@/hooks/contracts/queries/use-stchr-withdraw-transactions';
 import { cn } from '@/utils/tailwind';
 import {
   ChevronDown,
@@ -97,12 +97,13 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
 
   console.log('slowWithdrawData in position', slowWithdrawData);
 
+  // stCHR Withdraw Transaction data fetching
   const {
-    data: quickWithdrawData,
-    // isLoading: quickWithdrawLoading
-  } = useQuickWithdrawPositions();
+    data: stchrTransactionData,
+    // isLoading: stchrTransactionLoading
+  } = useStchrWithdrawTransactions();
 
-  console.log('quickWithdrawData in position', quickWithdrawData);
+  console.log('stchrTransactionData in position', stchrTransactionData);
 
   // Dialog state management
   const [selectedPosition, setSelectedPosition] = useState<UserReserveData | null>(null);
@@ -118,8 +119,9 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   const [selectedRecordIndex, setSelectedRecordIndex] = useState<number>(0);
   // LSD Withdraw progress dialog states
   const [slowWithdrawProgressDialogOpen, setSlowWithdrawProgressDialogOpen] = useState(false);
-  const [quickWithdrawProgressDialogOpen, setQuickWithdrawProgressDialogOpen] = useState(false);
   const [selectedWithdrawAsset, setSelectedWithdrawAsset] = useState<string>('');
+  // stCHR Withdraw Transaction dialog state
+  const [stchrTransactionDialogOpen, setStchrTransactionDialogOpen] = useState(false);
   // Expandable rows state
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -163,8 +165,11 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
 
   // Handle stCHR withdraw transaction pill click
   const handleStchrWithdrawTransactionClick = (symbol: string) => {
-    setSelectedWithdrawAsset(symbol);
-    setQuickWithdrawProgressDialogOpen(true);
+    const position = positions.find(p => p.symbol === symbol);
+    if (position) {
+      setSelectedPosition(position);
+      setStchrTransactionDialogOpen(true);
+    }
   };
 
   // Handle expand/collapse row
@@ -409,78 +414,14 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
 
   // Render stCHR withdraw transaction pill
   const renderStchrWithdrawTransactionPill = (symbol: string) => {
-    const withdrawInfo = getQuickWithdrawStatusForAsset(symbol, quickWithdrawData);
-    const { withdrawPositions } = withdrawInfo;
+    const { transactions, hasTransactions, totalWithdrawn } = getStchrWithdrawTransactionsForAsset(
+      symbol,
+      stchrTransactionData
+    );
 
     // Base card structure with fixed height
     const baseCardClasses =
       'group relative h-36 p-3 rounded-xl border border-border/30 bg-gradient-to-br from-card via-card/95 to-muted/20 hover:shadow-lg hover:shadow-[#52E5FF]/10 transition-all duration-300 hover:border-[#52E5FF]/40';
-
-    if (withdrawPositions.length === 0) {
-      return (
-        <div className={baseCardClasses}>
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[#52E5FF]/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="relative z-10 h-full flex flex-col justify-between">
-            {/* Header */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg bg-muted/20 group-hover:bg-[#52E5FF]/10 transition-colors duration-300">
-                <Zap className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#52E5FF] transition-colors duration-300" />
-              </div>
-              <div className="flex flex-col">
-                <Typography
-                  variant="small"
-                  className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
-                >
-                  stCHR Withdraw
-                </Typography>
-                <Typography variant="small" className="text-muted-foreground/60 text-xs">
-                  Transaction History
-                </Typography>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 flex flex-col justify-center items-center">
-              <Typography
-                variant="small"
-                className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
-              >
-                No stCHR transactions
-              </Typography>
-            </div>
-
-            {/* Empty Progress */}
-            <div className="mt-2">
-              <div className="h-1.5 rounded-full bg-muted/20 overflow-hidden">
-                <div className="w-0 h-full bg-[#52E5FF]/30 transition-all duration-300" />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Calculate summary stats
-    const totalStAssetAmount = withdrawPositions.reduce((sum, position) => {
-      return sum + position.stAssetAmount;
-    }, 0);
-
-    const completedCount = withdrawPositions.filter(position => {
-      const positionStatus = getQuickWithdrawPositionStatus(position);
-      return positionStatus.isCompleted;
-    }).length;
-
-    const readyCount = withdrawPositions.filter(position => {
-      const positionStatus = getQuickWithdrawPositionStatus(position);
-      return positionStatus.canComplete && !positionStatus.isCompleted;
-    }).length;
-
-    const errorCount = withdrawPositions.filter(position => {
-      const positionStatus = getQuickWithdrawPositionStatus(position);
-      return positionStatus.hasError;
-    }).length;
-
-    const pendingCount = withdrawPositions.length - completedCount - readyCount - errorCount;
 
     return (
       <TooltipProvider>
@@ -495,191 +436,85 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
               <div className="relative z-10 h-full flex flex-col justify-between">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className={cn(
-                      'p-1.5 rounded-lg transition-all duration-300',
-                      errorCount > 0
-                        ? 'bg-red-500/10 group-hover:bg-red-500/20'
-                        : completedCount > 0
-                          ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
-                          : readyCount > 0
-                            ? 'bg-[#52E5FF]/10 group-hover:bg-[#52E5FF]/20'
-                            : 'bg-orange-500/10 group-hover:bg-orange-500/20'
-                    )}
-                  >
-                    <Zap
-                      className={cn(
-                        'w-3.5 h-3.5 transition-colors duration-300',
-                        errorCount > 0
-                          ? 'text-red-500'
-                          : completedCount > 0 || readyCount > 0
-                            ? 'text-[#52E5FF]'
-                            : 'text-orange-500'
-                      )}
-                    />
+                  <div className="p-1.5 rounded-lg bg-muted/20 group-hover:bg-[#52E5FF]/10 transition-colors duration-300">
+                    <Zap className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#52E5FF] transition-colors duration-300" />
                   </div>
                   <div className="flex flex-col">
                     <Typography
                       variant="small"
-                      className="font-semibold group-hover:text-[#52E5FF] transition-colors duration-300 truncate"
+                      className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors duration-300 truncate"
                     >
-                      stCHR Withdraw
+                      stCHR History
                     </Typography>
+                    <Typography variant="small" className="text-muted-foreground/60 text-xs">
+                      {hasTransactions ? `${transactions.length} transactions` : 'No transactions'}
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 flex flex-col justify-center">
+                  {hasTransactions ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                          Total Withdrawn:
+                        </Typography>
+                        <Typography variant="small" className="font-medium text-[#52E5FF] text-xs">
+                          {totalWithdrawn.toFixed(3)} stCHR
+                        </Typography>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Typography variant="small" className="text-muted-foreground/70 text-xs">
+                          Transactions:
+                        </Typography>
+                        <Typography variant="small" className="font-medium text-foreground text-xs">
+                          {transactions.length}
+                        </Typography>
+                      </div>
+                    </div>
+                  ) : (
                     <Typography
                       variant="small"
-                      className="text-muted-foreground/70 text-xs truncate"
+                      className="text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors duration-300 text-center text-xs"
                     >
-                      {withdrawPositions.length} position{withdrawPositions.length > 1 ? 's' : ''}
+                      No stCHR transactions
                     </Typography>
-                  </div>
+                  )}
                 </div>
 
-                {/* Stats */}
-                <div className="space-y-1 mb-2">
-                  <div className="flex justify-between items-center">
-                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
-                      Total:
-                    </Typography>
-                    <Typography variant="small" className="text-[#52E5FF] font-semibold text-sm">
-                      {totalStAssetAmount}
-                    </Typography>
+                {/* Progress Bar */}
+                <div className="mt-2">
+                  <div className="h-1.5 rounded-full bg-muted/20 overflow-hidden">
+                    <div
+                      className="h-full bg-[#52E5FF]/70 transition-all duration-300"
+                      style={{ width: hasTransactions ? '100%' : '0%' }}
+                    />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <Typography variant="small" className="text-muted-foreground/70 text-xs">
-                      Status:
-                    </Typography>
-                    <div className="flex items-center gap-1">
-                      {completedCount > 0 && (
-                        <div className="flex items-center gap-0.5">
-                          <CheckCircle2 className="w-2.5 h-2.5 text-[#52E5FF]" />
-                          <Typography
-                            variant="small"
-                            className="text-[#52E5FF] font-medium text-xs"
-                          >
-                            {completedCount}
-                          </Typography>
-                        </div>
-                      )}
-                      {readyCount > 0 && (
-                        <div className="flex items-center gap-0.5">
-                          <Target className="w-2.5 h-2.5 text-[#52E5FF]" />
-                          <Typography
-                            variant="small"
-                            className="text-[#52E5FF] font-medium text-xs"
-                          >
-                            {readyCount}
-                          </Typography>
-                        </div>
-                      )}
-                      {pendingCount > 0 && (
-                        <div className="flex items-center gap-0.5">
-                          <Clock className="w-2.5 h-2.5 text-orange-500" />
-                          <Typography
-                            variant="small"
-                            className="text-orange-500 font-medium text-xs"
-                          >
-                            {pendingCount}
-                          </Typography>
-                        </div>
-                      )}
-                      {errorCount > 0 && (
-                        <div className="flex items-center gap-0.5">
-                          <AlertTriangle className="w-2.5 h-2.5 text-red-500" />
-                          <Typography variant="small" className="text-red-500 font-medium text-xs">
-                            {errorCount}
-                          </Typography>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary Badge */}
-                <div className="mb-2">
-                  <div
-                    className={cn(
-                      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 w-full justify-center',
-                      errorCount > 0
-                        ? 'bg-red-500/10 text-red-500 group-hover:bg-red-500/20'
-                        : completedCount > 0
-                          ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
-                          : readyCount > 0
-                            ? 'bg-[#52E5FF]/10 text-[#52E5FF] group-hover:bg-[#52E5FF]/20'
-                            : 'bg-orange-500/10 text-orange-500 group-hover:bg-orange-500/20'
-                    )}
-                  >
-                    {errorCount > 0 ? (
-                      <>
-                        <AlertTriangle className="w-3 h-3" />
-                        <span className="truncate">Some Failed</span>
-                      </>
-                    ) : completedCount > 0 ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span className="truncate">Some Done</span>
-                      </>
-                    ) : readyCount > 0 ? (
-                      <>
-                        <Target className="w-3 h-3" />
-                        <span className="truncate">Some Ready</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-3 h-3" />
-                        <span className="truncate">Processing</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress Bar - Segmented */}
-                <div className="relative">
-                  <div className="flex h-1.5 rounded-full border border-border/20 bg-muted/10 overflow-hidden">
-                    {withdrawPositions.map((position, index) => {
-                      const positionStatus = getQuickWithdrawPositionStatus(position);
-                      const { isCompleted, hasError, canComplete } = positionStatus;
-                      const isProcessing = !isCompleted && !hasError && !canComplete;
-
-                      let segmentColor = 'bg-orange-500/40';
-                      if (hasError) segmentColor = 'bg-red-500';
-                      else if (isCompleted) segmentColor = 'bg-[#52E5FF]';
-                      else if (canComplete) segmentColor = 'bg-[#52E5FF]/80';
-                      else if (isProcessing) segmentColor = 'bg-orange-500';
-
-                      return (
-                        <div
-                          key={index}
-                          className={cn(
-                            'flex-1 h-full transition-all duration-500',
-                            segmentColor,
-                            'first:rounded-l-full last:rounded-r-full'
-                          )}
-                        >
-                          {isProcessing && (
-                            <div className="w-full h-full bg-white/30 animate-pulse first:rounded-l-full last:rounded-r-full" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF]/20 via-[#36B1FF]/20 to-[#E4F5FF]/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
                 </div>
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs">
-            <div className="space-y-2">
-              <Typography variant="small" weight="semibold">
-                stCHR Transaction Overview
-              </Typography>
-              <div className="text-xs space-y-1.5">
-                <div>Total: {totalStAssetAmount} stCHR</div>
-                <div>Transactions: {withdrawPositions.length}</div>
-                {completedCount > 0 && <div>Completed: {completedCount}</div>}
-                {readyCount > 0 && <div>Ready: {readyCount}</div>}
-                {pendingCount > 0 && <div>Pending: {pendingCount}</div>}
-                {errorCount > 0 && <div>Failed: {errorCount}</div>}
-              </div>
+          <TooltipContent side="left" className="max-w-xs">
+            <div className="space-y-1 text-xs">
+              {hasTransactions ? (
+                <>
+                  <p>
+                    <strong>stCHR Withdraw History</strong>
+                  </p>
+                  <p>Total Withdrawn: {totalWithdrawn.toFixed(6)} stCHR</p>
+                  <p>Number of Transactions: {transactions.length}</p>
+                  <p>Click to view detailed transaction history</p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    <strong>stCHR Transaction History</strong>
+                  </p>
+                  <p>No stCHR withdrawals yet</p>
+                  <p>Your transaction history will appear here</p>
+                </>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>
@@ -1358,13 +1193,12 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
         />
       )}
 
-      {/* Quick Withdraw Progress Dialog */}
-      {selectedWithdrawAsset && (
-        <QuickWithdrawProgressDialog
-          open={quickWithdrawProgressDialogOpen}
-          onOpenChange={setQuickWithdrawProgressDialogOpen}
-          assetSymbol={selectedWithdrawAsset}
-          quickWithdrawData={quickWithdrawData}
+      {/* Stchr Withdraw Transaction Dialog */}
+      {selectedPosition && stchrTransactionDialogOpen && (
+        <StchrWithdrawTransactionDialog
+          open={stchrTransactionDialogOpen}
+          onOpenChange={setStchrTransactionDialogOpen}
+          reserve={selectedPosition}
         />
       )}
     </div>

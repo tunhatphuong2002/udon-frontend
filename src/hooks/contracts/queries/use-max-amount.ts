@@ -13,8 +13,8 @@ type queryMaxType =
   | 'get_max_withdraw_amount'
   | 'get_max_borrow_amount'
   | 'get_max_repay_amount'
-  | 'get_max_slow_withdraw_amount_query'
-  | 'get_max_quick_withdraw_amount_query';
+  | 'get_max_chr_withdraw_amount_query'
+  | 'get_max_stchr_withdraw_amount_query';
 
 /**
  * Hook to fetch the max withdraw/repay/repay amount for a specific user
