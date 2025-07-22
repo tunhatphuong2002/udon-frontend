@@ -51,8 +51,6 @@ export function useCompleteSlowWithdraw({
               'complete_slow_withdraw_operation',
               params.positionId,
               params.underlyingAssetId,
-              params.stAssetAmount,
-              0n, // Additional amount (not used in basic implementation)
               Date.now()
             )
           )

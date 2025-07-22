@@ -9,15 +9,12 @@ interface WithdrawParams {
   amount: number | string;
   decimals: number;
   isUserWithdrawMax?: boolean;
-  withdrawType: WithdrawType;
 }
 
 interface WithdrawResult {
   success: boolean;
   error?: Error;
 }
-
-type WithdrawType = 'slow' | 'quick' | 'none';
 
 /**
  * Hook to withdraw assets from the protocol
@@ -69,7 +66,6 @@ export function useWithdraw({
               params.assetId, // asset ID to withdraw
               amountValue, // amount
               account.id, // to_id,
-              params.withdrawType,
               Date.now()
             )
           )

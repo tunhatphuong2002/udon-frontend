@@ -228,7 +228,6 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
         amount: data.amount,
         decimals: reserve.decimals,
         isUserWithdrawMax: Number(form.watch('amount')) === Number(maxWithdrawAmount),
-        withdrawType: 'none',
       });
 
       console.log('Withdraw submitted:', {
