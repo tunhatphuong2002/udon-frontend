@@ -18,6 +18,7 @@ export interface AssetPrice {
   stork_asset_id: string;
   price: number;
   timestamp: string;
+  asset_symbol: string;
 }
 
 export interface UserReserveDataResponse {
