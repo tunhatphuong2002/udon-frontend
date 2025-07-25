@@ -38,7 +38,7 @@ async function initSupply() {
     await adminSession.call(op('initialize_underlying_asset_factory'));
     await adminSession.call(op('initialize_a_asset_factory'));
     await adminSession.call(op('initialize_variable_debt_asset_factory'));
-    // await adminSession.call(op('initialize_emode_logic'));
+    // await adminSession.call(op('initialize_emode_logic')); // it delete at newest version
     console.log(chalk.green('✅ Asset factories initialized'));
 
     // Create fee manager
@@ -82,10 +82,10 @@ async function initSupply() {
 
       // TODO: Uncomment this when we have a price asset oracle
       // update price asset
-      await adminSession.call(
-        op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
-      );
-      console.log(chalk.green('✅ Price asset updated:'));
+      // await adminSession.call(
+      //   op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
+      // );
+      // console.log(chalk.green('✅ Price asset updated:'));
 
       // Create fee manager
       await adminSession.call(

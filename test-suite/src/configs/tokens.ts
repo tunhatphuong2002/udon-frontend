@@ -64,14 +64,14 @@ export const TOKENS = [
   //   price: parseUnits('0.22', 18).toString(),
   //   storkAssetId: 'CHRUSD',
   // },
-  {
-    name: 'Chromia Test',
-    symbol: 'tCHR',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
-    price: parseUnits('0.22', 18).toString(),
-    storkAssetId: 'CHRUSD',
-  },
+  // {
+  //   name: 'Chromia Test',
+  //   symbol: 'tCHR',
+  //   decimals: 6,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+  //   price: parseUnits('0.22', 18).toString(),
+  //   storkAssetId: 'CHRUSD',
+  // },
   {
     name: 'USDT',
     symbol: 'USDT',
