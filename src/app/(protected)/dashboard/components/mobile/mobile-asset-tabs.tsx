@@ -8,7 +8,7 @@ import { CheckIcon } from 'lucide-react';
 import { UserReserveData, UserAccountData } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Skeleton } from '@/components/common/skeleton';
-import { FaucetTestBadge } from '../faucet-badge';
+// import { FaucetTestBadge } from '../faucet-badge';
 import { SupplyDialog } from '../supply/supply-dialog';
 import { BorrowDialog } from '../borrow/borrow-dialog';
 import CountUp from '@/components/common/count-up';
@@ -242,9 +242,9 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4">
+              {/* <div className="flex justify-between items-center mb-4">
                 <FaucetTestBadge isLoading={isLoading} />
-              </div>
+              </div> */}
               {processedAssets.length > 0 ? (
                 <div className="space-y-4">
                   {processedAssets.map((asset, index) => (

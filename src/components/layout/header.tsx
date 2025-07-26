@@ -3,28 +3,29 @@ import Image from 'next/image';
 import { ConnectWallet } from '@/components/custom/wallet';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/tailwind';
-import { SparklesIcon } from 'lucide-react';
-import { ShineBorder } from '@/components/common/shine-border';
-import { Typography } from '../common/typography';
+// import { SparklesIcon } from 'lucide-react';
+// import { ShineBorder } from '@/components/common/shine-border';
+// import { Typography } from '../common/typography';
+import { NetworkBadge } from '../custom/landing/network-badge';
 
-// Testnet badge component
-const TestnetBadge = () => {
-  return (
-    <div
-      className={cn(
-        'relative overflow-hidden inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-medium',
-        'absolute right-[-54px] top-[-15px]',
-        'bg-card/80'
-      )}
-    >
-      <ShineBorder shineColor={['#36B1FF', '#E4F5FF']} duration={10} />
-      <SparklesIcon className="w-3 h-3" />
-      <Typography weight="medium" className="text-[8px] uppercase text-bold">
-        Testnet
-      </Typography>
-    </div>
-  );
-};
+// // Testnet badge component
+// const TestnetBadge = () => {
+//   return (
+//     <div
+//       className={cn(
+//         'relative overflow-hidden inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-medium',
+//         'absolute right-[-54px] top-[-15px]',
+//         'bg-card/80'
+//       )}
+//     >
+//       <ShineBorder shineColor={['#36B1FF', '#E4F5FF']} duration={10} />
+//       <SparklesIcon className="w-3 h-3" />
+//       <Typography weight="medium" className="text-[8px] uppercase text-bold">
+//         Testnet
+//       </Typography>
+//     </div>
+//   );
+// };
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -57,7 +58,7 @@ export const Header: React.FC = () => {
     >
       <div className="w-[94px] h-[46px] relative cursor-pointer" onClick={() => router.push('/')}>
         <Image src="/logo/logo-shorttext.png" alt="Logo" fill className="object-contain" />
-        <TestnetBadge />
+        <NetworkBadge network="mainnet" />
       </div>
       <div className="z-[100]">
         <ConnectWallet />
