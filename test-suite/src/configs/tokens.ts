@@ -16,22 +16,22 @@ export const ASSET_CONFIG = {
 
 // Token definitions
 export const TOKENS = [
-  {
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    decimals: 8,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
-    price: parseUnits('60000', 18).toString(),
-    storkAssetId: 'BTCUSD',
-  },
-  {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
-    price: parseUnits('2500', 18).toString(),
-    storkAssetId: 'ETHUSD',
-  },
+  // {
+  //   name: 'Bitcoin',
+  //   symbol: 'BTC',
+  //   decimals: 8,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1.png',
+  //   price: parseUnits('60000', 18).toString(),
+  //   storkAssetId: 'BTCUSD',
+  // },
+  // {
+  //   name: 'Ethereum',
+  //   symbol: 'ETH',
+  //   decimals: 18,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/1027.png',
+  //   price: parseUnits('2500', 18).toString(),
+  //   storkAssetId: 'ETHUSD',
+  // },
   {
     name: 'MyNeighborAlice',
     symbol: 'ALICE',
@@ -40,14 +40,14 @@ export const TOKENS = [
     price: parseUnits('0.49', 18).toString(),
     storkAssetId: 'ALICEUSD',
   },
-  {
-    name: 'DAR Open Network',
-    symbol: 'D',
-    decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
-    price: parseUnits('0.45', 18).toString(),
-    storkAssetId: 'DUSD',
-  },
+  // {
+  //   name: 'DAR Open Network',
+  //   symbol: 'D',
+  //   decimals: 18,
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+  //   price: parseUnits('0.45', 18).toString(),
+  //   storkAssetId: 'DUSD',
+  // },
   {
     name: 'Chromia',
     symbol: 'CHR',

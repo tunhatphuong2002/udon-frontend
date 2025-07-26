@@ -9,7 +9,7 @@ export interface IMaxBorrow {
   decimals: number;
 }
 
-type queryMaxType = 'get_max_withdraw_amount' | 'get_max_borrow_amount' | 'get_max_repay_amount';
+type queryMaxType = 'get_max_withdraw_amount' | 'get_max_borrow_amount';
 
 /**
  * Hook to fetch the max withdraw/repay/repay amount for a specific user

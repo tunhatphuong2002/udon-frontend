@@ -82,10 +82,10 @@ async function initSupply() {
 
       // TODO: Uncomment this when we have a price asset oracle
       // update price asset
-      // await adminSession.call(
-      //   op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
-      // );
-      // console.log(chalk.green('✅ Price asset updated:'));
+      await adminSession.call(
+        op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
+      );
+      console.log(chalk.green('✅ Price asset updated:'));
 
       // Create fee manager
       await adminSession.call(
@@ -152,6 +152,14 @@ async function initSupply() {
       );
 
       console.log(chalk.green(`✅ Set field for reserve_configuration`));
+
+      console.log(chalk.blue(`🔄 Setting reserve factor for ${token.symbol}...`));
+      await adminSession.call(op('set_reserve_factor_op', underlyingAssetId, 1000)); // reserve factor = 10% -> Earn 10% of the interest borrower pays
+      console.log(chalk.green(`✅ Reserve factor set for ${token.symbol}`));
+
+      console.log(chalk.blue(`🔄 Setting liquidation protocol fee for ${token.symbol}...`));
+      await adminSession.call(op('set_liquidation_protocol_fee_op', underlyingAssetId, 1000)); // liquidation protocol fee = 10% -> Earn 10% from liquidators' profit
+      console.log(chalk.green(`✅ Liquidation protocol fee set for ${token.symbol}`));
 
       // set debt ceiling = 0
       await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 0));

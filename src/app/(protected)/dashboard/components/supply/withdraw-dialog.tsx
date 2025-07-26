@@ -93,9 +93,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     'get_max_withdraw_amount'
   );
 
-  const maxWithdrawAmount = !yourSupplyCollateralPosition
-    ? maxAmount
-    : reserve.currentATokenBalance;
+  const maxWithdrawAmount =
+    reserve.currentATokenBalance > maxAmount ? maxAmount : reserve.currentATokenBalance;
+
+  console.log('maxAmount', maxAmount);
+  console.log('reserve.currentATokenTotalSupply', reserve.currentATokenTotalSupply);
 
   // Use the withdraw hook
   const withdraw = useWithdraw({
