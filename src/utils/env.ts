@@ -53,10 +53,10 @@ const detectNetwork = (nodeUrl: string): Network => {
 // Convert comma-separated string to array of URLs or single URL string
 export const getNodeUrlPool = (): string | string[] => {
   const defaultNodes = [
-    'https://node0.testnet.chromia.com:7740',
-    'https://node1.testnet.chromia.com:7740',
-    'https://node2.testnet.chromia.com:7740',
-    'https://node3.testnet.chromia.com:7740',
+    'https://dapps0.chromaway.com',
+    'https://chromia-mainnet.w3coins.io:7740',
+    'https://mainnet-dapp1.sunube.net:7740',
+    'https://chromia.01node.com:7740',
   ].join(',');
 
   const nodeUrls = getEnv('NEXT_PUBLIC_NODE_URL_POOL', defaultNodes);
