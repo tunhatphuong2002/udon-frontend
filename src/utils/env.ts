@@ -44,7 +44,7 @@ const detectNetwork = (nodeUrl: string): Network => {
   if (nodeUrl.includes('testnet')) {
     return 'testnet';
   }
-  if (nodeUrl.includes('mainnet')) {
+  if (nodeUrl.includes('chromaway')) {
     return 'mainnet';
   }
   return 'local'; // default to local if can't detect
@@ -104,3 +104,5 @@ export const env = {
   walletconnectProjectId: WALLETCONNECT_PROJECT_ID,
   docs: DOCS,
 } as const;
+
+console.log('env', env);
