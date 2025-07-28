@@ -16,7 +16,7 @@ import {
 import { SupplyDialog } from './supply-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
-// import { FaucetTestBadge } from '../faucet-badge';
+import { FaucetTestBadge } from '../faucet-badge';
 import CountUp from '@/components/common/count-up';
 
 interface SupplyTableProps {
@@ -241,9 +241,9 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
             )}
           </div>
 
-          {/* <div>
+          <div>
             <FaucetTestBadge isLoading={isLoading} />
-          </div> */}
+          </div>
         </div>
 
         {(!reserves || reserves.length === 0) && !isLoading && (

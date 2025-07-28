@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Typography } from '@/components/common/typography';
 import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
@@ -14,7 +13,6 @@ interface FaucetTestBadgeProps {
 }
 
 export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadgeProps) {
-  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -43,7 +41,12 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
         isHovered && 'scale-[1.03]',
         className
       )}
-      onClick={() => router.push('/faucet')}
+      onClick={() =>
+        window.open(
+          'https://vault.chromia.com/en/transfer/?fromBrid=15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA&toBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6',
+          '_blank'
+        )
+      }
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -62,7 +65,7 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
           isHovered ? 'text-foreground' : 'text-submerged'
         )}
       >
-        Udon Faucet Testnet
+        Deposit to Udon
       </Typography>
       <ExternalLinkIcon
         className={cn(
