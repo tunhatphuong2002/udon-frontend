@@ -11,12 +11,7 @@ import { Button } from '@/components/common/button';
 import { Switch } from '@/components/common/switch';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { useState } from 'react';
 import { SupplyDialog } from '../supply/supply-dialog';
 import { WithdrawDialog } from '../supply/withdraw-dialog';
@@ -104,27 +99,25 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
 
   const renderAssetCell = (asset: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium" className="text-2xl">
-                {asset.symbol}
-              </Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{asset.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+              <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium" className="text-2xl">
+              {asset.symbol}
+            </Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{asset.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 

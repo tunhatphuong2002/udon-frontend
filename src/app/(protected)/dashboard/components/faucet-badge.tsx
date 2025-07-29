@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
 import { ShineBorder } from '@/components/common/shine-border';
+import { DepositModal } from '@/components/custom/modals/deposit-modal';
 
 interface FaucetTestBadgeProps {
   isLoading?: boolean;
@@ -15,6 +16,7 @@ interface FaucetTestBadgeProps {
 export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [depositModalOpen, setDepositModalOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -33,46 +35,48 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
   }
 
   return (
-    <div
-      className={cn(
-        'relative inline-flex items-center gap-2 py-1.5 px-3 rounded-full',
-        'bg-gradient-to-r from-background/20 via-background/50 to-background/20',
-        'cursor-pointer',
-        isHovered && 'scale-[1.03]',
-        className
-      )}
-      onClick={() =>
-        window.open(
-          'https://vault.chromia.com/en/transfer/?fromBrid=15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA&toBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6',
-          '_blank'
-        )
-      }
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <ShineBorder shineColor={['#52E5FF', '#36B1FF', '#E4F5FF']} duration={10} />
-      <Sparkles
+    <>
+      <div
         className={cn(
-          'w-4 h-4 transition-colors duration-300',
-          isHovered ? 'text-primary' : 'text-submerged'
+          'relative inline-flex items-center gap-2 py-1.5 px-3 rounded-full',
+          'bg-gradient-to-r from-background/20 via-background/50 to-background/20',
+          'cursor-pointer',
+          isHovered && 'scale-[1.03]',
+          className
         )}
-      />
-      <Typography
-        variant="small"
-        weight="medium"
-        className={cn(
-          'transition-colors duration-300',
-          isHovered ? 'text-foreground' : 'text-submerged'
-        )}
+        onClick={() => setDepositModalOpen(true)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        Deposit to Udon
-      </Typography>
-      <ExternalLinkIcon
-        className={cn(
-          'w-3.5 h-3.5 transition-all duration-300',
-          isHovered ? 'text-primary transform translate-x-0.5 -translate-y-0.5' : 'text-submerged'
-        )}
-      />
-    </div>
+        <ShineBorder shineColor={['#52E5FF', '#36B1FF', '#E4F5FF']} duration={10} />
+        <Sparkles
+          className={cn(
+            'w-4 h-4 transition-colors duration-300',
+            isHovered ? 'text-primary' : 'text-submerged'
+          )}
+        />
+        <Typography
+          variant="small"
+          weight="medium"
+          className={cn(
+            'transition-colors duration-300',
+            isHovered ? 'text-foreground' : 'text-submerged'
+          )}
+        >
+          Deposit to Udon
+        </Typography>
+        <ExternalLinkIcon
+          className={cn(
+            'w-3.5 h-3.5 transition-all duration-300',
+            isHovered ? 'text-primary transform translate-x-0.5 -translate-y-0.5' : 'text-submerged'
+          )}
+        />
+      </div>
+
+      {/* re-render when close or click outside dialog */}
+      {depositModalOpen && (
+        <DepositModal open={depositModalOpen} onOpenChange={setDepositModalOpen} />
+      )}
+    </>
   );
 }
