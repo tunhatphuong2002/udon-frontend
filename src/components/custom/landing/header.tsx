@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/common/button';
 import { useRouter } from 'next/navigation';
 import { NetworkBadge } from './network-badge';
+import { ExternalLinkIcon } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -13,16 +14,26 @@ export const Header: React.FC = () => {
         <Image src="/logo/logo-shorttext-black.png" alt="Logo" fill className="object-contain" />
         <NetworkBadge network="mainnet" />
       </div>
-      <Button
-        variant="default"
-        onClick={() => {
-          router.push('/dashboard');
-        }}
-      >
-        <Typography size="base" weight="medium">
-          Launch App
-        </Typography>
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="gradient"
+          onClick={() => window.open('https://testnet.udonfi.xyz/', '_blank')}
+          className="text-sm"
+        >
+          <ExternalLinkIcon className="w-4 h-4 mr-1" />
+          Try Testnet
+        </Button>
+        <Button
+          variant="gradient"
+          onClick={() => {
+            router.push('/dashboard');
+          }}
+        >
+          <Typography size="base" weight="medium">
+            Launch App
+          </Typography>
+        </Button>
+      </div>
     </div>
   );
 };

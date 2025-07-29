@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { ConnectWallet } from '@/components/custom/wallet';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/tailwind';
+import { Button } from '../common/button';
+import { ExternalLinkIcon } from 'lucide-react';
 // import { SparklesIcon } from 'lucide-react';
 // import { ShineBorder } from '@/components/common/shine-border';
 // import { Typography } from '../common/typography';
@@ -60,7 +62,15 @@ export const Header: React.FC = () => {
         <Image src="/logo/logo-shorttext.png" alt="Logo" fill className="object-contain" />
         <NetworkBadge network="mainnet" />
       </div>
-      <div className="z-[100]">
+      <div className="z-[100] flex items-center gap-3">
+        <Button
+          variant="gradient"
+          onClick={() => window.open('https://testnet.udonfi.xyz/', '_blank')}
+          className="text-sm"
+        >
+          <ExternalLinkIcon className="w-4 h-4 mr-1" />
+          Try Testnet
+        </Button>
         <ConnectWallet />
       </div>
     </header>
