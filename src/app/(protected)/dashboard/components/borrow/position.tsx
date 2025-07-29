@@ -6,12 +6,7 @@ import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { Badge } from '@/components/common/badge';
 import { Skeleton } from '@/components/common/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { RepayDialog } from './repay-dialog';
 import { BorrowDialog } from './borrow-dialog';
@@ -66,25 +61,23 @@ export const BorrowPositionTable: React.FC<BorrowPositionTableProps> = ({
   // Render reserve. icon and symbol
   const renderAssetCell = (reserve: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(reserve.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
-                <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium">{reserve.symbol}</Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{reserve.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => handleAssetClick(reserve.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+              <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium">{reserve.symbol}</Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{reserve.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 

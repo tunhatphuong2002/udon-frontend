@@ -5,6 +5,7 @@ import { Providers } from '@/providers';
 import './globals.css';
 import localFont from 'next/font/local';
 import { Toaster } from '@/components/common/sonner';
+import { TooltipProvider } from '@/components/common/tooltip';
 import { VercelAnalytics } from '@/analytics/vercel';
 
 const BattlefinFont = localFont({
@@ -106,7 +107,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-background text-foreground" suppressHydrationWarning>
         {/* Providers */}
-        <Providers>{children}</Providers>
+        <Providers>
+          <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+        </Providers>
         {/* Toaster */}
         <Toaster closeButton richColors />
       </body>

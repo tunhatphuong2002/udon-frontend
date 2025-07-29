@@ -31,6 +31,8 @@ export const getEnv = (key: string, defaultValue: string = ''): string => {
       return process.env.NEXT_PUBLIC_REPORT_BUG_FORM_URL || defaultValue;
     case 'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID':
       return process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || defaultValue;
+    case 'NEXT_PUBLIC_DOCS_URL':
+      return process.env.NEXT_PUBLIC_DOCS_URL || defaultValue;
     default:
       return defaultValue;
   }
@@ -87,7 +89,7 @@ export const GA_TRACKING_ID = getEnv('NEXT_PUBLIC_GA_TRACKING_ID', '');
 export const BRID = getEnv('NEXT_PUBLIC_BRID', '');
 export const REPORT_BUG_FORM_URL = getEnv('NEXT_PUBLIC_REPORT_BUG_FORM_URL', '');
 export const WALLETCONNECT_PROJECT_ID = getEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID', '');
-export const DOCS = getEnv('NEXT_PUBLIC_DOCS', '');
+export const DOCS = getEnv('NEXT_PUBLIC_DOCS_URL', '');
 
 // Export all environment variables in a single object
 export const env = {

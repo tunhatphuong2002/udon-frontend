@@ -8,12 +8,7 @@ import { Skeleton } from '@/components/common/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/utils/tailwind';
 import { Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 
 interface StatItemProps {
   value: number;
@@ -89,16 +84,14 @@ const StatItem: React.FC<StatItemProps> = ({
           </Typography>
 
           {tooltip && (
-            <TooltipProvider>
-              <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-submerged cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[250px] text-sm">
-                  <p>{tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-submerged cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                <p>{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </>
@@ -171,16 +164,14 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
                     </Typography>
 
                     {depositTooltip && (
-                      <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <Info className="h-4 w-4 text-submerged cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-[250px] text-sm">
-                            <p>{depositTooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-submerged cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                          <p>{depositTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
@@ -224,16 +215,14 @@ export const CombinedStatsCard: React.FC<CombinedStatsCardProps> = ({
                     </Typography>
 
                     {borrowTooltip && (
-                      <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <Info className="h-4 w-4 text-submerged cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-[250px] text-sm">
-                            <p>{borrowTooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-submerged cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                          <p>{borrowTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
@@ -292,16 +281,14 @@ export const StatCard: React.FC<StatCardProps> = ({
                   </Typography>
 
                   {tooltip && (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-submerged cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="max-w-[250px] text-sm">
-                          <p>{tooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip delayDuration={100}>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-submerged cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[250px] text-sm">
+                        <p>{tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </>

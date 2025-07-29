@@ -7,12 +7,7 @@ import { Switch } from '@/components/common/switch';
 import { Typography } from '@/components/common/typography';
 import { Badge } from '@/components/common/badge';
 import { Skeleton } from '@/components/common/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { SupplyDialog } from './supply-dialog';
 import { WithdrawDialog } from './withdraw-dialog';
@@ -77,25 +72,23 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
   // Render asset icon and symbol
   const renderAssetCell = (row: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(row.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={row.iconUrl} alt={row.symbol} />
-                <AvatarFallback>{row.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium">{row.symbol}</Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{row.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => handleAssetClick(row.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={row.iconUrl} alt={row.symbol} />
+              <AvatarFallback>{row.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium">{row.symbol}</Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{row.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -317,8 +310,14 @@ export const SupplyPositionTable: React.FC<SupplyPositionTableProps> = ({
       {/* Collateral Dialog */}
       {selectedCollateral && (
         <CollateralDialog
+          key={`collateral-${selectedCollateral.assetId.toString('hex')}`}
           open={collateralDialogOpen}
-          onOpenChange={setCollateralDialogOpen}
+          onOpenChange={open => {
+            setCollateralDialogOpen(open);
+            if (!open) {
+              setSelectedCollateral(null);
+            }
+          }}
           reserve={selectedCollateral}
           accountData={accountData}
           mutateAssets={mutateAssets}
