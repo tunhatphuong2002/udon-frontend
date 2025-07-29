@@ -28,8 +28,8 @@ export function WithdrawBadge({ isLoading = false, className }: WithdrawBadgePro
 
   if (isLoading) {
     return (
-      <div className={cn('inline-flex items-center h-8', className)}>
-        <Skeleton className="w-40 h-8 rounded-full" />
+      <div className={cn('inline-flex items-center h-9', className)}>
+        <Skeleton className="w-40 h-9 rounded-full" />
       </div>
     );
   }
@@ -38,7 +38,7 @@ export function WithdrawBadge({ isLoading = false, className }: WithdrawBadgePro
     <>
       <div
         className={cn(
-          'relative inline-flex items-center gap-2 py-1.5 px-3 rounded-full',
+          'relative inline-flex items-center gap-2 py-2 px-3 rounded-full h-9',
           'bg-gradient-to-r from-background/20 via-background/50 to-background/20',
           'cursor-pointer',
           isHovered && 'scale-[1.03]',

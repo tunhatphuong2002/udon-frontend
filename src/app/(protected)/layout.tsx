@@ -11,7 +11,6 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { useAccountCreatedModal } from '@/components/custom/modals/account-created-modal';
 import { MainLayout } from '@/components/layout';
 import { Popup } from '@/components/common/popup';
-import { StatsProvider } from '@/contexts/stats-context';
 
 const Layout = ({
   children,
@@ -31,52 +30,50 @@ const Layout = ({
   }, [setTheme]);
 
   return (
-    <StatsProvider>
-      <MainLayout>
-        {accountCreatedModal.modal}
+    <MainLayout>
+      {accountCreatedModal.modal}
 
-        {isConnected ? (
-          hasAccount ? (
-            children
-          ) : (
-            <div className="h-screen flex flex-1 items-center justify-center">
-              {isLoading || isReconnecting ? (
-                <CardLoading />
-              ) : (
-                <Popup
-                  variant="notfound"
-                  title="Account not found"
-                  description="You need to create an chromia account first!"
-                  buttonText={tried ? 'Retry creating account' : 'Create account'}
-                  onButtonClick={createAccount}
-                />
-              )}
-            </div>
-          )
+      {isConnected ? (
+        hasAccount ? (
+          children
         ) : (
           <div className="h-screen flex flex-1 items-center justify-center">
             {isLoading || isReconnecting ? (
               <CardLoading />
             ) : (
-              <ConnectKitButton.Custom>
-                {({ show, isConnecting }) => {
-                  if (isConnecting) return <CardLoading />;
-                  return (
-                    <Popup
-                      variant="wallet"
-                      title="Connect to your wallet"
-                      description="You need to connect your wallet to continue!"
-                      buttonText="Connect wallet"
-                      onButtonClick={show ?? (() => {})}
-                    />
-                  );
-                }}
-              </ConnectKitButton.Custom>
+              <Popup
+                variant="notfound"
+                title="Account not found"
+                description="You need to create an chromia account first!"
+                buttonText={tried ? 'Retry creating account' : 'Create account'}
+                onButtonClick={createAccount}
+              />
             )}
           </div>
-        )}
-      </MainLayout>
-    </StatsProvider>
+        )
+      ) : (
+        <div className="h-screen flex flex-1 items-center justify-center">
+          {isLoading || isReconnecting ? (
+            <CardLoading />
+          ) : (
+            <ConnectKitButton.Custom>
+              {({ show, isConnecting }) => {
+                if (isConnecting) return <CardLoading />;
+                return (
+                  <Popup
+                    variant="wallet"
+                    title="Connect to your wallet"
+                    description="You need to connect your wallet to continue!"
+                    buttonText="Connect wallet"
+                    onButtonClick={show ?? (() => {})}
+                  />
+                );
+              }}
+            </ConnectKitButton.Custom>
+          )}
+        </div>
+      )}
+    </MainLayout>
   );
 };
 

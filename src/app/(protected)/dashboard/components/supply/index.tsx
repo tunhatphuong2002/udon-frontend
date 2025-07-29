@@ -11,7 +11,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/too
 import { SupplyDialog } from './supply-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
-import { FaucetTestBadge } from '../faucet-badge';
 import CountUp from '@/components/common/count-up';
 
 interface SupplyTableProps {
@@ -232,10 +231,6 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
                 {title}
               </Typography>
             )}
-          </div>
-
-          <div>
-            <FaucetTestBadge isLoading={isLoading} />
           </div>
         </div>
 
