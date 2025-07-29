@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Typography } from '@/components/common/typography';
 import { MultiStatCard, CombinedStatsCard } from './components/stat-card';
 import { SupplyTable } from './components/supply';
@@ -12,6 +13,7 @@ import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
+import { useStats } from '@/contexts/stats-context';
 
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
@@ -49,6 +51,7 @@ export default function DashboardPage() {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const isLoadingTable = isLoadingAssets || isAccountDataFetching || isStatSupplyDepositFetching;
+  const { setTotalDeposit, setTotalBorrow } = useStats();
 
   const handleFetchData = () => {
     console.log('handleFetchData');
@@ -56,6 +59,20 @@ export default function DashboardPage() {
     refetchAccountData();
     refetchStatsSupplyDeposit();
   };
+
+  // Update header stats when data changes
+  React.useEffect(() => {
+    if (!isStatSupplyDepositFetching) {
+      setTotalDeposit(totalValueDeposited || 0);
+      setTotalBorrow(totalValueBorrowed || 0);
+    }
+  }, [
+    totalValueDeposited,
+    totalValueBorrowed,
+    isStatSupplyDepositFetching,
+    setTotalDeposit,
+    setTotalBorrow,
+  ]);
 
   return (
     <main className="px-4 sm:px-8 py-[100px] sm:py-[180px]">

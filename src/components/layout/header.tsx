@@ -4,7 +4,10 @@ import { ConnectWallet } from '@/components/custom/wallet';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/tailwind';
 import { Button } from '../common/button';
-import { ExternalLinkIcon } from 'lucide-react';
+// import { ExternalLinkIcon } from 'lucide-react';
+import { Typography } from '../common/typography';
+import CountUp from '../common/count-up';
+import { useStats } from '@/contexts/stats-context';
 // import { SparklesIcon } from 'lucide-react';
 // import { ShineBorder } from '@/components/common/shine-border';
 // import { Typography } from '../common/typography';
@@ -32,6 +35,7 @@ import { NetworkBadge } from '../custom/landing/network-badge';
 export const Header: React.FC = () => {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const { totalDeposit, totalBorrow } = useStats();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,14 +67,36 @@ export const Header: React.FC = () => {
         <NetworkBadge network="mainnet" />
       </div>
       <div className="z-[100] flex items-center gap-3">
+        {/* Total Deposit Button */}
         <Button
+          variant="outlineGradient"
+          className="hidden sm:flex flex-col items-center gap-1 px-3 py-[6px] h-auto"
+        >
+          <CountUp value={totalDeposit} prefix="$" className="text-lg font-medium " decimals={2} />
+          <Typography variant="small" color="submerged" className="text-base">
+            Total Deposit
+          </Typography>
+        </Button>
+
+        {/* Total Borrow Button */}
+        <Button
+          variant="outlineGradient"
+          className="hidden sm:flex flex-col items-center gap-1 px-3 py-[6px] h-auto"
+        >
+          <CountUp value={totalBorrow} prefix="$" className="text-lg font-medium" decimals={2} />
+          <Typography variant="small" color="submerged" className="text-base">
+            Total Borrow
+          </Typography>
+        </Button>
+
+        {/* <Button
           variant="gradient"
           onClick={() => window.open('https://testnet.udonfi.xyz/', '_blank')}
           className="text-sm"
         >
           <ExternalLinkIcon className="w-4 h-4 mr-1" />
           Try Testnet
-        </Button>
+        </Button> */}
         <ConnectWallet />
       </div>
     </header>
