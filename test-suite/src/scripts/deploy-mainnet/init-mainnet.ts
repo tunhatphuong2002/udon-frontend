@@ -1,13 +1,13 @@
 import { createAmount, op } from '@chromia/ft4';
-import { admin_kp } from '../configs/key-pair';
+import { admin_kp } from '../../configs/key-pair';
 // import { registerAccountOpen } from '../common/operations/accounts';
-import { getClient } from '../clients';
+import { getClient } from '../../clients';
 import chalk from 'chalk';
-import { RAY } from '../helpers/wadraymath';
+import { RAY } from '../../helpers/wadraymath';
 import { BigNumber } from 'ethers';
 // import { formatUnits, parseUnits } from 'ethers/lib/utils';
-import { TOKENS } from '../configs/tokens';
-import { getSessionOrRegister } from '../helpers';
+import { TOKENS_MAINNET } from '../../configs/tokens';
+import { getSessionOrRegister } from '../../helpers';
 
 async function initSupply() {
   try {
@@ -18,9 +18,6 @@ async function initSupply() {
     const client = await getClient();
     const adminSession = await getSessionOrRegister(client, admin_kp);
     const adminAccountId = adminSession.account.id;
-
-    // const userSession = await getSessionOrRegister(client, user_a_kp);
-    // const userAccountId = userSession.account.id;
 
     console.log(chalk.green('✅ Sessions created successfully'));
 
@@ -38,7 +35,6 @@ async function initSupply() {
     await adminSession.call(op('initialize_underlying_asset_factory'));
     await adminSession.call(op('initialize_a_asset_factory'));
     await adminSession.call(op('initialize_variable_debt_asset_factory'));
-    // await adminSession.call(op('initialize_emode_logic')); // it delete at newest version
     console.log(chalk.green('✅ Asset factories initialized'));
 
     // Create fee manager
@@ -59,13 +55,8 @@ async function initSupply() {
     const createdTokens = [];
 
     // Process each token
-    for (const token of TOKENS) {
+    for (const token of TOKENS_MAINNET) {
       console.log(chalk.blue(`🔄 Creating ${token.symbol}...`));
-
-      // Create underlying asset
-      await adminSession.call(
-        op('create_underlying_asset', token.name, token.symbol, token.decimals, token.icon)
-      );
 
       const underlyingAssetResult = await adminSession.getAssetsBySymbol(token.symbol);
       const underlyingAssetId = underlyingAssetResult.data[0].id;
@@ -80,16 +71,9 @@ async function initSupply() {
       );
       console.log(chalk.green('✅ Price asset oracle created:'));
 
-      // TODO: Uncomment this when we have a price asset oracle
-      // update price asset
-      // await adminSession.call(
-      //   op('update_price_update_op', token.storkAssetId, underlyingAssetId, BigInt(token.price))
-      // );
-      // console.log(chalk.green('✅ Price asset updated:'));
-
       // Create fee manager
       await adminSession.call(
-        op('set_fee_percentage_op', underlyingAssetId, createAmount(100, 0).value)
+        op('set_fee_percentage', underlyingAssetId, createAmount(100, 0).value)
       );
       console.log(chalk.green('✅ Fee manager created:'));
 
@@ -123,7 +107,7 @@ async function initSupply() {
       console.log('vAsset', vAsset);
       await adminSession.call(
         op(
-          'init_reserve_op',
+          'init_one_reserve',
           underlyingAssetId,
           adminAccountId,
           aAsset.name,
@@ -145,9 +129,9 @@ async function initSupply() {
         op(
           'configure_reserve_as_collateral',
           underlyingAssetId,
-          7000, // ltv = 70%
-          8000, // liquidation threshold = 80%
-          10500 // liquidation bonus = 5%
+          token.ltv, // ltv = 70%
+          token.liquidation_threshold, // liquidation threshold = 80%
+          token.liquidation_bonus // liquidation bonus = 5%
         )
       );
 

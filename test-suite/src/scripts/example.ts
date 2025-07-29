@@ -2,11 +2,7 @@ import { op } from '@chromia/ft4';
 import chalk from 'chalk';
 import { getClient } from '@clients/index';
 import { registerAccountOpen } from '@common/operations/accounts';
-
-const admin_kp = {
-  privKey: Buffer.from('5FA2E76BCDE5C548C34D91E96B76C4FBDAE5C1410FA7F55CF6FE2D6B0A2D073A', 'hex'),
-  pubKey: Buffer.from('033CBF397B79E38FFE68B9CD40B00C70785D9CCD8E1C9EA47674FA4091CA3BBADD', 'hex'),
-};
+import { admin_kp } from '../configs/key-pair';
 
 // example to implement post-chain
 async function main() {

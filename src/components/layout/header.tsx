@@ -3,33 +3,9 @@ import Image from 'next/image';
 import { ConnectWallet } from '@/components/custom/wallet';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/tailwind';
-// import { Button } from '../common/button';
-// import { ExternalLinkIcon } from 'lucide-react';
 import { FaucetTestBadge } from '@/app/(protected)/dashboard/components/faucet-badge';
 import { WithdrawBadge } from '@/app/(protected)/dashboard/components/withdraw-badge';
-// import { SparklesIcon } from 'lucide-react';
-// import { ShineBorder } from '@/components/common/shine-border';
-// import { Typography } from '../common/typography';
 import { NetworkBadge } from '../custom/landing/network-badge';
-
-// // Testnet badge component
-// const TestnetBadge = () => {
-//   return (
-//     <div
-//       className={cn(
-//         'relative overflow-hidden inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-medium',
-//         'absolute right-[-54px] top-[-15px]',
-//         'bg-card/80'
-//       )}
-//     >
-//       <ShineBorder shineColor={['#36B1FF', '#E4F5FF']} duration={10} />
-//       <SparklesIcon className="w-3 h-3" />
-//       <Typography weight="medium" className="text-[8px] uppercase text-bold">
-//         Testnet
-//       </Typography>
-//     </div>
-//   );
-// };
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -65,16 +41,10 @@ export const Header: React.FC = () => {
         <NetworkBadge network="mainnet" />
       </div>
       <div className="z-[100] flex items-center gap-3">
-        <FaucetTestBadge />
-        <WithdrawBadge />
-        {/* <Button
-          variant="gradient"
-          onClick={() => window.open('https://testnet.udonfi.xyz/', '_blank')}
-          className="text-sm"
-        >
-          <ExternalLinkIcon className="w-4 h-4 mr-1" />
-          Try Testnet
-        </Button> */}
+        <div className="hidden sm:flex items-center gap-3">
+          <FaucetTestBadge />
+          <WithdrawBadge />
+        </div>
         <ConnectWallet />
       </div>
     </header>
