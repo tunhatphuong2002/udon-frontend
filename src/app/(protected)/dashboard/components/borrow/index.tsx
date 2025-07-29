@@ -11,6 +11,7 @@ import { BorrowDialog } from './borrow-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import CountUp from '@/components/common/count-up';
+import { WithdrawBadge } from '../withdraw-badge';
 
 // Define type for borrow reserves
 
@@ -204,14 +205,20 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   return (
     <>
       <div className="flex-1 border bg-card p-3 sm:p-5 rounded-[18px] border-solid border-border min-w-[320px] max-w-full">
-        <div className="flex justify-between items-center">
-          {isLoading ? (
-            <Skeleton className="h-8 w-48" />
-          ) : (
-            <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-              {title}
-            </Typography>
-          )}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-48" />
+            ) : (
+              <Typography variant="h4" weight="semibold" className="text-2xl">
+                {title}
+              </Typography>
+            )}
+          </div>
+
+          <div>
+            <WithdrawBadge isLoading={isLoading} />
+          </div>
         </div>
 
         {(!reserves || reserves.length === 0) && !isLoading && (

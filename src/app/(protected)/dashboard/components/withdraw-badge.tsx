@@ -6,17 +6,17 @@ import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
 import { ShineBorder } from '@/components/common/shine-border';
-import { DepositDialog } from './supply/deposit-dialog';
+import { WithdrawDialog } from './borrow/withdraw-dialog';
 
-interface FaucetTestBadgeProps {
+interface WithdrawBadgeProps {
   isLoading?: boolean;
   className?: string;
 }
 
-export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadgeProps) {
+export function WithdrawBadge({ isLoading = false, className }: WithdrawBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -44,7 +44,7 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
           isHovered && 'scale-[1.03]',
           className
         )}
-        onClick={() => setDepositModalOpen(true)}
+        onClick={() => setWithdrawModalOpen(true)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -63,7 +63,7 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
             isHovered ? 'text-foreground' : 'text-submerged'
           )}
         >
-          Deposit to Udon
+          Withdraw from Udon
         </Typography>
         <ExternalLinkIcon
           className={cn(
@@ -74,8 +74,8 @@ export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadg
       </div>
 
       {/* re-render when close or click outside dialog */}
-      {depositModalOpen && (
-        <DepositDialog open={depositModalOpen} onOpenChange={setDepositModalOpen} />
+      {withdrawModalOpen && (
+        <WithdrawDialog open={withdrawModalOpen} onOpenChange={setWithdrawModalOpen} />
       )}
     </>
   );
