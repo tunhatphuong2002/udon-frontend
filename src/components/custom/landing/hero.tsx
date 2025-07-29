@@ -57,6 +57,7 @@ export default function Hero() {
               <div className="flex flex-row items-center justify-center md:justify-start gap-3 pb-6 sm:pb-8 md:pb-16 pt-2 sm:pt-4 flex-wrap">
                 {/* Earn Button */}
                 <Button
+                  variant={'gradient'}
                   className="flex flex-row flex-1 sm:flex-none sm:w-[140px] md:w-auto min-w-[100px] sm:min-w-[120px]"
                   onClick={() => {
                     router.push('/dashboard');
