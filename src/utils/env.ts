@@ -90,6 +90,7 @@ export const BRID = getEnv('NEXT_PUBLIC_BRID', '');
 export const REPORT_BUG_FORM_URL = getEnv('NEXT_PUBLIC_REPORT_BUG_FORM_URL', '');
 export const WALLETCONNECT_PROJECT_ID = getEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID', '');
 export const DOCS = getEnv('NEXT_PUBLIC_DOCS_URL', '');
+export const IS_MAINTENANCE = getEnv('NEXT_PUBLIC_IS_MAINTENANCE', 'false');
 
 // Export all environment variables in a single object
 export const env = {
@@ -105,6 +106,7 @@ export const env = {
   reportBugFormUrl: REPORT_BUG_FORM_URL,
   walletconnectProjectId: WALLETCONNECT_PROJECT_ID,
   docs: DOCS,
+  isMaintenance: IS_MAINTENANCE,
 } as const;
 
 console.log('env', env);
