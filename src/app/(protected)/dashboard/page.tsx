@@ -45,6 +45,7 @@ const MAINTENANCE_CONFIG = {
 export default function DashboardPage() {
   // Maintenance control
   const isMaintenance = env.isMaintenance; // Set to true to show maintenance card
+  console.log('isMaintenance', isMaintenance);
   // Use the enhanced custom hook to get all data
   const {
     assets: processedAssets,

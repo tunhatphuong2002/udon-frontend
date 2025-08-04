@@ -33,6 +33,8 @@ export const getEnv = (key: string, defaultValue: string = ''): string => {
       return process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || defaultValue;
     case 'NEXT_PUBLIC_DOCS_URL':
       return process.env.NEXT_PUBLIC_DOCS_URL || defaultValue;
+    case 'NEXT_PUBLIC_IS_MAINTENANCE':
+      return process.env.NEXT_PUBLIC_IS_MAINTENANCE || defaultValue;
     default:
       return defaultValue;
   }
@@ -106,7 +108,7 @@ export const env = {
   reportBugFormUrl: REPORT_BUG_FORM_URL,
   walletconnectProjectId: WALLETCONNECT_PROJECT_ID,
   docs: DOCS,
-  isMaintenance: IS_MAINTENANCE,
+  isMaintenance: IS_MAINTENANCE.toLowerCase() === 'true',
 } as const;
 
 console.log('env', env);
