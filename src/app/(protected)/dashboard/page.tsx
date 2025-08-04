@@ -1,63 +1,65 @@
 'use client';
 
 import { Typography } from '@/components/common/typography';
-import { MultiStatCard, CombinedStatsCard } from './components/stat-card';
-import { SupplyTable } from './components/supply';
-import { BorrowTable } from './components/borrow';
-import { SupplyPositionTable } from './components/supply/position';
-import { BorrowPositionTable } from './components/borrow/position';
-import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
-import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
-import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
-import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
+// import { MultiStatCard, CombinedStatsCard } from './components/stat-card';
+// import { SupplyTable } from './components/supply';
+// import { BorrowTable } from './components/borrow';
+// import { SupplyPositionTable } from './components/supply/position';
+// import { BorrowPositionTable } from './components/borrow/position';
+// import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
+// import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
+// import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
+// import { useMediaQuery } from '@/hooks/use-media-query';
+// import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
+// import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
 import { FaucetTestBadge } from './components/faucet-badge';
 import { WithdrawBadge } from './components/withdraw-badge';
+import { Button } from '@/components/common/button';
+import { AlertTriangle, RefreshCcw } from 'lucide-react';
 
 export default function DashboardPage() {
   // Use the enhanced custom hook to get all data
-  const {
-    assets: processedAssets,
-    supplyPositions,
-    borrowPositions,
-    isLoading: isLoadingAssets,
-    refresh: refetchAssets,
-    yourSupplyBalancePosition,
-    yourSupplyCollateralPosition,
-    yourSupplyAPYPosition,
-    yourBorrowBalancePosition,
-    yourBorrowPowerUsagePosition,
-    yourBorrowAPYPosition,
-    enableBorrow,
-    yourNetAPYPosition,
-    yourNetWorthPosition,
-  } = useCompletedAssets();
+  // const {
+  //   assets: processedAssets,
+  //   supplyPositions,
+  //   borrowPositions,
+  //   isLoading: isLoadingAssets,
+  //   refresh: refetchAssets,
+  //   yourSupplyBalancePosition,
+  //   yourSupplyCollateralPosition,
+  //   yourSupplyAPYPosition,
+  //   yourBorrowBalancePosition,
+  //   yourBorrowPowerUsagePosition,
+  //   yourBorrowAPYPosition,
+  //   enableBorrow,
+  //   yourNetAPYPosition,
+  //   yourNetWorthPosition,
+  // } = useCompletedAssets();
 
-  const {
-    totalValueDeposited,
-    totalValueBorrowed,
-    isLoading: isStatSupplyDepositFetching,
-    refetch: refetchStatsSupplyDeposit,
-  } = useStatsSupplyDeposit();
+  // const {
+  //   totalValueDeposited,
+  //   totalValueBorrowed,
+  //   isLoading: isStatSupplyDepositFetching,
+  //   refetch: refetchStatsSupplyDeposit,
+  // } = useStatsSupplyDeposit();
 
-  const {
-    data: accountData,
-    isLoading: isAccountDataFetching,
-    refetch: refetchAccountData,
-  } = useAccountData();
+  // const {
+  //   data: accountData,
+  //   isLoading: isAccountDataFetching,
+  //   refetch: refetchAccountData,
+  // } = useAccountData();
 
-  // Check if the current device is mobile
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  // // Check if the current device is mobile
+  // const isMobile = useMediaQuery('(max-width: 768px)');
 
-  const isLoadingTable = isLoadingAssets || isAccountDataFetching || isStatSupplyDepositFetching;
+  // const isLoadingTable = isLoadingAssets || isAccountDataFetching || isStatSupplyDepositFetching;
 
-  const handleFetchData = () => {
-    console.log('handleFetchData');
-    refetchAssets();
-    refetchAccountData();
-    refetchStatsSupplyDeposit();
-  };
+  // const handleFetchData = () => {
+  //   console.log('handleFetchData');
+  //   refetchAssets();
+  //   refetchAccountData();
+  //   refetchStatsSupplyDeposit();
+  // };
 
   return (
     <main className="px-4 sm:px-8 py-[100px] sm:py-[180px]">
@@ -91,7 +93,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="flex flex-col md:flex-row justify-between gap-6 mt-8 sm:mt-10">
+      {/* <section className="flex flex-col md:flex-row justify-between gap-6 mt-8 sm:mt-10">
         <MultiStatCard
           items={[
             {
@@ -141,9 +143,56 @@ export default function DashboardPage() {
           depositTooltip="The total value of all assets deposited into the protocol by all users. Higher deposit values indicate more liquidity available in the market."
           borrowTooltip="The total value of all assets borrowed from the protocol by all users. This represents the total debt across the protocol."
         />
+      </section> */}
+
+      {/* Maintenance Card */}
+      <section className="mb-8 sm:mb-10 flex justify-center my-10">
+        <div className="bg-card border border-border rounded-2xl p-8 sm:p-10 max-w-2xl w-full">
+          <div className="flex flex-col items-center text-center gap-6">
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-8 w-8 text-[#36B1FF]" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Typography variant="h3" weight="semibold" className="text-primary text-center">
+                  System Update in Progress
+                </Typography>
+                <Typography
+                  variant="small"
+                  color="submerged"
+                  className="text-sm max-w-md text-center"
+                >
+                  Udon Protocol is undergoing scheduled maintenance to enhance performance and
+                  security
+                </Typography>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button
+                variant="gradient"
+                size="default"
+                onClick={() => window.location.reload()}
+                className="text-sm"
+              >
+                <RefreshCcw className="w-4 h-4" />
+                Refresh
+              </Button>
+
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => window.open('https://x.com/udonfi_chromia', '_blank')}
+                className="text-sm"
+              >
+                Join X
+              </Button>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {isMobile ? (
+      {/* {isMobile ? (
         <section className="flex flex-col gap-6 mt-6">
           <MobilePositionTabs
             supplyPositions={supplyPositions}
@@ -205,7 +254,7 @@ export default function DashboardPage() {
             accountData={accountData}
           />
         </section>
-      )}
+      )} */}
     </main>
   );
 }
