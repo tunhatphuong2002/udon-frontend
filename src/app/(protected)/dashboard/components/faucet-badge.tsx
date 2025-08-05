@@ -6,14 +6,14 @@ import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
 import { ShineBorder } from '@/components/common/shine-border';
-import { DepositDialog } from './supply/deposit-dialog';
+import { DepositDialog } from './supply/deposit-to-udon-dialog';
 
-interface FaucetTestBadgeProps {
+interface DepositBadgeBadgeProps {
   isLoading?: boolean;
   className?: string;
 }
 
-export function FaucetTestBadge({ isLoading = false, className }: FaucetTestBadgeProps) {
+export function DepositBadge({ isLoading = false, className }: DepositBadgeBadgeProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [depositModalOpen, setDepositModalOpen] = useState(false);

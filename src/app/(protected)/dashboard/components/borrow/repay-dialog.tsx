@@ -22,6 +22,7 @@ import CountUp from '@/components/common/count-up';
 import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import { calculateHFAfterRepay } from '@/utils/hf';
 import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
+import { PROTOCOL_FEE_PERCENTAGE, PROTOCOL_FEE_DISPLAY } from '@/utils/constants';
 
 const repayFormSchema = z.object({
   amount: z
@@ -240,9 +241,9 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
       });
 
       if (repayResult.success) {
-        const totalWithFee = (Number(data.amount) * 1.01).toFixed(6);
+        const totalWithFee = (Number(data.amount) * (1 + PROTOCOL_FEE_PERCENTAGE)).toFixed(6);
         toast.success(
-          `Successfully repaid ${data.amount} ${selectedToken.symbol}. Total deducted: ${totalWithFee} ${selectedToken.symbol} (including 1% fee)`
+          `Successfully repaid ${data.amount} ${selectedToken.symbol}. Total deducted: ${totalWithFee} ${selectedToken.symbol} (including ${PROTOCOL_FEE_DISPLAY} fee)`
         );
         // Close dialog after successful operation
         onOpenChange(false);
@@ -473,15 +474,15 @@ export const RepayDialog: React.FC<RepayDialogProps> = ({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>1% fee is charged to support protocol development</p>
+                      <p>{PROTOCOL_FEE_DISPLAY} fee is charged to support protocol development</p>
                     </TooltipContent>
                   </Tooltip>
                 </Typography>
                 <CountUp
-                  value={Number(form.watch('amount')) * 0.01}
+                  value={Number(form.watch('amount')) * PROTOCOL_FEE_PERCENTAGE}
                   suffix={` ${reserve.symbol}`}
                   decimals={6}
-                  prefix={'1% ~ '}
+                  prefix={`${PROTOCOL_FEE_DISPLAY} ~ `}
                   animateOnlyOnce={true}
                 />
               </div>

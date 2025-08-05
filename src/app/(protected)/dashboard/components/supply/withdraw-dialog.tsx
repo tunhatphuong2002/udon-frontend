@@ -22,6 +22,7 @@ import CountUp from '@/components/common/count-up';
 import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 import { calculateHFAfterWithdraw } from '@/utils/hf';
+import { PROTOCOL_FEE_PERCENTAGE, PROTOCOL_FEE_DISPLAY } from '@/utils/constants';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -241,7 +242,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       });
 
       if (withdrawResult.success) {
-        const receivedAmount = (Number(data.amount) * 0.99).toFixed(6);
+        const receivedAmount = (Number(data.amount) * (1 - PROTOCOL_FEE_PERCENTAGE)).toFixed(6);
         toast.success(
           `Successfully withdrew ${data.amount} ${reserve.symbol}. You received ${receivedAmount} ${reserve.symbol}`
         );
@@ -457,14 +458,14 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                       <Info className="h-4 w-4" />
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      <p>1% fee is charged to support protocol development</p>
+                      <p>{PROTOCOL_FEE_DISPLAY} fee is charged to support protocol development</p>
                     </TooltipContent>
                   </Tooltip>
                 </Typography>
                 <CountUp
-                  value={Number(form.watch('amount')) * 0.01}
+                  value={Number(form.watch('amount')) * PROTOCOL_FEE_PERCENTAGE}
                   suffix={` ${reserve.symbol}`}
-                  prefix="1% ~ "
+                  prefix={`${PROTOCOL_FEE_DISPLAY} ~ `}
                   decimals={6}
                 />
               </div>
@@ -483,7 +484,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                 </Typography>
                 <div className="font-medium text-base flex flex-row items-center gap-1">
                   <CountUp
-                    value={Number(form.watch('amount')) * 0.99}
+                    value={Number(form.watch('amount')) * (1 - PROTOCOL_FEE_PERCENTAGE)}
                     suffix={` ${reserve.symbol}`}
                     decimals={6}
                   />
@@ -492,7 +493,11 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
                     <Skeleton className="inline-block h-5 w-20" />
                   ) : (
                     <CountUp
-                      value={(currentPrice || 0) * Number(form.watch('amount')) * 0.99}
+                      value={
+                        (currentPrice || 0) *
+                        Number(form.watch('amount')) *
+                        (1 - PROTOCOL_FEE_PERCENTAGE)
+                      }
                       prefix="$"
                       className="text-base"
                     />

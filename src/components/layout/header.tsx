@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { ConnectWallet } from '@/components/custom/wallet';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/tailwind';
-import { FaucetTestBadge } from '@/app/(protected)/dashboard/components/faucet-badge';
+import { DepositBadge } from '@/app/(protected)/dashboard/components/faucet-badge';
 import { WithdrawBadge } from '@/app/(protected)/dashboard/components/withdraw-badge';
 import { NetworkBadge } from '../custom/landing/network-badge';
 
@@ -42,7 +42,7 @@ export const Header: React.FC = () => {
       </div>
       <div className="z-[100] flex items-center gap-3">
         <div className="hidden sm:flex items-center gap-3">
-          <FaucetTestBadge />
+          <DepositBadge />
           <WithdrawBadge />
         </div>
         <ConnectWallet />

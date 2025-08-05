@@ -13,90 +13,14 @@ import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { cn } from '@/utils/tailwind';
+import { Token, TOKENS_MAINNET, getDepositOptions } from '@/utils/bridge-constants';
 
-interface Token {
-  name: string;
-  symbol: string;
-  decimals: number;
-  icon: string;
-}
-
-interface WithdrawOption {
-  name: string;
-  url: string;
-}
-
-interface WithdrawDialogProps {
+interface DepositModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const TOKENS_MAINNET: Token[] = [
-  {
-    name: 'ALICE',
-    symbol: 'ALICE',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/8766.png',
-  },
-  {
-    name: 'DAR Open Network',
-    symbol: 'D',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
-  },
-  {
-    name: 'Chromia',
-    symbol: 'CHR',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
-  },
-];
-
-const getWithdrawOptions = (symbol: string): WithdrawOption[] => {
-  switch (symbol) {
-    case 'CHR':
-      return [
-        {
-          name: 'Economy Chain',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=15C0CA99BEE60A3B23829968771C50E491BD00D2E3AE448580CD48A8D71E7BBA',
-        },
-        {
-          name: 'ColorPool DEX',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=19571DCB739CCDDC4BC8B96A01C7BDE9FCC389B566DD1B85737E892695674288',
-        },
-      ];
-    case 'D':
-      return [
-        {
-          name: 'Token Chain',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=8035EBF322D0057B00E1D596431A78D535DB45035FAF2045B76942034C0FC507',
-        },
-        {
-          name: 'Mines of Dalarnia Chain',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=5dceac1cafe8ce46284b4ffa739c55567f3b91147db27ff2e40ffd963c39bb8e',
-        },
-        {
-          name: 'ColorPool DEX',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=19571DCB739CCDDC4BC8B96A01C7BDE9FCC389B566DD1B85737E892695674288',
-        },
-      ];
-    case 'ALICE':
-      return [
-        {
-          name: 'Token Chain',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=8035EBF322D0057B00E1D596431A78D535DB45035FAF2045B76942034C0FC507',
-        },
-        {
-          name: 'ColorPool DEX',
-          url: 'https://vault.chromia.com/en/transfer/?fromBrid=F4E33267A8FF1ACCE3C6D7B441B8542FB84FF6DAA5114105563D2AA34979BEF6&toBrid=19571DCB739CCDDC4BC8B96A01C7BDE9FCC389B566DD1B85737E892695674288',
-        },
-      ];
-    default:
-      return [];
-  }
-};
-
-export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChange }) => {
+export const DepositDialog: React.FC<DepositModalProps> = ({ open, onOpenChange }) => {
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
   const handleTokenSelect = (token: Token) => {
@@ -107,7 +31,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
     setSelectedToken(null);
   };
 
-  const handleWithdrawOption = (url: string) => {
+  const handleDepositOption = (url: string) => {
     window.open(url, '_blank');
     onOpenChange(false);
   };
@@ -119,7 +43,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
           Choose Asset
         </Typography>
         <Typography variant="small" color="submerged" className="text-sm leading-relaxed">
-          Select which asset you&apos;d like to withdraw from Udon Protocol
+          Select which asset you&apos;d like to transfer to Udon Protocol
         </Typography>
       </div>
 
@@ -166,10 +90,10 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
     </div>
   );
 
-  const renderWithdrawOptions = () => {
+  const renderDepositOptions = () => {
     if (!selectedToken) return null;
 
-    const options = getWithdrawOptions(selectedToken.symbol);
+    const options = getDepositOptions(selectedToken.symbol);
 
     return (
       <div className="space-y-6">
@@ -191,10 +115,10 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
             </Avatar>
             <div>
               <Typography weight="semibold" className="text-lg">
-                Withdraw {selectedToken.symbol}
+                Deposit {selectedToken.symbol}
               </Typography>
               <Typography variant="small" color="submerged">
-                Choose your preferred withdrawal method
+                Choose your preferred deposit method
               </Typography>
             </div>
           </div>
@@ -211,7 +135,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
                 'cursor-pointer transition-all duration-300 ease-out',
                 'hover:shadow-sm'
               )}
-              onClick={() => handleWithdrawOption(option.url)}
+              onClick={() => handleDepositOption(option.url)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -240,13 +164,16 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
 
         <div className="p-4 bg-muted/30 rounded-lg border border-border/30">
           <div className="flex items-start gap-3">
+            {/* <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mt-0.5 flex-shrink-0">
+              <Link className="w-3.5 h-3.5 text-primary" />
+            </div> */}
             <div>
               <Typography variant="small" weight="medium" className="text-foreground">
                 Cross-Chain Transfer Process:{' '}
               </Typography>
               <Typography variant="small" color="submerged" className="mt-1">
-                You will be redirected to Chromia Vault to complete the withdrawal securely. Your
-                assets will be transferred cross-chain from Udon Protocol.
+                You will be redirected to Chromia Vault to complete the deposit securely. Your
+                assets will be transferred cross-chain to Udon Protocol.
               </Typography>
             </div>
           </div>
@@ -260,14 +187,14 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({ open, onOpenChan
       <DialogContent className="sm:max-w-[480px] rounded-xl">
         <DialogHeader className="pb-6">
           <DialogTitle className="text-2xl font-semibold text-center tracking-tight">
-            Withdraw from Udon
+            Deposit to Udon
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Select an asset and withdrawal method to transfer funds from Udon Protocol
+            Select an asset and deposit method to transfer funds to Udon Protocol
           </DialogDescription>
         </DialogHeader>
 
-        <div className="pb-2">{selectedToken ? renderWithdrawOptions() : renderTokenList()}</div>
+        <div className="pb-2">{selectedToken ? renderDepositOptions() : renderTokenList()}</div>
       </DialogContent>
     </Dialog>
   );

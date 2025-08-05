@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/common/skeleton';
 import { ExternalLinkIcon, Sparkles } from 'lucide-react';
 import { cn } from '@/utils/tailwind';
 import { ShineBorder } from '@/components/common/shine-border';
-import { WithdrawDialog } from './borrow/withdraw-dialog';
+import { WithdrawDialog } from './borrow/withdraw-from-udon-dialog';
 
 interface WithdrawBadgeProps {
   isLoading?: boolean;

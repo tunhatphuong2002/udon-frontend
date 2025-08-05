@@ -13,7 +13,7 @@ import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { MobilePositionTabs } from './components/mobile/mobile-position-tabs';
 import { MobileAssetTabs } from './components/mobile/mobile-asset-tabs';
-import { FaucetTestBadge } from './components/faucet-badge';
+import { DepositBadge } from './components/faucet-badge';
 import { WithdrawBadge } from './components/withdraw-badge';
 import { Button } from '@/components/common/button';
 import { RefreshCcw, ExternalLink } from 'lucide-react';
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             </Typography>
 
             <div className="flex items-center md:hidden w-max gap-4 mt-4">
-              <FaucetTestBadge />
+              <DepositBadge />
               <WithdrawBadge />
             </div>
           </section>
