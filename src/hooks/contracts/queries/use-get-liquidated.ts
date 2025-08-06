@@ -37,11 +37,11 @@ export function useGetLiquidated() {
       console.log('Fetching liquidated data ... ');
 
       const liquidatedRaw = await client.query('get_liquidated_by_user_id', {
-        // user_id: account.id,
-        user_id: Buffer.from(
-          '01A3D3913C462100B060B1C5FEB1FFDD79E0FC6DFA89756A5DCA55EA4C66B02C',
-          'hex'
-        ),
+        user_id: account.id,
+        // user_id: Buffer.from(
+        //   '01A3D3913C462100B060B1C5FEB1FFDD79E0FC6DFA89756A5DCA55EA4C66B02C',
+        //   'hex'
+        // ),
       });
 
       console.log('liquidatedRaw', liquidatedRaw);
