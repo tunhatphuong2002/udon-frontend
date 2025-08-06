@@ -5,8 +5,7 @@ import Image from 'next/image';
 import { MultiStatCard, CombinedStatsCard } from './components/stat-card';
 import { SupplyTable } from './components/supply';
 import { BorrowTable } from './components/borrow';
-import { SupplyPositionTable } from './components/supply/position';
-import { BorrowPositionTable } from './components/borrow/position';
+import { PositionTabs } from './components/position-tabs';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 import { useStatsSupplyDeposit } from '@/hooks/contracts/queries/use-stats-supply-deposit';
 import { useAccountData } from '@/hooks/contracts/queries/use-account-data';
@@ -251,40 +250,41 @@ export default function DashboardPage() {
             </section>
           ) : (
             <section className="grid xl:grid-cols-2 gap-4 sm:gap-5 mt-6 sm:mt-10 p-4 border border-solid rounded-3xl border-border">
-              <SupplyPositionTable
-                yourSupplyBalancePosition={yourSupplyBalancePosition}
-                yourSupplyCollateralPosition={yourSupplyCollateralPosition}
-                yourSupplyAPYPosition={yourSupplyAPYPosition}
-                positions={supplyPositions}
-                isLoading={isLoadingTable}
-                mutateAssets={handleFetchData}
-                accountData={accountData}
-              />
-              <BorrowPositionTable
-                yourBorrowBalancePosition={yourBorrowBalancePosition}
-                yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
-                yourBorrowAPYPosition={yourBorrowAPYPosition}
-                positions={borrowPositions}
-                isLoading={isLoadingTable}
-                mutateAssets={handleFetchData}
-                enableBorrow={enableBorrow}
-                accountData={accountData}
-              />
-              <SupplyTable
-                title="Assets to supply"
-                reserves={processedAssets}
-                isLoading={isLoadingTable}
-                mutateAssets={handleFetchData}
-                accountData={accountData}
-              />
-              <BorrowTable
-                title="Assets to borrow"
-                reserves={processedAssets}
-                isLoading={isLoadingTable}
-                mutateAssets={handleFetchData}
-                enableBorrow={enableBorrow}
-                accountData={accountData}
-              />
+              <div className="xl:col-span-2">
+                <PositionTabs
+                  supplyPositions={supplyPositions}
+                  borrowPositions={borrowPositions}
+                  yourSupplyBalancePosition={yourSupplyBalancePosition}
+                  yourSupplyCollateralPosition={yourSupplyCollateralPosition}
+                  yourSupplyAPYPosition={yourSupplyAPYPosition}
+                  yourBorrowBalancePosition={yourBorrowBalancePosition}
+                  yourBorrowPowerUsagePosition={yourBorrowPowerUsagePosition}
+                  yourBorrowAPYPosition={yourBorrowAPYPosition}
+                  enableBorrow={enableBorrow}
+                  accountData={accountData}
+                  isLoading={isLoadingTable}
+                  mutateAssets={handleFetchData}
+                />
+              </div>
+              <div className="xl:col-span-1">
+                <SupplyTable
+                  title="Assets to supply"
+                  reserves={processedAssets}
+                  isLoading={isLoadingTable}
+                  mutateAssets={handleFetchData}
+                  accountData={accountData}
+                />
+              </div>
+              <div className="xl:col-span-1">
+                <BorrowTable
+                  title="Assets to borrow"
+                  reserves={processedAssets}
+                  isLoading={isLoadingTable}
+                  mutateAssets={handleFetchData}
+                  enableBorrow={enableBorrow}
+                  accountData={accountData}
+                />
+              </div>
             </section>
           )}
         </div>

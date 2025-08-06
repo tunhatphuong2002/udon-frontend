@@ -81,6 +81,8 @@ build/
 **/*.swp
 **/*.swo
 
+**/.secret/
+
 # Logs
 logs/
 **/logs/

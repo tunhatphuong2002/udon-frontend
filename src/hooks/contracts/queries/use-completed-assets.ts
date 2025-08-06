@@ -51,12 +51,40 @@ export function useCompletedAssets() {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       reserves = reserves.map((r: any) => {
         const priceObj = prices.find(p => p.asset_symbol === r.symbol);
-        console.log(
-          'symbol, reserveCurrentLiquidityRate, reserveCurrentVariableBorrowRate',
-          r.symbol,
-          r.reserveCurrentLiquidityRate,
-          r.reserveCurrentVariableBorrowRate
+
+        const reserveFactor = Number(r.reserveFactor) / 100;
+
+        console.log('reserveFactor', reserveFactor);
+
+        const borrowAPY = Number(
+          normalizeBN(
+            calculateCompoundedRate({
+              rate: r.reserveCurrentVariableBorrowRate,
+              duration: SECONDS_PER_YEAR,
+            }),
+            27
+          ).multipliedBy(100)
         );
+
+        console.log('borrowAPY', borrowAPY);
+
+        const supplyAPYRaw = Number(
+          normalizeBN(
+            calculateCompoundedRate({
+              rate: r.reserveCurrentLiquidityRate,
+              duration: SECONDS_PER_YEAR,
+            }),
+            27
+          ).multipliedBy(100)
+        );
+
+        console.log('supplyAPYRaw', supplyAPYRaw);
+
+        const supplyAPYWithReserveFactor =
+          supplyAPYRaw + (borrowAPY - supplyAPYRaw) * (1 - reserveFactor / 100);
+
+        console.log('supplyAPYWithReserveFactor', supplyAPYWithReserveFactor);
+
         return {
           // asset
 
@@ -91,25 +119,10 @@ export function useCompletedAssets() {
           ltv: Number(r.ltv) / 100,
           availableLiquidity: Number(normalizeBN(r.availableLiquidity.toString(), r.decimals)),
 
-          supplyAPY: Number(
-            normalizeBN(
-              calculateCompoundedRate({
-                rate: r.reserveCurrentLiquidityRate,
-                duration: SECONDS_PER_YEAR,
-              }),
-              27
-            ).multipliedBy(100)
-          ),
+          supplyAPY: supplyAPYWithReserveFactor,
           liquidationThreshold: Number(r.liquidationThreshold) / 100,
-          borrowAPY: Number(
-            normalizeBN(
-              calculateCompoundedRate({
-                rate: r.reserveCurrentVariableBorrowRate,
-                duration: SECONDS_PER_YEAR,
-              }),
-              27
-            ).multipliedBy(100)
-          ),
+          borrowAPY: borrowAPY,
+          reserveFactor: reserveFactor,
         };
       });
 

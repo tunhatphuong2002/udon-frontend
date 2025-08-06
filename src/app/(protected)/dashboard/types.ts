@@ -93,6 +93,8 @@ export interface UserReserveData {
 
   availableLiquidity: number;
 
+  reserve_factor: number;
+
   // userDataAccount: UserAccountData;
 }
 

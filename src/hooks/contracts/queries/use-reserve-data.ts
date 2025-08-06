@@ -70,16 +70,10 @@ export function useReserveData(assetId: string) {
           normalizeBN(reserves.availableLiquidity.toString(), reserves.decimals)
         ),
 
-        supplyAPY: Number(
-          normalizeBN(
-            calculateCompoundedRate({
-              rate: reserves.reserveCurrentLiquidityRate,
-              duration: SECONDS_PER_YEAR,
-            }),
-            27
-          ).multipliedBy(100)
-        ),
-        liquidationThreshold: Number(reserves.liquidationThreshold) / 100,
+        // Calculate APY with reserve factor
+        reserveFactor: Number(reserves.reserveFactor) / 100,
+
+        // Calculate borrow APY
         borrowAPY: Number(
           normalizeBN(
             calculateCompoundedRate({
@@ -89,6 +83,34 @@ export function useReserveData(assetId: string) {
             27
           ).multipliedBy(100)
         ),
+
+        // Calculate supply APY with reserve factor adjustment
+        supplyAPY: (() => {
+          const borrowAPY = Number(
+            normalizeBN(
+              calculateCompoundedRate({
+                rate: reserves.reserveCurrentVariableBorrowRate,
+                duration: SECONDS_PER_YEAR,
+              }),
+              27
+            ).multipliedBy(100)
+          );
+
+          const supplyAPYRaw = Number(
+            normalizeBN(
+              calculateCompoundedRate({
+                rate: reserves.reserveCurrentLiquidityRate,
+                duration: SECONDS_PER_YEAR,
+              }),
+              27
+            ).multipliedBy(100)
+          );
+
+          const reserveFactor = Number(reserves.reserveFactor) / 100;
+
+          return supplyAPYRaw + (borrowAPY - supplyAPYRaw) * (1 - reserveFactor / 100);
+        })(),
+        liquidationThreshold: Number(reserves.liquidationThreshold) / 100,
       };
       console.log('reserves', reserves.assetId.toString('hex'));
       return reserves;
