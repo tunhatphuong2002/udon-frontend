@@ -11,18 +11,17 @@ import { Button } from '@/components/common/button';
 import { Switch } from '@/components/common/switch';
 import { useRouter } from 'next/navigation';
 import CountUp from '@/components/common/count-up';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { useState } from 'react';
 import { SupplyDialog } from '../supply/supply-dialog';
 import { WithdrawDialog } from '../supply/withdraw-dialog';
 import { CollateralDialog } from '../supply/collateral-dialog';
 import { BorrowDialog } from '../borrow/borrow-dialog';
 import { RepayDialog } from '../borrow/repay-dialog';
+import { useGetLiquidated } from '@/hooks/contracts/queries/use-get-liquidated';
+import { formatDistanceToNow } from 'date-fns';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { getAccountId } from '@/utils/get-tx-link';
 
 interface MobilePositionTabsProps {
   supplyPositions: UserReserveData[];
@@ -53,6 +52,11 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
   enableBorrow,
   accountData,
 }) => {
+  const {
+    data: liquidatedData,
+    liquidatedCount,
+    isLoading: isLiquidatedLoading,
+  } = useGetLiquidated();
   const router = useRouter();
 
   // Dialog state management for Supply
@@ -104,27 +108,25 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
 
   const renderAssetCell = (asset: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium" className="text-2xl">
-                {asset.symbol}
-              </Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{asset.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+              <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium" className="text-2xl">
+              {asset.symbol}
+            </Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{asset.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -256,6 +258,9 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           </TabsTrigger>
           <TabsTrigger value="borrow" className="flex-1 h-full py-4 text-base">
             Your Borrow
+          </TabsTrigger>
+          <TabsTrigger value="liquidated" className="flex-1 h-full py-4 text-base">
+            Liquidated{liquidatedCount > 0 && ` (${liquidatedCount})`}
           </TabsTrigger>
         </TabsList>
 
@@ -607,6 +612,212 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
                   <Typography className="text-submerged text-center text-lg">
                     No borrow positions found. <br />
                     Start borrowing assets to leverage your portfolio.
+                  </Typography>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* Liquidated Tab Content */}
+        <TabsContent value="liquidated" className="px-4 py-5">
+          {isLiquidatedLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="border border-border rounded-lg py-3 px-4 bg-card">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Skeleton className="w-10 h-10 rounded-lg" />
+                    <div className="space-y-1">
+                      <Skeleton className="w-20 h-4" />
+                      <Skeleton className="w-16 h-3" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Skeleton className="w-16 h-4" />
+                      <Skeleton className="w-20 h-3" />
+                    </div>
+                    <div className="space-y-1">
+                      <Skeleton className="w-16 h-4" />
+                      <Skeleton className="w-20 h-3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {liquidatedData?.liquidated && liquidatedData.liquidated.length > 0 ? (
+                <div className="space-y-4">
+                  {liquidatedData.liquidated.map((liquidation, index) => (
+                    <div
+                      key={index}
+                      className={`border border-border rounded-lg py-3 px-4 ${
+                        index % 2 === 0 ? 'bg-black/20' : 'bg-card'
+                      }`}
+                    >
+                      {/* Top row: Event icon and timestamp */}
+                      <div className="flex mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <AlertTriangle className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <Typography weight="semibold" className="text-primary">
+                              Liquidation
+                            </Typography>
+                            <Typography color="submerged">
+                              {formatDistanceToNow(new Date(liquidation.timestamp), {
+                                addSuffix: true,
+                              })}
+                            </Typography>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom row: Asset details */}
+                      <div className="flex mt-2">
+                        {/* Col 1: Debt Asset */}
+                        <div className="flex-1">
+                          <Typography color="submerged" className="mb-[2px] text-[12px]">
+                            Debt Asset
+                          </Typography>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage
+                                src={liquidatedData?.debtAsset?.iconUrl}
+                                alt={liquidatedData?.debtAsset?.symbol || 'Asset'}
+                              />
+                              <AvatarFallback>
+                                {liquidatedData?.debtAsset?.symbol?.charAt(0) || 'A'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <Typography weight="medium" className="text-sm">
+                                {liquidatedData?.debtAsset?.symbol || 'Unknown'}
+                              </Typography>
+                              <CountUp
+                                value={liquidation.debtToCover}
+                                className="text-sm text-submerged"
+                                decimals={6}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Col 2: Collateral Asset */}
+                        <div className="flex-1">
+                          <Typography color="submerged" className="mb-[2px] text-[12px]">
+                            Collateral Asset
+                          </Typography>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage
+                                src={liquidatedData?.collateralAsset?.iconUrl}
+                                alt={liquidatedData?.collateralAsset?.symbol || 'Asset'}
+                              />
+                              <AvatarFallback>
+                                {liquidatedData?.collateralAsset?.symbol?.charAt(0) || 'A'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <Typography weight="medium" className="text-sm">
+                                {liquidatedData?.collateralAsset?.symbol || 'Unknown'}
+                              </Typography>
+                              <CountUp
+                                value={liquidation.liquidatedCollateralAmount}
+                                className="text-sm text-submerged"
+                                decimals={6}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom row: Received and Liquidator */}
+                      <div className="flex mt-3 pt-3 border-t border-border/30">
+                        {/* Received */}
+                        <div className="flex-1">
+                          <Typography color="submerged" className="mb-[2px] text-[12px]">
+                            Received
+                          </Typography>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6">
+                              <AvatarImage
+                                src={
+                                  liquidation.receiveAAsset
+                                    ? liquidatedData?.debtAsset?.iconUrl
+                                    : liquidatedData?.collateralAsset?.iconUrl
+                                }
+                                alt={
+                                  liquidation.receiveAAsset
+                                    ? liquidatedData?.debtAsset?.symbol
+                                    : liquidatedData?.collateralAsset?.symbol || 'Asset'
+                                }
+                              />
+                              <AvatarFallback>
+                                {liquidation.receiveAAsset
+                                  ? liquidatedData?.debtAsset?.symbol?.charAt(0)
+                                  : liquidatedData?.collateralAsset?.symbol?.charAt(0) || 'A'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <Typography weight="medium" className="text-sm">
+                                {liquidation.receiveAAsset ? 'aTokens' : 'Underlying Assets'}
+                              </Typography>
+                              <Typography variant="small" color="submerged">
+                                {liquidation.receiveAAsset
+                                  ? liquidatedData?.debtAsset?.symbol
+                                  : liquidatedData?.collateralAsset?.symbol || 'Unknown'}
+                              </Typography>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Liquidator */}
+                        <div className="flex-1">
+                          <Typography color="submerged" className="mb-[2px] text-[12px]">
+                            Liquidator
+                          </Typography>
+                          <a
+                            href={getAccountId(liquidation.liquidatorId.toString('hex'))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <Typography variant="small" className="font-mono text-sm">
+                              {liquidation.liquidatorId.toString('hex').slice(0, 8)}...
+                            </Typography>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted/20 flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <Typography variant="h4" weight="semibold" className="mb-2">
+                    No Liquidations
+                  </Typography>
+                  <Typography variant="p" color="submerged" className="max-w-md text-center">
+                    You haven&apos;t been liquidated. Keep your health factor above 1 to avoid
+                    liquidation.
                   </Typography>
                 </div>
               )}

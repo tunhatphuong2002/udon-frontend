@@ -31,6 +31,10 @@ export const getEnv = (key: string, defaultValue: string = ''): string => {
       return process.env.NEXT_PUBLIC_REPORT_BUG_FORM_URL || defaultValue;
     case 'NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID':
       return process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || defaultValue;
+    case 'NEXT_PUBLIC_DOCS_URL':
+      return process.env.NEXT_PUBLIC_DOCS_URL || defaultValue;
+    case 'NEXT_PUBLIC_IS_MAINTENANCE':
+      return process.env.NEXT_PUBLIC_IS_MAINTENANCE || defaultValue;
     default:
       return defaultValue;
   }
@@ -44,7 +48,7 @@ const detectNetwork = (nodeUrl: string): Network => {
   if (nodeUrl.includes('testnet')) {
     return 'testnet';
   }
-  if (nodeUrl.includes('mainnet')) {
+  if (nodeUrl.includes('chromaway')) {
     return 'mainnet';
   }
   return 'local'; // default to local if can't detect
@@ -53,10 +57,10 @@ const detectNetwork = (nodeUrl: string): Network => {
 // Convert comma-separated string to array of URLs or single URL string
 export const getNodeUrlPool = (): string | string[] => {
   const defaultNodes = [
-    'https://node0.testnet.chromia.com:7740',
-    'https://node1.testnet.chromia.com:7740',
-    'https://node2.testnet.chromia.com:7740',
-    'https://node3.testnet.chromia.com:7740',
+    'https://dapps0.chromaway.com',
+    'https://chromia-mainnet.w3coins.io:7740',
+    'https://mainnet-dapp1.sunube.net:7740',
+    'https://chromia.01node.com:7740',
   ].join(',');
 
   const nodeUrls = getEnv('NEXT_PUBLIC_NODE_URL_POOL', defaultNodes);
@@ -87,7 +91,8 @@ export const GA_TRACKING_ID = getEnv('NEXT_PUBLIC_GA_TRACKING_ID', '');
 export const BRID = getEnv('NEXT_PUBLIC_BRID', '');
 export const REPORT_BUG_FORM_URL = getEnv('NEXT_PUBLIC_REPORT_BUG_FORM_URL', '');
 export const WALLETCONNECT_PROJECT_ID = getEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID', '');
-export const DOCS = getEnv('NEXT_PUBLIC_DOCS', '');
+export const DOCS = getEnv('NEXT_PUBLIC_DOCS_URL', '');
+export const IS_MAINTENANCE = getEnv('NEXT_PUBLIC_IS_MAINTENANCE', 'false');
 
 // Export all environment variables in a single object
 export const env = {
@@ -103,4 +108,7 @@ export const env = {
   reportBugFormUrl: REPORT_BUG_FORM_URL,
   walletconnectProjectId: WALLETCONNECT_PROJECT_ID,
   docs: DOCS,
+  isMaintenance: IS_MAINTENANCE.toLowerCase() === 'true',
 } as const;
+
+console.log('env', env);

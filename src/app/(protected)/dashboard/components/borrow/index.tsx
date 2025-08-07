@@ -6,12 +6,7 @@ import { Typography } from '@/components/common/typography';
 import { useRouter } from 'next/navigation';
 import { ColumnDef, SortableTable } from '@/components/common/sortable-table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { BorrowDialog } from './borrow-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
@@ -53,25 +48,23 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   // Render asset icon and symbol
   const renderAssetCell = (asset: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium">{asset.symbol}</Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{asset.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+              <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium">{asset.symbol}</Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{asset.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -126,7 +119,7 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
       },
     },
     {
-      header: 'Total Supply',
+      header: 'Total Borrow',
       accessorKey: 'currentVariableDebtTokenTotalSupply',
       enableSorting: true,
       cell: ({ row }) => {
@@ -211,14 +204,16 @@ export const BorrowTable: React.FC<BorrowTableProps> = ({
   return (
     <>
       <div className="flex-1 border bg-card p-3 sm:p-5 rounded-[18px] border-solid border-border min-w-[320px] max-w-full">
-        <div className="flex justify-between items-center">
-          {isLoading ? (
-            <Skeleton className="h-8 w-48" />
-          ) : (
-            <Typography variant="h4" weight="semibold" className="mb-4 text-2xl">
-              {title}
-            </Typography>
-          )}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-48" />
+            ) : (
+              <Typography variant="h4" weight="semibold" className="text-2xl">
+                {title}
+              </Typography>
+            )}
+          </div>
         </div>
 
         {(!reserves || reserves.length === 0) && !isLoading && (

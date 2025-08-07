@@ -8,17 +8,11 @@ import { CheckIcon } from 'lucide-react';
 import { UserReserveData, UserAccountData } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Skeleton } from '@/components/common/skeleton';
-import { FaucetTestBadge } from '../faucet-badge';
 import { SupplyDialog } from '../supply/supply-dialog';
 import { BorrowDialog } from '../borrow/borrow-dialog';
 import CountUp from '@/components/common/count-up';
 import { useRouter } from 'next/navigation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 
 interface MobileAssetTabsProps {
   processedAssets: UserReserveData[];
@@ -62,27 +56,25 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
   // Render asset icon and symbol
   const renderAssetCell = (asset: UserReserveData) => {
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
-            >
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
-                <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <Typography weight="medium" className="text-2xl">
-                {asset.symbol}
-              </Typography>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{asset.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => handleAssetClick(asset.assetId.toString('hex'))}
+          >
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
+              <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Typography weight="medium" className="text-2xl">
+              {asset.symbol}
+            </Typography>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{asset.name}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -242,9 +234,6 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4">
-                <FaucetTestBadge isLoading={isLoading} />
-              </div>
               {processedAssets.length > 0 ? (
                 <div className="space-y-4">
                   {processedAssets.map((asset, index) => (
@@ -382,6 +371,7 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-4">
                 <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-5 w-16" />
               </div>
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (

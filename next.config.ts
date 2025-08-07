@@ -47,7 +47,25 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'filehub.minesofdalarnia.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
         hostname: 's3.eu-central-1.amazonaws.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'bscscan.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'assets.chromia.com',
         port: '',
         pathname: '**',
       },

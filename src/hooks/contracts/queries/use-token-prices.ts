@@ -2,13 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { toast } from 'sonner';
 import { Asset, Balance } from '@chromia/ft4';
-
-interface AssetPrice {
-  stork_asset_id: string;
-  price: number;
-  timestamp: string;
-  asset_symbol: string;
-}
+import { AssetPrice } from '@/app/(protected)/dashboard/types';
 
 interface TokenPriceMap {
   [key: string]: number;

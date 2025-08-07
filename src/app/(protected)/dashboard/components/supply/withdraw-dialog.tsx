@@ -16,17 +16,13 @@ import { Typography } from '@/components/common/typography';
 import { Input } from '@/components/common/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Skeleton } from '@/components/common/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/common/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
 import { UserAccountData, UserReserveData } from '../../types';
 import CountUp from '@/components/common/count-up';
 import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
 import { normalize, normalizeBN, valueToBigNumber } from '@/utils/bignumber';
 import { calculateHFAfterWithdraw } from '@/utils/hf';
+import { PROTOCOL_FEE_PERCENTAGE, PROTOCOL_FEE_DISPLAY } from '@/utils/constants';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -51,6 +47,7 @@ export interface WithdrawDialogProps {
   reserve: UserReserveData;
   accountData: UserAccountData;
   mutateAssets: () => void;
+  yourSupplyCollateralPosition: number;
 }
 
 // Create a debounced fetch function with lodash
@@ -64,7 +61,9 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   reserve,
   accountData,
   mutateAssets,
+  yourSupplyCollateralPosition,
 }) => {
+  console.log('yourSupplyCollateralPosition', yourSupplyCollateralPosition);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | undefined>(reserve.price);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
@@ -84,11 +83,17 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
     refetch: fetchPrice,
   } = useAssetPrice(reserve.assetId, isRefetchEnabled);
 
-  const { data: maxWithdrawAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
+  const { data: maxAmount, isLoading: isMaxWithdrawFetching } = useMaxAmount(
     reserve.assetId,
     reserve.decimals,
     'get_max_withdraw_amount'
   );
+
+  const maxWithdrawAmount =
+    reserve.currentATokenBalance > maxAmount ? maxAmount : reserve.currentATokenBalance;
+
+  console.log('maxAmount', maxAmount);
+  console.log('reserve.currentATokenTotalSupply', reserve.currentATokenTotalSupply);
 
   // Use the withdraw hook
   const withdraw = useWithdraw({
@@ -201,6 +206,7 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   const handleMaxAmount = () => {
     // Use supply balance as the max amount
     form.setValue('amount', maxWithdrawAmount.toString());
+    console.log('maxWithdrawAmount', maxWithdrawAmount);
     handleFetchPrice();
   };
 
@@ -236,7 +242,10 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
       });
 
       if (withdrawResult.success) {
-        toast.success(`Successfully withdraw ${data.amount} ${reserve.symbol}`);
+        const receivedAmount = (Number(data.amount) * (1 - PROTOCOL_FEE_PERCENTAGE)).toFixed(6);
+        toast.success(
+          `Successfully withdrew ${data.amount} ${reserve.symbol}. You received ${receivedAmount} ${reserve.symbol}`
+        );
         // Close dialog after successful operation
         onOpenChange(false);
       } else {
@@ -258,223 +267,267 @@ export const WithdrawDialog: React.FC<WithdrawDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] rounded-xl">
-        <TooltipProvider delayDuration={300}>
-          <DialogHeader>
-            <div className="flex justify-between items-center">
-              <DialogTitle className="text-2xl font-semibold">
-                Withdraw {reserve.symbol}
-              </DialogTitle>
-            </div>
-          </DialogHeader>
+        <DialogHeader>
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-2xl font-semibold">Withdraw {reserve.symbol}</DialogTitle>
+          </div>
+        </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
-            <div className="space-y-6 py-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Typography className="flex items-center gap-1">Amount</Typography>
-                </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Typography className="flex items-center gap-1">Amount</Typography>
+              </div>
 
-                <div className="border px-3 py-2 rounded-lg">
-                  <div className="relative">
-                    <Input
-                      {...form.register('amount')}
-                      autoComplete="off"
-                      placeholder="0.00"
-                      className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.]?[0-9]*"
-                      min={0.0}
-                      max={maxWithdrawAmount}
-                      step="any"
-                      onChange={handleAmountChange}
-                    />
-                    <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
-                      {/* clear icon */}
-                      {form.watch('amount') && (
-                        <Button
-                          variant="none"
-                          size="icon"
-                          onClick={() => {
-                            form.setValue('amount', '');
-                            // Reset health factor when clearing input
-                            setCalculatedHealthFactor(
-                              accountData.healthFactor === -1
-                                ? -1
-                                : Number(
-                                    normalizeBN(
-                                      valueToBigNumber(accountData.healthFactor.toString()),
-                                      18
-                                    )
+              <div className="border px-3 py-2 rounded-lg">
+                <div className="relative">
+                  <Input
+                    {...form.register('amount')}
+                    autoComplete="off"
+                    placeholder="0.00"
+                    className="p-0 text-xl font-medium placeholder:text-submerged focus-visible:ring-tranparent focus-visible:outline-none focus-visible:ring-0 w-[60%]"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
+                    min={0.0}
+                    max={maxWithdrawAmount}
+                    step="any"
+                    onChange={handleAmountChange}
+                  />
+                  <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
+                    {/* clear icon */}
+                    {form.watch('amount') && (
+                      <Button
+                        variant="none"
+                        size="icon"
+                        onClick={() => {
+                          form.setValue('amount', '');
+                          // Reset health factor when clearing input
+                          setCalculatedHealthFactor(
+                            accountData.healthFactor === -1
+                              ? -1
+                              : Number(
+                                  normalizeBN(
+                                    valueToBigNumber(accountData.healthFactor.toString()),
+                                    18
                                   )
-                            );
-                          }}
-                          className="hover:opacity-70"
-                        >
-                          <CircleX className="h-6 w-6 text-embossed" />
-                        </Button>
+                                )
+                          );
+                        }}
+                        className="hover:opacity-70"
+                      >
+                        <CircleX className="h-6 w-6 text-embossed" />
+                      </Button>
+                    )}
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
+                      <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-row items-center gap-1">
+                      <span className="font-medium text-lg">{reserve.symbol}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-base">
+                  {isPriceFetching ? (
+                    <Skeleton className="h-5 w-20" />
+                  ) : (
+                    <CountUp
+                      value={(currentPrice || 0) * Number(form.watch('amount'))}
+                      prefix="$"
+                      className="text-base"
+                    />
+                  )}
+                  <div
+                    className="flex flex-row items-center gap-1 text-primary cursor-pointer"
+                    onClick={handleMaxAmount}
+                  >
+                    <div className="flex flex-row items-center gap-1 cursor-pointer">
+                      <Typography>Available: </Typography>
+                      {isMaxWithdrawFetching ? (
+                        <Skeleton className="h-5 w-20" />
+                      ) : (
+                        <CountUp
+                          value={maxWithdrawAmount}
+                          suffix={` ${reserve.symbol}`}
+                          decimals={6}
+                        />
                       )}
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={reserve.iconUrl} alt={reserve.symbol} />
-                        <AvatarFallback>{reserve.symbol.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-row items-center gap-1">
-                        <span className="font-medium text-lg">{reserve.symbol}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-base">
-                    {isPriceFetching ? (
-                      <Skeleton className="h-5 w-20" />
-                    ) : (
-                      <CountUp
-                        value={(currentPrice || 0) * Number(form.watch('amount'))}
-                        prefix="$"
-                        className="text-base"
-                      />
-                    )}
-                    <div
-                      className="flex flex-row items-center gap-1 text-primary cursor-pointer"
-                      onClick={handleMaxAmount}
-                    >
-                      <div className="flex flex-row items-center gap-1 cursor-pointer">
-                        <Typography>Available: </Typography>
-                        {isMaxWithdrawFetching ? (
-                          <Skeleton className="h-5 w-20" />
-                        ) : (
-                          <Typography className="font-bold">{maxWithdrawAmount}</Typography>
-                        )}
-                        <Typography className="font-bold text-primary">MAX</Typography>
-                      </div>
+                      <Typography className="font-bold text-primary">MAX</Typography>
                     </div>
                   </div>
                 </div>
-
-                {form.formState.errors.amount && (
-                  <Typography className="text-destructive">
-                    {form.formState.errors.amount.message}
-                  </Typography>
-                )}
               </div>
 
-              <div className="space-y-4">
-                <Typography weight="semibold" className="text-lg">
-                  Transaction overview
+              {form.formState.errors.amount && (
+                <Typography className="text-destructive">
+                  {form.formState.errors.amount.message}
                 </Typography>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Remaining supply</Typography>
-                  <Typography weight="medium">
-                    <CountUp
-                      value={maxWithdrawAmount - Number(form.watch('amount'))}
-                      suffix={` ${reserve.symbol}`}
-                      decimals={6}
-                    />
-                  </Typography>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">
-                    Health factor
-                    <Tooltip delayDuration={100}>
-                      <TooltipTrigger type="button">
-                        <Info className="h-4 w-4" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Liquidation occurs when health factor is below 1.0</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </Typography>
-
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    {Number(currentHealthFactor) === -1 ? (
-                      <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
-                    ) : (
-                      <CountUp
-                        value={Number(currentHealthFactor)}
-                        decimals={2}
-                        className={
-                          Number(currentHealthFactor) === -1
-                            ? 'text-green-500'
-                            : Number(currentHealthFactor) <= 1.25
-                              ? 'text-red-500'
-                              : Number(currentHealthFactor) <= 1.5
-                                ? 'text-amber-500'
-                                : 'text-green-500'
-                        }
-                      />
-                    )}
-
-                    {/* icon arrow left to right */}
-                    <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
-
-                    {!form.watch('amount') || Number(form.watch('amount')) === 0 ? (
-                      <Typography className="text-muted-foreground font-medium">_</Typography>
-                    ) : calculatedHealthFactor === -1 ? (
-                      <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
-                    ) : (
-                      <CountUp
-                        value={calculatedHealthFactor}
-                        decimals={2}
-                        className={
-                          calculatedHealthFactor === -1
-                            ? 'text-green-500'
-                            : calculatedHealthFactor <= 1.25
-                              ? 'text-red-500'
-                              : calculatedHealthFactor <= 1.5
-                                ? 'text-amber-500'
-                                : 'text-green-500'
-                        }
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <Typography className="flex items-center gap-1">Withdraw amount</Typography>
-                  <div className="font-medium text-base flex flex-row items-center gap-1">
-                    <CountUp
-                      value={Number(form.watch('amount'))}
-                      suffix={` ${reserve.symbol}`}
-                      decimals={6}
-                    />
-                    ~{' '}
-                    {isPriceFetching ? (
-                      <Skeleton className="inline-block h-5 w-20" />
-                    ) : (
-                      <CountUp
-                        value={(currentPrice || 0) * Number(form.watch('amount'))}
-                        prefix="$"
-                        className="text-base"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              {isSubmitting ? (
-                <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-                  Processing...
-                </Button>
-              ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
-                <Button disabled className="w-full text-lg py-6">
-                  Enter an amount
-                </Button>
-              ) : (
-                <Button
-                  variant="gradient"
-                  type="submit"
-                  className="w-full text-lg py-6"
-                  disabled={!form.watch('amount')}
-                >
-                  Withdraw {reserve.symbol}
-                </Button>
               )}
             </div>
-          </form>
-        </TooltipProvider>
+
+            <div className="space-y-4">
+              <Typography weight="semibold" className="text-lg">
+                Transaction overview
+              </Typography>
+
+              <div className="flex justify-between items-center">
+                <Typography className="flex items-center gap-1">
+                  Remaining supply
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger type="button">
+                      <Info className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Your supply balance after this withdrawal</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Typography>
+                <Typography weight="medium">
+                  <CountUp
+                    value={maxWithdrawAmount - Number(form.watch('amount'))}
+                    suffix={` ${reserve.symbol}`}
+                    decimals={6}
+                  />
+                </Typography>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <Typography className="flex items-center gap-1">
+                  Health factor
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger type="button">
+                      <Info className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Liquidation occurs when health factor is below 1.0</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Typography>
+
+                <div className="flex flex-row items-center justify-center gap-1">
+                  {Number(currentHealthFactor) === -1 ? (
+                    <Typography className="text-green-500 text-3xl text-bold">∞</Typography>
+                  ) : (
+                    <CountUp
+                      value={Number(currentHealthFactor)}
+                      decimals={2}
+                      className={
+                        Number(currentHealthFactor) === -1
+                          ? 'text-green-500'
+                          : Number(currentHealthFactor) <= 1.25
+                            ? 'text-red-500'
+                            : Number(currentHealthFactor) <= 1.5
+                              ? 'text-amber-500'
+                              : 'text-green-500'
+                      }
+                    />
+                  )}
+
+                  {/* icon arrow left to right */}
+                  <ArrowRight className="h-4 w-4 mb-1 text-muted-foreground" />
+
+                  {!form.watch('amount') || Number(form.watch('amount')) === 0 ? (
+                    <Typography className="text-muted-foreground font-medium">_</Typography>
+                  ) : calculatedHealthFactor === -1 ? (
+                    <Typography className="!text-green-500 text-3xl text-bold">∞</Typography>
+                  ) : (
+                    <CountUp
+                      value={calculatedHealthFactor}
+                      decimals={2}
+                      className={
+                        calculatedHealthFactor === -1
+                          ? 'text-green-500'
+                          : calculatedHealthFactor <= 1.25
+                            ? 'text-red-500'
+                            : calculatedHealthFactor <= 1.5
+                              ? 'text-amber-500'
+                              : 'text-green-500'
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <Typography className="flex items-center gap-1">
+                  Fee
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger type="button">
+                      <Info className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{PROTOCOL_FEE_DISPLAY} fee is charged to support protocol development</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Typography>
+                <CountUp
+                  value={Number(form.watch('amount')) * PROTOCOL_FEE_PERCENTAGE}
+                  suffix={` ${reserve.symbol}`}
+                  prefix={`${PROTOCOL_FEE_DISPLAY} ~ `}
+                  decimals={6}
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <Typography className="flex items-center gap-1">
+                  You will receive
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger type="button">
+                      <Info className="h-4 w-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Amount you will receive after deducting 1% protocol fee</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Typography>
+                <div className="font-medium text-base flex flex-row items-center gap-1">
+                  <CountUp
+                    value={Number(form.watch('amount')) * (1 - PROTOCOL_FEE_PERCENTAGE)}
+                    suffix={` ${reserve.symbol}`}
+                    decimals={6}
+                  />
+                  ~{' '}
+                  {isPriceFetching ? (
+                    <Skeleton className="inline-block h-5 w-20" />
+                  ) : (
+                    <CountUp
+                      value={
+                        (currentPrice || 0) *
+                        Number(form.watch('amount')) *
+                        (1 - PROTOCOL_FEE_PERCENTAGE)
+                      }
+                      prefix="$"
+                      className="text-base"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            {isSubmitting ? (
+              <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+                Processing...
+              </Button>
+            ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
+              <Button disabled className="w-full text-lg py-6">
+                Enter an amount
+              </Button>
+            ) : (
+              <Button
+                variant="gradient"
+                type="submit"
+                className="w-full text-lg py-6"
+                disabled={!form.watch('amount')}
+              >
+                Withdraw {reserve.symbol}
+              </Button>
+            )}
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

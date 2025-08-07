@@ -20,48 +20,66 @@ function getTxTypeInfo(operationName: string) {
   if (op.includes('supply')) {
     return {
       label: 'Supply',
-      icon: <Banknote className="h-7 w-7 text-red-500" />,
-      color: 'text-red-500',
-      amountColor: 'text-red-500',
+      // icon: <Banknote className="h-7 w-7 text-red-500" />,
+      icon: <Banknote className="h-7 w-7" />,
+      // color: 'text-red-500',
+      // amountColor: 'text-red-500',
+      color: 'text-embossed',
+      amountColor: 'text-embossed',
     };
   }
   if (op.includes('withdraw')) {
     return {
       label: 'Withdraw',
-      icon: <ArrowDownRight className="h-7 w-7 text-green-500" />,
-      color: 'text-green-500',
-      amountColor: 'text-green-500',
+      // icon: <ArrowDownRight className="h-7 w-7 text-green-500" />,
+      icon: <ArrowDownRight className="h-7 w-7" />,
+      // color: 'text-green-500',
+      // amountColor: 'text-green-500',
+      color: 'text-embossed',
+      amountColor: 'text-embossed',
     };
   }
   if (op.includes('borrow')) {
     return {
       label: 'Borrow',
-      icon: <HandCoins className="h-7 w-7 text-green-500" />,
-      color: 'text-green-500',
-      amountColor: 'text-green-500',
+      // icon: <HandCoins className="h-7 w-7 text-green-500" />,
+      icon: <HandCoins className="h-7 w-7" />,
+      // color: 'text-green-500',
+      // amountColor: 'text-green-500',
+      color: 'text-embossed',
+      amountColor: 'text-embossed',
     };
   }
   if (op.includes('repay')) {
     return {
       label: 'Repay',
-      icon: <Banknote className="h-7 w-7 text-red-500" />,
-      color: 'text-red-500',
-      amountColor: 'text-red-500',
+      // icon: <Banknote className="h-7 w-7 text-red-500" />,
+      icon: <Banknote className="h-7 w-7" />,
+      // color: 'text-red-500',
+      // amountColor: 'text-red-500',
+      color: 'text-embossed',
+      amountColor: 'text-embossed',
     };
   }
   if (op.includes('transfer')) {
     return {
       label: 'Transfer',
-      icon: <ArrowUpRight className="h-7 w-7 text-red-500" />,
-      color: 'text-red-500',
-      amountColor: 'text-red-500',
+      icon: <ArrowUpRight className="h-7 w-7" />,
+      // icon: <ArrowUpRight className="h-7 w-7 text-red-500" />,
+      // color: 'text-red-500',
+      // amountColor: 'text-red-500',
+      color: 'text-embossed',
+      amountColor: 'text-embossed',
     };
   }
   return {
     label: op,
-    icon: <HelpCircle className="h-7 w-7 text-gray-400" />,
-    color: 'text-gray-400',
-    amountColor: 'text-gray-400',
+    // icon: <HelpCircle className="h-7 w-7 text-gray-400" />,
+    icon: <HelpCircle className="h-7 w-7" />,
+    // color: 'text-gray-400',
+    // amountColor: 'text-gray-400',
+    color: 'text-embossed',
+    amountColor: 'text-embossed',
   };
 }
 
@@ -125,7 +143,7 @@ export function TransactionHistory({
                 const value = normalizeBN(transfer.delta.value.toString(), transfer.asset.decimals);
                 const numericValue = Number(value);
                 // Show sign for positive/negative
-                const isPositive = numericValue > 0;
+                // const isPositive = numericValue > 0;
                 return (
                   <>
                     {(index > 0 || !fullList) && (
@@ -180,7 +198,7 @@ export function TransactionHistory({
                       <span
                         className={`flex flex-row items-center text-base font-bold ml-2 ${txType.amountColor}`}
                       >
-                        {isPositive ? '+' : '- '}
+                        {/* {isPositive ? '+' : '- '} */}
                         <CountUp
                           value={Math.abs(numericValue)}
                           decimals={6}

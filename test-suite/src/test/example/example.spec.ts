@@ -1,3 +1,4 @@
+import { admin_kp } from '../../configs/key-pair';
 import {
   createConnection,
   createInMemoryFtKeyStore,
@@ -14,11 +15,6 @@ declare global {
   // eslint-disable-next-line no-var
   var Buffer: typeof Buffer;
 }
-
-const admin_kp = {
-  privKey: Buffer.from('5FA2E76BCDE5C548C34D91E96B76C4FBDAE5C1410FA7F55CF6FE2D6B0A2D073A', 'hex'),
-  pubKey: Buffer.from('033CBF397B79E38FFE68B9CD40B00C70785D9CCD8E1C9EA47674FA4091CA3BBADD', 'hex'),
-};
 
 describe('Chromia FT4 - initialize_underlying_asset_factory', () => {
   let session: Session;

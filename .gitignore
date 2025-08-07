@@ -1,5 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+contract/*
+
 # dependencies
 /node_modules
 /.pnp
@@ -79,6 +81,8 @@ build/
 *.swo
 **/*.swp
 **/*.swo
+
+**/.secret/
 
 # Logs
 logs/
