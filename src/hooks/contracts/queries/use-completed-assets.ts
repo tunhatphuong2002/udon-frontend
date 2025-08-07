@@ -26,6 +26,8 @@ export function useCompletedAssets() {
       const result = await client.query('get_all_fields_user_reserve_data', {
         user_id: account.id,
       });
+
+      console.log('result', result);
       // convert key in object to camelCase
       let reserves = (Array.isArray(result) ? result : []).map(r => keysToCamelCase(r));
       console.log('reserves', reserves);

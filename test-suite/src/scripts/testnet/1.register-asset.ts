@@ -2,7 +2,7 @@ import { createInMemoryFtKeyStore } from '@chromia/ft4';
 
 import { newSignatureProvider } from 'postchain-client';
 import chalk from 'chalk';
-import { admin_kp } from '../../configs/key-pair';
+import { admin_udon_testnet_kp } from '../../configs/key-pair';
 import { getClient } from '../../clients';
 import { registerAssetWithValidation } from '../../helpers';
 
@@ -27,7 +27,7 @@ export async function runRegisterAssetTransferExample() {
     console.log(chalk.bold.cyan(`=== Starting Cross-Chain Transfer Example ===`));
 
     // Create admin signature provider for asset registration
-    const adminSignatureProvider = newSignatureProvider(0, admin_kp);
+    const adminSignatureProvider = newSignatureProvider(0, admin_udon_testnet_kp);
 
     const udonClient = await getClient();
 

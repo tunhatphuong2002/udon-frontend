@@ -138,7 +138,7 @@ async function initSupply() {
       console.log(chalk.green(`✅ Set field for reserve_configuration`));
 
       console.log(chalk.blue(`🔄 Setting reserve factor for ${token.symbol}...`));
-      await adminSession.call(op('set_reserve_factor_op', underlyingAssetId, 1000)); // reserve factor = 10% -> Earn 10% of the interest borrower pays
+      await adminSession.call(op('set_reserve_factor_op', underlyingAssetId, 6000)); // change reserve factor = 60% -> Earn 60% of the interest borrower pays
       console.log(chalk.green(`✅ Reserve factor set for ${token.symbol}`));
 
       console.log(chalk.blue(`🔄 Setting liquidation protocol fee for ${token.symbol}...`));

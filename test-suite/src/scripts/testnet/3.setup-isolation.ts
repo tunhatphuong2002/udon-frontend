@@ -1,8 +1,8 @@
 import { op } from '@chromia/ft4';
-import { admin_kp } from '../../configs/key-pair';
+import { admin_udon_testnet_kp } from '../../configs/key-pair';
 import { getClient } from '../../clients';
 import chalk from 'chalk';
-import { TOKENS } from '../../configs/tokens';
+import { TOKENS_TESTNET } from '../../configs/tokens';
 import { getSessionOrRegister } from '../../helpers';
 
 async function setFee() {
@@ -12,17 +12,17 @@ async function setFee() {
     // Get client and setup sessions
     console.log(chalk.blue('🔄 Setting up client and sessions...'));
     const client = await getClient();
-    const adminSession = await getSessionOrRegister(client, admin_kp);
+    const adminSession = await getSessionOrRegister(client, admin_udon_testnet_kp);
 
-    const token = TOKENS.find(t => t.symbol === 'D');
+    const token = TOKENS_TESTNET.find(t => t.symbol === 'tD');
     console.log(chalk.blue(`🔄 Setting fee for ${token.symbol}...`));
 
     const underlyingAssetResult = await adminSession.getAssetsBySymbol(token.symbol);
     const underlyingAssetId = underlyingAssetResult.data[0].id;
     console.log(chalk.green(`✅ ${token.symbol} created:`), chalk.yellow(`(${underlyingAssetId})`));
 
-    // await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, true));
-    // console.log(chalk.green(`✅ ${token.symbol} borrowable set to true`));
+    await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, true));
+    console.log(chalk.green(`✅ ${token.symbol} borrowable set to true`));
 
     await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 1000));
     console.log(chalk.green(`✅ ${token.symbol} debt ceiling set to 1000000000000000000`));

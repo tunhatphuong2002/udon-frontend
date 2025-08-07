@@ -106,7 +106,7 @@ export const TOKENS_TESTNET = [
   {
     name: 'DAR Open Network',
     symbol: 'tD',
-    decimals: 18,
+    decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
     price: parseUnits('0.45', 18).toString(),
     brid: '8035EBF322D0057B00E1D596431A78D535DB45035FAF2045B76942034C0FC507',
