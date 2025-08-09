@@ -127,6 +127,17 @@ export const TOKENS_TESTNET = [
     liquidation_threshold: 8000,
     liquidation_bonus: 10500,
   },
+  {
+    name: 'Staked Chromia',
+    symbol: 'sttCHR',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/3978.png',
+    price: parseUnits('0.22', 18).toString(),
+    storkAssetId: 'CHRUSD',
+    ltv: 7000,
+    liquidation_threshold: 8000,
+    liquidation_bonus: 10500,
+  },
 ];
 
 // export const TOKENS_TCHR = {
