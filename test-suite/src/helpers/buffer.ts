@@ -4,3 +4,10 @@ export const ensureBuffer = (input: Buffer | string): Buffer => {
   }
   return input;
 };
+
+export const ensureString = (input: Buffer | string): string => {
+  if (typeof input === 'string') {
+    return input;
+  }
+  return input.toString('hex');
+};

@@ -844,7 +844,6 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
           reserve={selectedSupplyPosition}
           accountData={accountData}
           mutateAssets={mutateAssets}
-          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
         />
       )}
 
