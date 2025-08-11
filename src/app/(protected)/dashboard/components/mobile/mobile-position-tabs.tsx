@@ -839,6 +839,7 @@ export const MobilePositionTabs: React.FC<MobilePositionTabsProps> = ({
 
       {selectedSupplyPosition && withdrawDialogOpen && (
         <WithdrawDialog
+          yourSupplyCollateralPosition={yourSupplyCollateralPosition}
           open={withdrawDialogOpen}
           onOpenChange={setWithdrawDialogOpen}
           reserve={selectedSupplyPosition}
