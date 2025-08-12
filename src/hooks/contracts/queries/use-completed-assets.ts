@@ -146,25 +146,7 @@ export function useCompletedAssets() {
 
   // For compatibility with old API, split supply/borrow positions
   const supplyPositions = useMemo(
-    // filter if currentATokenBalance > 0 and symbol is sttCHR we replace with tCHR
-    () => {
-      const filteredReserves = userReserves.filter(r => r.currentATokenBalance > 0);
-      return filteredReserves.map(r => {
-        if (r.symbol === 'sttCHR') {
-          const tCHR = userReserves.find(r => r.symbol === 'tCHR');
-          return {
-            ...r,
-            symbol: 'tCHR',
-            assetId: tCHR?.assetId,
-            name: tCHR?.name,
-            decimals: tCHR?.decimals,
-            iconUrl: tCHR?.iconUrl,
-            type: tCHR?.type,
-          };
-        }
-        return r;
-      });
-    },
+    () => userReserves.filter(r => r.currentATokenBalance > 0),
     [userReserves]
   );
 
@@ -268,20 +250,10 @@ export function useCompletedAssets() {
     return enable;
   }, [userReserves]);
 
-  const supplyReserves = useMemo(() => {
-    return userReserves.filter(r => r.symbol !== 'sttCHR'); // because sttCHR is not supplyable
-  }, [userReserves]);
-
-  const borrowReserves = useMemo(() => {
-    return userReserves.filter(r => r.symbol !== 'tCHR'); // because tCHR is not borrowable
-  }, [userReserves]);
-
   return {
     assets: userReserves,
-    supplyPositions: supplyPositions as UserReserveData[],
-    borrowPositions: borrowPositions as UserReserveData[],
-    supplyReserves,
-    borrowReserves,
+    supplyPositions,
+    borrowPositions,
     yourSupplyBalancePosition,
     yourSupplyCollateralPosition,
     yourSupplyAPYPosition,
