@@ -13,6 +13,8 @@ import { BorrowDialog } from '../borrow/borrow-dialog';
 import CountUp from '@/components/common/count-up';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { ShineBorder } from '@/components/common/shine-border';
 
 interface MobileAssetTabsProps {
   processedAssets: UserReserveData[];
@@ -332,6 +334,19 @@ export const MobileAssetTabs: React.FC<MobileAssetTabsProps> = ({
 
                         {/* Right section */}
                         <div className="flex flex-col gap-2 justify-center">
+                          {asset.symbol === 'tCHR' && (
+                            <div
+                              className="relative inline-flex items-center justify-center gap-1 h-7 px-3 rounded-full w-[80px] bg-gradient-to-r from-background/20 via-background/50 to-background/20 cursor-pointer"
+                              onClick={() => router.push('/staking')}
+                            >
+                              <ShineBorder
+                                shineColor={['#52E5FF', '#36B1FF', '#E4F5FF']}
+                                duration={10}
+                              />
+                              <Typography className="text-base">Staking</Typography>
+                              <ExternalLinkIcon className="w-4 h-4" />
+                            </div>
+                          )}
                           <Button
                             variant="gradient"
                             size="sm"
