@@ -59,7 +59,7 @@ const TabsList = React.forwardRef<
             bottom: '8%',
             height: '84%',
             borderRadius: '9999px',
-            backgroundColor: 'rgba(74,74,80,1)',
+            backgroundColor: 'rgba(74,74,80,0.5)',
             zIndex: 0,
             cursor: 'pointer',
           }}

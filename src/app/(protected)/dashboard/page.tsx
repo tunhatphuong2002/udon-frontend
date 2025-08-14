@@ -50,8 +50,6 @@ export default function DashboardPage() {
     assets: processedAssets,
     supplyPositions,
     borrowPositions,
-    supplyReserves,
-    borrowReserves,
     isLoading: isLoadingAssets,
     refresh: refetchAssets,
     yourSupplyBalancePosition,
@@ -271,7 +269,7 @@ export default function DashboardPage() {
               <div className="xl:col-span-1">
                 <SupplyTable
                   title="Assets to supply"
-                  reserves={supplyReserves}
+                  reserves={processedAssets}
                   isLoading={isLoadingTable}
                   mutateAssets={handleFetchData}
                   accountData={accountData}
@@ -280,7 +278,7 @@ export default function DashboardPage() {
               <div className="xl:col-span-1">
                 <BorrowTable
                   title="Assets to borrow"
-                  reserves={borrowReserves}
+                  reserves={processedAssets}
                   isLoading={isLoadingTable}
                   mutateAssets={handleFetchData}
                   enableBorrow={enableBorrow}

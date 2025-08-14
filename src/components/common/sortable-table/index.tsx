@@ -254,7 +254,11 @@ export function SortableTable<T>({
               return (
                 <React.Fragment key={rowIndex}>
                   <TableRow
-                    className={cn(rowIndex % 2 === 0 ? 'bg-card' : 'bg-[#28292C]', 'border-none')}
+                    className={cn(
+                      rowIndex % 2 === 0 ? 'bg-card' : 'bg-[#28292C]',
+                      'border-none',
+                      'group'
+                    )}
                   >
                     {columns.map((column, colIndex) => (
                       <TableCell

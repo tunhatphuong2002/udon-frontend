@@ -12,6 +12,8 @@ import { SupplyDialog } from './supply-dialog';
 import { UserAccountData, UserReserveData } from '../../types';
 import { Skeleton } from '@/components/common/skeleton';
 import CountUp from '@/components/common/count-up';
+import { ShineBorder } from '@/components/common/shine-border';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 
 interface SupplyTableProps {
   title: string;
@@ -57,7 +59,26 @@ export const SupplyTable: React.FC<SupplyTableProps> = ({
               <AvatarImage src={asset.iconUrl} alt={asset.symbol} />
               <AvatarFallback>{asset.symbol.charAt(0)}</AvatarFallback>
             </Avatar>
-            <Typography weight="medium">{asset.symbol}</Typography>
+            <div className="flex flex-col justify-center gap-1">
+              <Typography weight="medium">{asset.symbol}</Typography>
+              {asset.symbol === 'tCHR' && (
+                <div className="overflow-hidden transition-all duration-300 ease-out max-h-0 opacity-0 -translate-y-1 group-hover:max-h-7 group-hover:opacity-100 group-hover:translate-y-0">
+                  <div
+                    className="relative inline-flex items-center gap-1 h-6 px-2 rounded-full bg-gradient-to-r from-background/20 via-background/50 to-background/20 cursor-pointer"
+                    onClick={e => {
+                      e.stopPropagation();
+                      router.push('/staking');
+                    }}
+                  >
+                    <ShineBorder shineColor={['#52E5FF', '#36B1FF', '#E4F5FF']} duration={10} />
+                    <Typography variant="small" className="text-xs">
+                      Staking
+                    </Typography>
+                    <ExternalLinkIcon />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">
