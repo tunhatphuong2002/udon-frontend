@@ -24,8 +24,8 @@ async function setFee() {
     await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, true));
     console.log(chalk.green(`✅ ${token.symbol} borrowable set to true`));
 
-    await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 1000));
-    console.log(chalk.green(`✅ ${token.symbol} debt ceiling set to 1000000000000000000`));
+    await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 0));
+    console.log(chalk.green(`✅ ${token.symbol} debt ceiling set to 0`));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN SET FEE ❌❌❌'));
     console.error(chalk.red(error));
