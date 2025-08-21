@@ -49,6 +49,18 @@ export const TOKENS = [
     storkAssetId: 'DUSD',
   },
   {
+    name: 'Iso DAR Open Network',
+    symbol: 'isotD',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/128x128/11374.png',
+    price: parseUnits('0.45', 18).toString(),
+    brid: '8035EBF322D0057B00E1D596431A78D535DB45035FAF2045B76942034C0FC507',
+    storkAssetId: 'DUSD',
+    ltv: 6500,
+    liquidation_threshold: 7500,
+    liquidation_bonus: 11000,
+  },
+  {
     name: 'Chromia',
     symbol: 'CHR',
     decimals: 6,
