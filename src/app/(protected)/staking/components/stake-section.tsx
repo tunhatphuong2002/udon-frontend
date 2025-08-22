@@ -47,9 +47,15 @@ export const StakeSection: React.FC = () => {
   } = useCompletedAssets();
 
   // Find CHR asset from the assets list
+  // TODO: need to query the current lsd asset
   const chrAsset = useMemo(() => {
     return processedAssets.find(asset => asset.symbol === 'CHR' || asset.symbol === 'tCHR');
   }, [processedAssets]);
+
+  // Constants - TODO: Replace with real data from hooks
+  const exchangeRate = 1.0; // 1 CHR = 1 stCHR
+  const stakingAPY = 3; // Staking APY percentage
+  const stakingFee = 0.3; // Fee percentage
 
   // Use the asset price hook for real-time price updates
   const {
@@ -58,13 +64,8 @@ export const StakeSection: React.FC = () => {
     refetch: fetchPrice,
   } = useAssetPrice(chrAsset?.assetId || '', isRefetchEnabled && !!chrAsset);
 
-  // Constants - TODO: Replace with real data from hooks
-  const exchangeRate = 1.0; // 1 CHR = 1 stCHR
-  const stakingAPY = 12.5; // Staking APY percentage
-  const stakingFee = 0.3; // Fee percentage
-
   // Get real data or fallback to defaults
-  const chrPrice = currentPrice || chrAsset?.price || 0.75;
+  const chrPrice = currentPrice || 0;
   const maxBalance = chrAsset?.balance || 0;
   const isLoading = isLoadingAssets || isPriceFetching;
 

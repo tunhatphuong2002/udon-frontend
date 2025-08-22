@@ -164,7 +164,7 @@ export const Header: React.FC = () => {
                                 Stake
                               </h4>
                               <span className="text-xs px-2 py-1 bg-muted text-muted-foreground rounded-full">
-                                12.5% APY
+                                3% APY
                               </span>
                             </div>
                           </div>

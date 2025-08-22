@@ -1,4 +1,4 @@
-import { createAmount, op } from '@chromia/ft4';
+import { op } from '@chromia/ft4';
 import { admin_udon_testnet_kp } from '../../configs/key-pair';
 import { getClient } from '../../clients';
 import chalk from 'chalk';
@@ -21,12 +21,10 @@ async function setFee() {
     const underlyingAssetId = underlyingAssetResult.data[0].id;
     console.log(chalk.green(`✅ ${token.symbol} created:`), chalk.yellow(`(${underlyingAssetId})`));
 
-    // await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, true));
-    // console.log(chalk.green(`✅ ${token.symbol} borrowable set to true`));
+    await adminSession.call(op('set_borrowable_in_isolation_op', underlyingAssetId, true));
+    console.log(chalk.green(`✅ ${token.symbol} borrowable set to true`));
 
-    await adminSession.call(
-      op('set_debt_ceiling_op', underlyingAssetId, createAmount(10000000, 18).value)
-    );
+    await adminSession.call(op('set_debt_ceiling_op', underlyingAssetId, 10_000_000 * 6));
     console.log(chalk.green(`✅ ${token.symbol} debt ceiling set to 0`));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN SET FEE ❌❌❌'));
