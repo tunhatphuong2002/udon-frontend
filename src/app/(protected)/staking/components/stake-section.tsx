@@ -52,6 +52,8 @@ export const StakeSection: React.FC = () => {
     return processedAssets.find(asset => asset.symbol === 'CHR' || asset.symbol === 'tCHR');
   }, [processedAssets]);
 
+  console.log('processedAssets', processedAssets);
+
   // Constants - TODO: Replace with real data from hooks
   const exchangeRate = 1.0; // 1 CHR = 1 stCHR
   const stakingAPY = 3; // Staking APY percentage

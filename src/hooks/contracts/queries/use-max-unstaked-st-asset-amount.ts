@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { normalizeBN, valueToBigNumber } from '@/utils/bignumber';
-import { createAmount } from '@chromia/ft4';
 
 /**
  * Hook to fetch the max stCHR withdraw amount based on a known CHR amount
@@ -11,42 +10,30 @@ import { createAmount } from '@chromia/ft4';
  * @param enabled Whether the query should be enabled
  * @returns Query result with data (number, human units), isLoading, error, and refetch function
  */
-export function useMaxStchrAmountWithChr(
+export function useMaxUnstakedStAssetAmount(
   assetId: Buffer<ArrayBufferLike>,
   decimals: number,
-  chrAmount: number,
   enabled: boolean = true
 ) {
   const { client, account } = useChromiaAccount();
 
   const query = useQuery({
-    queryKey: [
-      'get_max_stchr_withdraw_amount_with_chr_known_query',
-      account?.id,
-      assetId,
-      decimals,
-      chrAmount,
-    ],
+    queryKey: ['get_max_unstaked_st_asset_amount', account?.id, assetId, decimals],
     queryFn: async () => {
       console.log('useMaxStchrAmountWithChr - queryFn called with:', {
-        chrAmount,
         enabled,
         accountId: account?.id?.toString('hex'),
         assetId: assetId.toString('hex'),
       });
-      if (!client || !account?.id || !assetId || chrAmount <= 0) {
+      if (!client || !account?.id || !assetId) {
         throw new Error('Missing client, user/asset ID, or invalid CHR amount');
       }
 
       // Call Chromia contract for max stCHR amount (returns big integer string)
-      const maxStchrRaw = (await client.query(
-        'get_max_stchr_withdraw_amount_with_chr_known_query',
-        {
-          user_id: account?.id,
-          asset_id: assetId,
-          chr_amount: createAmount(chrAmount, decimals).value,
-        }
-      )) as unknown as bigint;
+      const maxStchrRaw = (await client.query('get_max_unstaked_st_asset_amount', {
+        user_id: account?.id,
+        underlying_asset_id: assetId,
+      })) as unknown as bigint;
 
       console.log('maxStchrRaw', maxStchrRaw);
 
@@ -55,7 +42,7 @@ export function useMaxStchrAmountWithChr(
       console.log('useMaxStchrAmountWithChr - result:', result);
       return result;
     },
-    enabled: !!client && !!account?.id && !!assetId && chrAmount > 0 && enabled,
+    enabled: !!client && !!account?.id && !!assetId && assetId.length > 0 && enabled,
     retry: 2,
   });
 

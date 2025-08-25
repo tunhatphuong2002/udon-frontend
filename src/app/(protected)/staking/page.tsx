@@ -96,8 +96,8 @@ export default function StakingPage() {
                   <TabsTrigger value="stake" className="text-base font-medium">
                     Stake
                   </TabsTrigger>
-                  <TabsTrigger value="withdraw" className="text-base font-medium">
-                    Withdraw
+                  <TabsTrigger value="unstake" className="text-base font-medium">
+                    Unstake
                   </TabsTrigger>
                   <TabsTrigger value="claim" className="text-base font-medium">
                     Claim
@@ -108,7 +108,7 @@ export default function StakingPage() {
                   <StakeSection />
                 </TabsContent>
 
-                <TabsContent value="withdraw" className="mt-0">
+                <TabsContent value="unstake" className="mt-0">
                   <WithdrawSection />
                 </TabsContent>
 

@@ -20,7 +20,7 @@ async function initSupply() {
     await adminSession.call(
       op(
         'set_staking_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
+        Buffer.from('92A82246ED3F21FA13EBCDE7067AF492D0B1B462300879832A834F7C687A716D', 'hex'),
         30n
       )
     );
@@ -29,7 +29,7 @@ async function initSupply() {
     await adminSession.call(
       op(
         'set_unstaking_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
+        Buffer.from('92A82246ED3F21FA13EBCDE7067AF492D0B1B462300879832A834F7C687A716D', 'hex'),
         30n
       )
     );

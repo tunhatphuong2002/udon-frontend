@@ -58,7 +58,7 @@ export function useChrWithdraw({
         // Execute CHR withdraw operation
         const result = await session
           .transactionBuilder()
-          .add(op('withdraw_chr', params.assetId, amountValue))
+          .add(op('unstake', account.id, params.assetId, amountValue, Date.now()))
           .buildAndSend();
 
         console.log('CHR withdraw transaction result:', result);

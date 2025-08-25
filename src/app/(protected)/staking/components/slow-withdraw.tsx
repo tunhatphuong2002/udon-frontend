@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/common/skeleton';
 import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
-import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
+import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstaked-st-asset-amount';
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -52,6 +52,10 @@ export const SlowWithdraw: React.FC = () => {
     return processedAssets.find(asset => asset.symbol === 'CHR' || asset.symbol === 'tCHR');
   }, [processedAssets]);
 
+  const stchrAsset = useMemo(() => {
+    return processedAssets.find(asset => asset.symbol === 'stCHR' || asset.symbol === 'sttCHR');
+  }, [processedAssets]);
+
   // Use the asset price hook for real-time price updates
   const {
     data: currentPrice,
@@ -60,19 +64,19 @@ export const SlowWithdraw: React.FC = () => {
   } = useAssetPrice(chrAsset?.assetId || Buffer.from(''), isRefetchEnabled && !!chrAsset);
 
   // Fetch max CHR amount that can be withdrawn
-  const { data: maxChrAmount } = useMaxAmount(
+  const { data: maxChrAmount, isLoading: isLoadingMaxChrAmount } = useMaxUnstakedStAssetAmount(
     chrAsset?.assetId || Buffer.from(''),
     chrAsset?.decimals || 6,
-    'get_max_chr_withdraw_amount_query'
+    !!chrAsset && processedAssets.length > 0 && !!chrAsset.assetId
   );
 
   // Constants
   const exchangeRate = 1.0; // 1 stCHR = 1 CHR
 
   // Get real data or fallback to defaults
-  const chrPrice = currentPrice || chrAsset?.price || 0.75;
-  const maxStChrBalance = maxChrAmount || 0; // Available staked CHR to withdraw
-  const isLoading = isLoadingAssets || isPriceFetching;
+  const chrPrice = currentPrice || chrAsset?.price || 0;
+  const maxStChrBalance = maxChrAmount !== undefined && maxChrAmount > 0 ? maxChrAmount : 0; // Available staked CHR to withdraw
+  const isLoading = isLoadingAssets || isPriceFetching || isLoadingMaxChrAmount;
 
   const withdrawData = {
     maxAmount: maxStChrBalance,
@@ -149,9 +153,9 @@ export const SlowWithdraw: React.FC = () => {
       setIsSubmitting(true);
 
       await chrWithdraw({
-        assetId: chrAsset?.assetId || Buffer.from(''),
+        assetId: stchrAsset?.assetId || Buffer.from(''),
         amount: data.amount,
-        decimals: chrAsset?.decimals || 6,
+        decimals: stchrAsset?.decimals || 6,
         isUserWithdrawMax: Number(data.amount) === withdrawData.maxAmount,
       });
     } catch (error) {
@@ -196,11 +200,11 @@ export const SlowWithdraw: React.FC = () => {
                 </Button>
               )}
               <Avatar className="h-7 w-7">
-                <AvatarImage src="/images/tokens/chr.png" alt="CHR" />
-                <AvatarFallback>CHR</AvatarFallback>
+                <AvatarImage src={stchrAsset?.iconUrl} alt={stchrAsset?.symbol} />
+                <AvatarFallback>{stchrAsset?.symbol}</AvatarFallback>
               </Avatar>
               <Typography weight="medium" className="text-lg">
-                CHR
+                {stchrAsset?.symbol}
               </Typography>
             </div>
           </div>
@@ -312,9 +316,17 @@ export const SlowWithdraw: React.FC = () => {
           <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
             Processing...
           </Button>
+        ) : !chrAsset ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+            {isLoadingAssets ? 'Loading assets...' : 'CHR asset not found'}
+          </Button>
         ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
           <Button disabled className="w-full text-lg py-6">
             Enter an amount
+          </Button>
+        ) : maxStChrBalance <= 0 ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+            {isLoading ? 'Loading...' : 'No staked CHR available'}
           </Button>
         ) : (
           <Button
