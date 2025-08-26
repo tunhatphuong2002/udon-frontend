@@ -42,9 +42,9 @@ const stakeFormSchema = z.object({
 
 type StakeFormValues = z.infer<typeof stakeFormSchema>;
 
-export const StakeSection: React.FC<StakeSectionProps> = ({
+export const RewardSection: React.FC<StakeSectionProps> = ({
   chrAsset,
-  stAsset,
+  // stAsset,
   refetchAssets,
   isLoadingAssets,
 }: StakeSectionProps) => {
@@ -303,11 +303,11 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
                 </div>
                 <div className="flex items-center gap-3 absolute right-0 top-1/2 -translate-y-1/2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
-                    <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
+                    <AvatarImage src={chrAsset?.iconUrl || '/images/tokens/chr.png'} alt="stCHR" />
+                    <AvatarFallback>stCHR</AvatarFallback>
                   </Avatar>
                   <Typography weight="medium" className="text-lg">
-                    {stAsset?.symbol}
+                    st{chrAsset?.symbol || 'CHR'}
                   </Typography>
                 </div>
               </div>

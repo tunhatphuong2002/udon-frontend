@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { CircleX, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -15,9 +15,16 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
 import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
-import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
-import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstaked-st-asset-amount';
+import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstake';
+import { UserReserveData } from '../../dashboard/types';
+
+interface SlowWithdrawSectionProps {
+  chrAsset: UserReserveData | undefined;
+  stAsset: UserReserveData | undefined;
+  refetchAssets: () => void;
+  isLoadingAssets: boolean;
+}
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -36,25 +43,14 @@ const withdrawFormSchema = z.object({
 
 type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
 
-export const SlowWithdraw: React.FC = () => {
+export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
+  chrAsset,
+  stAsset,
+  refetchAssets,
+  isLoadingAssets,
+}: SlowWithdrawSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-
-  // Fetch all assets to get CHR data
-  const {
-    assets: processedAssets,
-    isLoading: isLoadingAssets,
-    refresh: refetchAssets,
-  } = useCompletedAssets();
-
-  // Find CHR asset from the assets list
-  const chrAsset = useMemo(() => {
-    return processedAssets.find(asset => asset.symbol === 'CHR' || asset.symbol === 'tCHR');
-  }, [processedAssets]);
-
-  const stchrAsset = useMemo(() => {
-    return processedAssets.find(asset => asset.symbol === 'stCHR' || asset.symbol === 'sttCHR');
-  }, [processedAssets]);
 
   // Use the asset price hook for real-time price updates
   const {
@@ -67,7 +63,7 @@ export const SlowWithdraw: React.FC = () => {
   const { data: maxChrAmount, isLoading: isLoadingMaxChrAmount } = useMaxUnstakedStAssetAmount(
     chrAsset?.assetId || Buffer.from(''),
     chrAsset?.decimals || 6,
-    !!chrAsset && processedAssets.length > 0 && !!chrAsset.assetId
+    !!chrAsset && !!chrAsset.assetId
   );
 
   // Constants
@@ -153,9 +149,9 @@ export const SlowWithdraw: React.FC = () => {
       setIsSubmitting(true);
 
       await chrWithdraw({
-        assetId: stchrAsset?.assetId || Buffer.from(''),
+        assetId: stAsset?.assetId || Buffer.from(''),
         amount: data.amount,
-        decimals: stchrAsset?.decimals || 6,
+        decimals: stAsset?.decimals || 6,
         isUserWithdrawMax: Number(data.amount) === withdrawData.maxAmount,
       });
     } catch (error) {
@@ -200,11 +196,11 @@ export const SlowWithdraw: React.FC = () => {
                 </Button>
               )}
               <Avatar className="h-7 w-7">
-                <AvatarImage src={stchrAsset?.iconUrl} alt={stchrAsset?.symbol} />
-                <AvatarFallback>{stchrAsset?.symbol}</AvatarFallback>
+                <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
+                <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
               </Avatar>
               <Typography weight="medium" className="text-lg">
-                {stchrAsset?.symbol}
+                {stAsset?.symbol}
               </Typography>
             </div>
           </div>
