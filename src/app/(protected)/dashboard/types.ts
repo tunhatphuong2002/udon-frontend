@@ -1,19 +1,3 @@
-// // Define the common asset structure both components will use
-// export interface CommonAsset extends Asset {
-//   price?: number;
-//   balance?: string;
-//   balanceAmount?: bigint;
-//   rawBalance?: {
-//     amount: bigint;
-//     asset: Asset;
-//   };
-//   canBeCollateral?: boolean;
-//   supplyAPY?: number;
-//   borrowAPY?: number;
-//   icon_url?: string;
-//   available?: string;
-// }
-
 export interface AssetPrice {
   stork_asset_id: string;
   price: number;
@@ -122,3 +106,77 @@ export interface AvailableLiquidityToken {
   symbol: string;
   availableLiquidityToken: number;
 }
+
+export enum StakingStatus {
+  PENDING_STAKING,
+  CROSS_TRANSFER_TO_EC,
+  STAKED,
+}
+
+export enum UnstakingStatus {
+  PENDING_REQUEST,
+  PENDING_UNSTAKING_14D,
+  CROSS_TRANSFER_TO_UDON,
+  UNSTAKED,
+  CLAIMED,
+}
+
+export enum LsdFailureStatus {
+  NO_FAILURE,
+  STAKING_CROSS_TRANSFER_EC,
+  STAKING_HANDLE,
+  UNSTAKING_REQUEST,
+  UNSTAKING_HANDLE,
+  UNSTAKING_CROSS_TRANSFER_UDON,
+}
+
+export enum ClaimStatus {
+  PENDING_CLAIM,
+  CLAIMED,
+}
+
+export type ClaimPosition = {
+  positionId: Buffer<ArrayBufferLike>;
+  userId: Buffer<ArrayBufferLike>;
+  underlyingAssetId: Buffer<ArrayBufferLike>;
+  rewardAmount: number;
+  claimStatus: ClaimStatus;
+  failureStage: LsdFailureStatus;
+  txClaim: string;
+  txCrossChain: string;
+  requestedAt: number;
+  completedAt: number;
+  isActive: boolean;
+};
+
+export type UnstakingPosition = {
+  positionId: Buffer<ArrayBufferLike>;
+  userId: Buffer<ArrayBufferLike>;
+  underlyingAssetId: Buffer<ArrayBufferLike>;
+  expectedAmount: number;
+  netAmount: number;
+  unstakingStatus: UnstakingStatus;
+  failureStage: LsdFailureStatus;
+  txUnstaking: string;
+  txCrossChain: string;
+  requestedAt: number;
+  availableAt: number;
+  completedAt: number;
+  isActive: boolean;
+};
+
+export type StakingPosition = {
+  positionId: Buffer<ArrayBufferLike>;
+  userId: Buffer<ArrayBufferLike>;
+  underlyingAssetId: Buffer<ArrayBufferLike>;
+  expectedAmount: number;
+  netAmount: number;
+  creationEcFee: number;
+  stakingStatus: StakingStatus;
+  failureStage: LsdFailureStatus;
+  txStaking: string;
+  txCrossChain: string;
+  createdAt: number;
+  completedAt: number;
+  isActive: boolean;
+};

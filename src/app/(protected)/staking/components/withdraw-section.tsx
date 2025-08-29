@@ -7,11 +7,8 @@ import { cn } from '@/utils/tailwind';
 import { PendingClaims } from './pending-claims';
 import { ReadyClaims } from './ready-claims';
 import { CompletedClaims } from './completed-claims';
-import {
-  UnstakingStatus,
-  useUnstakingPositions,
-} from '@/hooks/contracts/queries/use-unstaking-positions';
-import { UserReserveData } from '../../dashboard/types';
+import { UnstakingStatus, UserReserveData } from '../../dashboard/types';
+import { useUnstakingPositions } from '@/hooks/contracts/queries/use-unstaking-positions';
 
 type WithdrawType = 'pending' | 'ready' | 'completed';
 
@@ -31,9 +28,9 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
   const [claimType, setClaimType] = useState<WithdrawType>('ready');
   const [status, setStatus] = useState<UnstakingStatus>(UnstakingStatus.UNSTAKED);
   const {
-    data: dataStakingPos,
+    data: dataUnstakingPos,
     isLoading: isLoading,
-    refetch: refetchStakingPos,
+    refetch: refetchUnstakingPos,
   } = useUnstakingPositions(
     chrAsset?.assetId || Buffer.from('', 'hex'),
     chrAsset?.decimals || 0,
@@ -45,10 +42,16 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
     switch (claimType) {
       case 'ready':
         setStatus(UnstakingStatus.UNSTAKED);
+        break;
       case 'completed':
         setStatus(UnstakingStatus.CLAIMED);
-      default:
+        break;
+      case 'pending':
         setStatus(UnstakingStatus.PENDING_REQUEST);
+        break;
+      default:
+        setStatus(UnstakingStatus.UNSTAKED);
+        break;
     }
   }, [claimType]);
 
@@ -243,13 +246,32 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
       {/* Conditional Content Based on Claim Type */}
       {claimType === 'pending' && (
         <PendingClaims
-          dataStakingPos={dataStakingPos || []}
+          dataUnstakingPos={dataUnstakingPos || []}
           isLoading={isLoading}
-          refetchStakingPos={refetchStakingPos}
+          refetchUnstakingPos={refetchUnstakingPos}
         />
       )}
-      {claimType === 'ready' && <ReadyClaims />}
-      {claimType === 'completed' && <CompletedClaims />}
+      {claimType === 'ready' && (
+        <ReadyClaims
+          positions={dataUnstakingPos || []}
+          onClaim={async () => {
+            // TODO: Implement claim logic here
+            return new Promise<void>(resolve => {
+              setTimeout(() => {
+                resolve();
+              }, 1000);
+            });
+          }}
+        />
+      )}
+      {claimType === 'completed' && (
+        <CompletedClaims
+          positions={dataUnstakingPos || []}
+          onViewTx={() => {
+            // TODO: Implement view transaction logic (e.g., open explorer)
+          }}
+        />
+      )}
     </div>
   );
 };

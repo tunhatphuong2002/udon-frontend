@@ -2,40 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
 import { keysToCamelCase } from '@/utils/object';
 import { normalizeBN } from '@/utils/bignumber';
-
-export enum UnstakingStatus {
-  PENDING_REQUEST,
-  PENDING_UNSTAKING_14D,
-  CROSS_TRANSFER_TO_UDON,
-  UNSTAKED,
-  CLAIMED,
-}
-
-export enum LsdFailureStatus {
-  NO_FAILURE,
-  STAKING_CROSS_TRANSFER_EC,
-  STAKING_HANDLE,
-  UNSTAKING_REQUEST,
-  UNSTAKING_HANDLE,
-  UNSTAKING_CROSS_TRANSFER_UDON,
-}
-
-export interface UnstakePosition {
-  positionId: Buffer<ArrayBufferLike>;
-  userId: Buffer<ArrayBufferLike>;
-  underlyingAssetId: Buffer<ArrayBufferLike>;
-  expectedAmount: number;
-  netAmount: number;
-  unstakingStatus: UnstakingStatus;
-  failureStage: LsdFailureStatus;
-  lsdErrorId: Buffer<ArrayBufferLike>;
-  txStaking: string;
-  txCrossChain: string;
-  requestedAt: number;
-  availableAt: number;
-  completedAt: number;
-  isActive: boolean;
-}
+import { UnstakingPosition, UnstakingStatus } from '@/app/(protected)/dashboard/types';
 
 /**
  * Hook to fetch user's  stake/unstake positions
@@ -69,7 +36,7 @@ export function useUnstakingPositions(
 
       const rawPositions = (Array.isArray(positionsResult) ? positionsResult : []).map(p =>
         keysToCamelCase(p)
-      ) as UnstakePosition[];
+      ) as UnstakingPosition[];
 
       // Format positions with proper number conversion
       const positions = rawPositions.map(p => ({

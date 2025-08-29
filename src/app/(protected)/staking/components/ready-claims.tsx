@@ -9,38 +9,22 @@ import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
 import { toast } from 'sonner';
 
-interface WithdrawPosition {
-  id: string;
-  amount: number;
-  type: 'slow' | 'quick';
-  status: 'pending' | 'ready' | 'completed';
-  createdAt: Date;
-  completionDate?: Date;
-  remainingDays?: number;
+import { UnstakingPosition, UnstakingStatus } from '@/app/(protected)/dashboard/types';
+
+interface ReadyClaimsProps {
+  positions: UnstakingPosition[];
+  onClaim: (position: UnstakingPosition) => Promise<void>;
 }
 
-// Mock data - replace with real data hooks
-const positions: WithdrawPosition[] = [
-  {
-    id: '1',
-    amount: 5.25,
-    type: 'slow',
-    status: 'ready',
-    createdAt: new Date('2024-01-01'),
-    completionDate: new Date('2024-01-15'),
-  },
-];
-
-export const ReadyClaims: React.FC = () => {
+export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim }) => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  const readyPositions = positions.filter(p => p.status === 'ready');
+  // Only show positions that are ready to claim
+  const readyPositions = positions.filter(p => p.unstakingStatus === UnstakingStatus.UNSTAKED);
 
-  const handleClaim = async (positionId: string, amount: number) => {
-    setIsProcessing(positionId);
+  const handleClaim = async (position: UnstakingPosition) => {
+    setIsProcessing(position.positionId.toString('hex'));
     try {
-      // Mock claim operation - replace with real claim hook
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success(`Successfully claimed ${amount} CHR`);
+      await onClaim(position);
     } catch {
       toast.error('Failed to claim withdrawal');
     } finally {
@@ -54,10 +38,10 @@ export const ReadyClaims: React.FC = () => {
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="h-8 w-8 text-muted-foreground" />
         </div>
-        <Typography weight="semibold" className="text-xl mb-2">
+        <Typography weight="semibold" className="text-xl mb-2 text-center">
           No withdrawals ready to claim
         </Typography>
-        <Typography className="text-muted-foreground">
+        <Typography className="text-muted-foreground text-center">
           Completed withdrawals that are ready to claim will appear here.
         </Typography>
       </div>
@@ -78,7 +62,7 @@ export const ReadyClaims: React.FC = () => {
       <div className="space-y-3">
         {readyPositions.map(position => (
           <div
-            key={position.id}
+            key={position.positionId.toString('hex')}
             className="bg-card border border-border rounded-xl p-4 hover:border-green-500/30 transition-colors"
           >
             <div className="flex items-center justify-between">
@@ -90,24 +74,27 @@ export const ReadyClaims: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
-                      value={position.amount}
+                      value={position.netAmount}
                       suffix=" CHR"
                       decimals={2}
                       className="font-medium"
                     />
                   </div>
                   <Typography variant="small" className="text-muted-foreground">
-                    Completed: {position.createdAt.toLocaleDateString()}
+                    Completed:{' '}
+                    {position.completedAt
+                      ? new Date(position.completedAt).toLocaleDateString()
+                      : '-'}
                   </Typography>
                 </div>
               </div>
               <Button
                 variant="gradient"
-                onClick={() => handleClaim(position.id, position.amount)}
-                disabled={isProcessing === position.id}
+                onClick={() => handleClaim(position)}
+                disabled={isProcessing === position.positionId.toString('hex')}
                 className="px-6"
               >
-                {isProcessing === position.id ? 'Claiming...' : 'Claim'}
+                {isProcessing === position.positionId.toString('hex') ? 'Claiming...' : 'Claim'}
               </Button>
             </div>
           </div>

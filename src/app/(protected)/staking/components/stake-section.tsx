@@ -16,6 +16,7 @@ import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
 import { useStaking } from '@/hooks/contracts/operations/use-staking';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
+import { useGetStakingUser } from '@/hooks/contracts/queries/use-get-staking-user';
 import { UserReserveData } from '../../dashboard/types';
 
 interface StakeSectionProps {
@@ -25,22 +26,35 @@ interface StakeSectionProps {
   isLoadingAssets: boolean;
 }
 
-const stakeFormSchema = z.object({
-  amount: z
-    .string()
-    .min(1, 'Amount is required!')
-    .refine(
-      val => {
-        const num = Number(val);
-        return !isNaN(num) && num > 0;
-      },
-      {
-        message: 'Please enter a valid positive number',
-      }
-    ),
-});
+function makeStakeFormSchema(creationFee: number) {
+  return z.object({
+    amount: z
+      .string()
+      .min(1, 'Amount is required!')
+      .refine(
+        val => {
+          const num = Number(val);
+          return !isNaN(num) && num > 0;
+        },
+        {
+          message: 'Please enter a valid positive number',
+        }
+      )
+      .refine(
+        val => {
+          const num = Number(val);
+          return num > creationFee;
+        },
+        {
+          message: `Amount must be greater than the creation fee`,
+        }
+      ),
+  });
+}
 
-type StakeFormValues = z.infer<typeof stakeFormSchema>;
+type StakeFormValues = {
+  amount: string;
+};
 
 export const StakeSection: React.FC<StakeSectionProps> = ({
   chrAsset,
@@ -52,9 +66,14 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
 
   // Constants - TODO: Replace with real data from hooks
-  const exchangeRate = 1.0; // 1 CHR = 1 stCHR
   const stakingAPY = 3; // Staking APY percentage
-  const stakingFee = 0.3; // Fee percentage
+  const stakingFeePercent = 0.3; // Fee percentage
+
+  // Query if user has staked before
+  const { data: isFirstTimeStaking, isLoading: isLoadingStakingUser } = useGetStakingUser();
+
+  // Creating account staking fee logic
+  const creationFee = isFirstTimeStaking ? 10 : 0;
 
   // Use the asset price hook for real-time price updates
   const {
@@ -66,10 +85,10 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
   // Get real data or fallback to defaults
   const chrPrice = currentPrice || 0;
   const maxBalance = chrAsset?.balance || 0;
-  const isLoading = isLoadingAssets || isPriceFetching;
+  const isLoading = isLoadingAssets || isPriceFetching || isLoadingStakingUser;
 
   const form = useForm<StakeFormValues>({
-    resolver: zodResolver(stakeFormSchema),
+    resolver: zodResolver(makeStakeFormSchema(creationFee)),
     defaultValues: {
       amount: '',
     },
@@ -156,9 +175,10 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
   };
 
   const inputAmount = Number(form.watch('amount')) || 0;
-  const feeAmount = inputAmount * (stakingFee / 100);
-  const netAmount = inputAmount - feeAmount;
-  const stCHRReceived = netAmount * exchangeRate;
+  // Calculate staking fee based on new formula
+  const stakingBase = Math.max(inputAmount - creationFee, 0);
+  const stakingFee = stakingBase * (stakingFeePercent / 100);
+  const stCHRReceived = Math.max(inputAmount - creationFee - stakingFee, 0);
 
   // Show loading state if no CHR asset data yet
   if (isLoadingAssets && !chrAsset) {
@@ -322,7 +342,7 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
                 ) : (
                   <Typography>$0.00</Typography>
                 )}
-                <Typography>1 CHR = 1 stCHR</Typography>
+                <Typography>- 0.3% fee staking</Typography>
               </div>
             </div>
           </div>
@@ -341,53 +361,61 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
                     <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Annual Percentage Yield for staking CHR tokens</p>
+                    <p>Annual Percentage Yield for staking {chrAsset?.symbol} tokens</p>
                   </TooltipContent>
                 </Tooltip>
               </Typography>
-              <CountUp value={stakingAPY} suffix="%" className="font-medium" decimals={1} />
+              <CountUp
+                value={stakingAPY}
+                suffix="% + Shared Rewards"
+                className="font-medium"
+                decimals={1}
+              />
             </div>
 
             <div className="flex justify-between items-center">
               <Typography className="flex items-center gap-1">
-                Exchange rate
+                Creating account staking fee
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger type="button">
                     <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>1 CHR = 1 stCHR</p>
+                    <p>
+                      When you stake for the first time, a fee of 10 {chrAsset?.symbol} will be
+                      charged to create your staking account. If you have already staked, this fee
+                      is 0.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </Typography>
               <CountUp
                 className="font-medium text-base"
-                value={exchangeRate}
-                suffix=" stCHR"
-                prefix="1 CHR = "
+                value={creationFee}
+                prefix="- "
+                suffix=" CHR"
                 decimals={0}
               />
             </div>
 
             <div className="flex justify-between items-center">
               <Typography className="flex items-center gap-1">
-                Fee staking
+                Staking fee
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger type="button">
                     <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Staking fee: {stakingFee}% of staked amount</p>
+                    <p>Staking fee: {stakingFeePercent}% of (amount - creation_fee)</p>
                   </TooltipContent>
                 </Tooltip>
               </Typography>
               <div className="flex items-center gap-2">
-                <CountUp className="font-medium" value={stakingFee} suffix="%" decimals={1} />
                 <CountUp
                   className="font-medium"
-                  value={feeAmount}
-                  suffix=" CHR"
-                  prefix="~ "
+                  value={stakingFee}
+                  suffix={` CHR (${stakingFeePercent}%)`}
+                  prefix="-"
                   decimals={4}
                 />
               </div>
@@ -395,24 +423,50 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
 
             <div className="flex justify-between items-center">
               <Typography className="flex items-center gap-1">
-                You will receive
+                You will stake
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger type="button">
                     <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Amount of stCHR tokens you will receive after fees</p>
+                    <p>Amount of {chrAsset?.symbol} tokens you will stake</p>
                   </TooltipContent>
                 </Tooltip>
               </Typography>
               <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={chrAsset?.iconUrl || '/images/tokens/chr.png'} alt="stCHR" />
-                  <AvatarFallback>stCHR</AvatarFallback>
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                  <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
                 </Avatar>
                 <CountUp
                   value={stCHRReceived}
-                  suffix=" stCHR"
+                  suffix={` ${chrAsset?.symbol}`}
+                  decimals={4}
+                  className="font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <Typography className="flex items-center gap-1">
+                You will reveive
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger type="button">
+                    <Info className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Amount of {stAsset?.symbol} tokens you will receive after staking</p>
+                  </TooltipContent>
+                </Tooltip>
+              </Typography>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
+                  <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
+                </Avatar>
+                <CountUp
+                  value={stCHRReceived}
+                  suffix={` ${stAsset?.symbol}`}
                   decimals={4}
                   className="font-medium"
                 />
@@ -426,7 +480,9 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
               <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
                 Processing...
               </Button>
-            ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
+            ) : !form.watch('amount') ||
+              parseFloat(form.watch('amount')) === 0 ||
+              parseFloat(form.watch('amount')) <= creationFee ? (
               <Button disabled className="w-full text-lg py-6 bg-primary">
                 Enter an amount
               </Button>
@@ -437,7 +493,7 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
                 className="w-full text-lg py-6"
                 disabled={!form.watch('amount') || isLoading}
               >
-                Stake {chrAsset?.symbol || 'CHR'}
+                Stake {chrAsset?.symbol}
               </Button>
             )}
           </div>

@@ -348,7 +348,7 @@ export const RewardSection: React.FC<StakeSectionProps> = ({
               <CountUp value={stakingAPY} suffix="%" className="font-medium" decimals={1} />
             </div>
 
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <Typography className="flex items-center gap-1">
                 Exchange rate
                 <Tooltip delayDuration={100}>
@@ -367,7 +367,7 @@ export const RewardSection: React.FC<StakeSectionProps> = ({
                 prefix="1 CHR = "
                 decimals={0}
               />
-            </div>
+            </div> */}
 
             <div className="flex justify-between items-center">
               <Typography className="flex items-center gap-1">

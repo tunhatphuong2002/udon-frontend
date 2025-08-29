@@ -9,30 +9,15 @@ import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
 import { toast } from 'sonner';
 
-interface WithdrawPosition {
-  id: string;
-  amount: number;
-  type: 'slow' | 'quick';
-  status: 'pending' | 'ready' | 'completed';
-  createdAt: Date;
-  completionDate?: Date;
-  remainingDays?: number;
+import { UnstakingPosition, UnstakingStatus } from '@/app/(protected)/dashboard/types';
+
+interface CompletedClaimsProps {
+  positions: UnstakingPosition[];
+  onViewTx?: (position: UnstakingPosition) => void;
 }
 
-// Mock data - replace with real data hooks
-const positions: WithdrawPosition[] = [
-  {
-    id: '3',
-    amount: 2.5,
-    type: 'quick',
-    status: 'completed',
-    createdAt: new Date('2024-01-05'),
-    completionDate: new Date('2024-01-05'),
-  },
-];
-
-export const CompletedClaims: React.FC = () => {
-  const completedPositions = positions.filter(p => p.status === 'completed');
+export const CompletedClaims: React.FC<CompletedClaimsProps> = ({ positions, onViewTx }) => {
+  const completedPositions = positions.filter(p => p.unstakingStatus === UnstakingStatus.CLAIMED);
 
   if (completedPositions.length === 0) {
     return (
@@ -40,10 +25,10 @@ export const CompletedClaims: React.FC = () => {
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="h-8 w-8 text-muted-foreground" />
         </div>
-        <Typography weight="semibold" className="text-xl mb-2">
+        <Typography weight="semibold" className="text-xl mb-2 text-center">
           No completed withdrawals
         </Typography>
-        <Typography className="text-muted-foreground">
+        <Typography className="text-muted-foreground text-center">
           Your claimed withdrawals will appear here for transaction history.
         </Typography>
       </div>
@@ -63,7 +48,10 @@ export const CompletedClaims: React.FC = () => {
 
       <div className="space-y-3">
         {completedPositions.map(position => (
-          <div key={position.id} className="bg-card border border-border rounded-xl p-4 opacity-75">
+          <div
+            key={position.positionId.toString('hex')}
+            className="bg-card border border-border rounded-xl p-4 opacity-75"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
@@ -73,14 +61,17 @@ export const CompletedClaims: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
-                      value={position.amount}
+                      value={position.netAmount}
                       suffix=" CHR"
                       decimals={2}
                       className="font-medium"
                     />
                   </div>
                   <Typography variant="small" className="text-muted-foreground">
-                    Claimed: {position.completionDate?.toLocaleDateString()}
+                    Claimed:{' '}
+                    {position.completedAt
+                      ? new Date(position.completedAt).toLocaleDateString()
+                      : '-'}
                   </Typography>
                 </div>
               </div>
@@ -88,8 +79,8 @@ export const CompletedClaims: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  // Open transaction explorer
-                  toast.info('Opening transaction details...');
+                  if (onViewTx) onViewTx(position);
+                  else toast.info('Opening transaction details...');
                 }}
               >
                 <ExternalLink className="h-4 w-4" />
