@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
-import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
+import { useUnstaking } from '@/hooks/contracts/operations/use-untaking';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
 import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstake';
 import { UserReserveData } from '../../dashboard/types';
@@ -92,7 +92,7 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
   const burnAmount = amount; // For slow withdraw, user burns exactly amount stCHR
   const receiveAmount = amount - unstakingFee; // User receives CHR after all fees
 
-  const chrWithdraw = useChrWithdraw({
+  const chrWithdraw = useUnstaking({
     onSuccess: (result, params) => {
       console.log('CHR withdraw success:', { result, params });
       toast.success('Successfully initiated slow withdraw');

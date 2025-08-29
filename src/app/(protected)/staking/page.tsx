@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Button } from '@/components/common/button';
 import { ChevronLeft } from 'lucide-react';
 import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
-// import { RewardSection } from './components/reward-section';
+import { ClaimHistorySection } from './components/claim-history-section';
 
 export default function StakingPage() {
   const searchParams = useSearchParams();
@@ -114,7 +114,7 @@ export default function StakingPage() {
           <div className="max-w-2xl mx-auto">
             <div className="p-4 sm:p-6 border border-solid rounded-3xl border-border bg-[#161616dc]">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-8 bg-card p-1 h-12">
+                <TabsList className="grid w-full grid-cols-4 mb-8 bg-card p-1 h-12">
                   <TabsTrigger value="stake" className="text-base font-medium">
                     Stake
                   </TabsTrigger>
@@ -124,9 +124,9 @@ export default function StakingPage() {
                   <TabsTrigger value="withdraw" className="text-base font-medium">
                     Withdraw
                   </TabsTrigger>
-                  {/* <TabsTrigger value="reward" className="text-base font-medium">
+                  <TabsTrigger value="reward" className="text-base font-medium">
                     Reward
-                  </TabsTrigger> */}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="stake" className="mt-0">
@@ -156,14 +156,9 @@ export default function StakingPage() {
                   />
                 </TabsContent>
 
-                {/* <TabsContent value="reward" className="mt-0">
-                  <RewardSection
-                    isLoadingAssets={isLoadingAssets}
-                    refetchAssets={refetchAssets}
-                    chrAsset={chrAsset}
-                    stAsset={stchrAsset}
-                  />
-                </TabsContent> */}
+                <TabsContent value="reward" className="mt-0">
+                  <ClaimHistorySection chrAsset={chrAsset} />
+                </TabsContent>
               </Tabs>
             </div>
           </div>

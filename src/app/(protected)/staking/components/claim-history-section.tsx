@@ -7,23 +7,28 @@ import { Typography } from '@/components/common/typography';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
 import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
-import { toast } from 'sonner';
 
-import { UnstakingPosition } from '@/app/(protected)/dashboard/types';
 import { UserReserveData } from '@/app/(protected)/dashboard/types';
+import { getTxLink } from '@/utils/get-tx-link';
+import { toast } from 'sonner';
+import { useClaimHistory } from '@/hooks/contracts/queries/use-claim-history';
 
-interface CompletedClaimsProps {
-  positions: UnstakingPosition[];
-  onViewTx?: (position: UnstakingPosition) => void;
+interface ClaimHistorySectionProps {
   chrAsset?: UserReserveData;
 }
 
-export const CompletedClaims: React.FC<CompletedClaimsProps> = ({
-  positions,
-  onViewTx,
-  chrAsset,
-}) => {
-  if (positions.length === 0) {
+export const ClaimHistorySection = ({ chrAsset }: ClaimHistorySectionProps) => {
+  const {
+    data: claimHistory,
+    // isLoading: isLoading,
+    // refetch: refetchClaimHistory,
+  } = useClaimHistory(
+    chrAsset?.assetId || Buffer.from('', 'hex'),
+    chrAsset?.decimals || 0,
+    !!chrAsset
+  );
+
+  if (claimHistory?.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -43,17 +48,17 @@ export const CompletedClaims: React.FC<CompletedClaimsProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Typography weight="semibold" className="text-lg">
-          Completed Withdrawals
+          Claim Section
         </Typography>
         <Badge variant="secondary" className="text-primary-foreground">
-          {positions.length} completed
+          {claimHistory?.length} completed
         </Badge>
       </div>
 
       <div className="space-y-3">
-        {positions.map(position => (
+        {claimHistory?.map(history => (
           <div
-            key={position.positionId.toString('hex')}
+            key={history.id.toString('hex')}
             className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center justify-between">
@@ -65,7 +70,7 @@ export const CompletedClaims: React.FC<CompletedClaimsProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
-                      value={position.netAmount}
+                      value={history.rewardAmount}
                       suffix={chrAsset?.symbol}
                       decimals={2}
                       className="font-medium"
@@ -73,8 +78,8 @@ export const CompletedClaims: React.FC<CompletedClaimsProps> = ({
                   </div>
                   <Typography variant="small" className="text-muted-foreground">
                     Claimed:{' '}
-                    {position.completedAt
-                      ? new Date(position.completedAt).toLocaleString('en-GB', {
+                    {history.completedAt
+                      ? new Date(history.completedAt).toLocaleString('en-GB', {
                           year: 'numeric',
                           month: '2-digit',
                           day: '2-digit',
@@ -90,8 +95,11 @@ export const CompletedClaims: React.FC<CompletedClaimsProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  if (onViewTx) onViewTx(position);
-                  else toast.info('Opening transaction details...');
+                  if (!history.txCrossChain) {
+                    toast.error('No transaction hash found');
+                    return;
+                  }
+                  window.open(getTxLink(history.txCrossChain), '_blank');
                 }}
               >
                 <ExternalLink className="h-4 w-4" />

@@ -9,6 +9,9 @@ import { ReadyClaims } from './ready-claims';
 import { CompletedClaims } from './completed-claims';
 import { UnstakingStatus, UserReserveData } from '../../dashboard/types';
 import { useUnstakingPositions } from '@/hooks/contracts/queries/use-unstaking-positions';
+import { useCompleteUnstaking } from '@/hooks/contracts/operations/use-complete-unstaking';
+import { toast } from 'sonner';
+import { getTxLink } from '@/utils/get-tx-link';
 
 type WithdrawType = 'pending' | 'ready' | 'completed';
 
@@ -25,11 +28,20 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
   // refetchAssets,
   // isLoadingAssets,
 }: UnstakeSectionProps) => {
+  const completeUnstaking = useCompleteUnstaking({
+    onSuccess: () => {
+      toast.success('Withdrawal claimed successfully!');
+      refetchUnstakingPos();
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to claim withdrawal: ${error.message}`);
+    },
+  });
   const [claimType, setClaimType] = useState<WithdrawType>('ready');
   const [status, setStatus] = useState<UnstakingStatus>(UnstakingStatus.UNSTAKED);
   const {
     data: dataUnstakingPos,
-    isLoading: isLoading,
+    // isLoading: isLoading,
     refetch: refetchUnstakingPos,
   } = useUnstakingPositions(
     chrAsset?.assetId || Buffer.from('', 'hex'),
@@ -37,6 +49,8 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
     status,
     !!chrAsset
   );
+
+  console.log('dataUnstakingPos', dataUnstakingPos);
 
   useEffect(() => {
     switch (claimType) {
@@ -245,30 +259,35 @@ export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
 
       {/* Conditional Content Based on Claim Type */}
       {claimType === 'pending' && (
-        <PendingClaims
-          dataUnstakingPos={dataUnstakingPos || []}
-          isLoading={isLoading}
-          refetchUnstakingPos={refetchUnstakingPos}
-        />
+        <PendingClaims dataUnstakingPos={dataUnstakingPos || []} chrAsset={chrAsset} />
       )}
       {claimType === 'ready' && (
         <ReadyClaims
           positions={dataUnstakingPos || []}
-          onClaim={async () => {
-            // TODO: Implement claim logic here
-            return new Promise<void>(resolve => {
-              setTimeout(() => {
-                resolve();
-              }, 1000);
+          onClaim={async position => {
+            if (!chrAsset) {
+              toast.error('CHR asset not found');
+              return;
+            }
+            await completeUnstaking({
+              positionId: position.positionId,
+              underlyingAssetId: position.underlyingAssetId,
+              stAssetAmount: position.netAmount,
             });
           }}
+          chrAsset={chrAsset}
         />
       )}
       {claimType === 'completed' && (
         <CompletedClaims
+          chrAsset={chrAsset}
           positions={dataUnstakingPos || []}
-          onViewTx={() => {
-            // TODO: Implement view transaction logic (e.g., open explorer)
+          onViewTx={position => {
+            if (!position.txUnstaking) {
+              toast.error('No transaction hash found');
+              return;
+            }
+            window.open(getTxLink(position.txUnstaking), '_blank');
           }}
         />
       )}

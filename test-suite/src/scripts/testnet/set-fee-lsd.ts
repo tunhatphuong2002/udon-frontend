@@ -5,7 +5,7 @@ import chalk from 'chalk';
 // import { formatUnits, parseUnits } from 'ethers/lib/utils';
 // import { TOKENS_MAINNET } from '../../configs/tokens';
 import { getSessionOrRegister } from '../../helpers';
-import { op } from '@chromia/ft4';
+import { createAmount, op } from '@chromia/ft4';
 
 async function initSupply() {
   try {
@@ -17,20 +17,28 @@ async function initSupply() {
     const adminSession = await getSessionOrRegister(client, admin_udon_testnet_kp);
 
     // testFeeSession can not withdraw fee?
-    await adminSession.call(
-      op(
-        'set_staking_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
-        30n
-      )
-    );
+    // await adminSession.call(
+    //   op(
+    //     'set_staking_fee',
+    //     Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
+    //     30n
+    //   )
+    // );
 
-    // testFeeSession can not withdraw fee?
+    // // testFeeSession can not withdraw fee?
+    // await adminSession.call(
+    //   op(
+    //     'set_unstaking_fee',
+    //     Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
+    //     30n
+    //   )
+    // );
+
     await adminSession.call(
       op(
-        'set_unstaking_fee',
+        'set_creation_ec_fee',
         Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
-        30n
+        createAmount(10, 6).value
       )
     );
   } catch (error) {

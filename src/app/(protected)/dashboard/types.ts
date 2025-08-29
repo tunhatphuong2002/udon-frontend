@@ -165,6 +165,17 @@ export type UnstakingPosition = {
   isActive: boolean;
 };
 
+export type ClaimHistory = {
+  id: Buffer<ArrayBufferLike>;
+  userId: Buffer<ArrayBufferLike>;
+  underlyingAssetId: Buffer<ArrayBufferLike>;
+  rewardAmount: number;
+  claimStatus: ClaimStatus;
+  failureStage: LsdFailureStatus;
+  txCrossChain: string;
+  completedAt: number;
+};
+
 export type StakingPosition = {
   positionId: Buffer<ArrayBufferLike>;
   userId: Buffer<ArrayBufferLike>;

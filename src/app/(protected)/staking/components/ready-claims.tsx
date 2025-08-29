@@ -9,17 +9,17 @@ import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
 import { toast } from 'sonner';
 
-import { UnstakingPosition, UnstakingStatus } from '@/app/(protected)/dashboard/types';
+import { UnstakingPosition } from '@/app/(protected)/dashboard/types';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
 
 interface ReadyClaimsProps {
   positions: UnstakingPosition[];
   onClaim: (position: UnstakingPosition) => Promise<void>;
+  chrAsset: UserReserveData | undefined;
 }
 
-export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim }) => {
+export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim, chrAsset }) => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  // Only show positions that are ready to claim
-  const readyPositions = positions.filter(p => p.unstakingStatus === UnstakingStatus.UNSTAKED);
 
   const handleClaim = async (position: UnstakingPosition) => {
     setIsProcessing(position.positionId.toString('hex'));
@@ -32,7 +32,7 @@ export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim }) 
     }
   };
 
-  if (readyPositions.length === 0) {
+  if (!positions || positions.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -55,35 +55,42 @@ export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim }) 
           Ready to Claim
         </Typography>
         <Badge variant="secondary" className="text-green-500">
-          {readyPositions.length} ready
+          {positions.length} ready
         </Badge>
       </div>
 
       <div className="space-y-3">
-        {readyPositions.map(position => (
+        {positions.map(position => (
           <div
             key={position.positionId.toString('hex')}
-            className="bg-card border border-border rounded-xl p-4 hover:border-green-500/30 transition-colors"
+            className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/images/tokens/chr.png" alt="CHR" />
-                  <AvatarFallback>CHR</AvatarFallback>
+                  <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                  <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
                       value={position.netAmount}
-                      suffix=" CHR"
-                      decimals={2}
+                      suffix={` ${chrAsset?.symbol}`}
+                      decimals={6}
                       className="font-medium"
                     />
                   </div>
                   <Typography variant="small" className="text-muted-foreground">
-                    Completed:{' '}
-                    {position.completedAt
-                      ? new Date(position.completedAt).toLocaleDateString()
+                    Available:{' '}
+                    {position.availableAt
+                      ? new Date(position.availableAt).toLocaleString('en-GB', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
                       : '-'}
                   </Typography>
                 </div>

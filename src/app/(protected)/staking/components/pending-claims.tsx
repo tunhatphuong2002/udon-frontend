@@ -7,18 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
 import { UnstakingPosition } from '@/app/(protected)/dashboard/types';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
 
 interface PendingClaimProps {
   dataUnstakingPos: UnstakingPosition[];
-  isLoading: boolean;
-  refetchUnstakingPos: () => void;
+  chrAsset: UserReserveData | undefined;
 }
 
-export const PendingClaims: React.FC<PendingClaimProps> = ({
-  dataUnstakingPos,
-  // isLoading,
-  // refetchStakingPos,
-}) => {
+export const PendingClaims: React.FC<PendingClaimProps> = ({ dataUnstakingPos, chrAsset }) => {
   if (!dataUnstakingPos || dataUnstakingPos.length === 0) {
     return (
       <div className="text-center py-12">
@@ -55,14 +51,14 @@ export const PendingClaims: React.FC<PendingClaimProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/images/tokens/chr.png" alt="CHR" />
-                  <AvatarFallback>CHR</AvatarFallback>
+                  <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                  <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
                       value={Number(position.netAmount)}
-                      suffix=" CHR"
+                      suffix={chrAsset?.symbol}
                       decimals={2}
                       className="font-medium"
                     />
