@@ -8,7 +8,7 @@ import { BigNumber } from 'ethers';
 // import { formatUnits, parseUnits } from 'ethers/lib/utils';
 import { TOKENS_TESTNET } from '../../configs/tokens';
 import { getSessionOrRegister } from '../../helpers';
-import { getCHRIdBuffer, getStCHRIdBuffer, getAstCHRIdBuffer } from '../../helpers/crypto';
+import { getCHRIdBuffer, getStCHRIdBuffer } from '../../helpers/crypto';
 
 async function initSupply() {
   try {
@@ -20,25 +20,25 @@ async function initSupply() {
     const adminSession = await getSessionOrRegister(client, admin_udon_testnet_kp);
     const adminAccountId = adminSession.account.id;
 
-    // console.log(chalk.green('✅ Sessions created successfully'));
+    console.log(chalk.green('✅ Sessions created successfully'));
 
-    // console.log('adminSession', adminSession);
+    console.log('adminSession', adminSession);
 
-    // // Initialize ACL module
-    // console.log(chalk.blue('🔄 Initializing ACL module...'));
-    // await adminSession.call(op('initialize', admin_udon_testnet_kp.pubKey));
-    // await adminSession.call(
-    //   op('grant_role', 'POOL_ADMIN', adminAccountId, admin_udon_testnet_kp.pubKey)
-    // );
-    // console.log(chalk.green('✅ ACL module initialized'));
+    // Initialize ACL module
+    console.log(chalk.blue('🔄 Initializing ACL module...'));
+    await adminSession.call(op('initialize', admin_udon_testnet_kp.pubKey));
+    await adminSession.call(
+      op('grant_role', 'POOL_ADMIN', adminAccountId, admin_udon_testnet_kp.pubKey)
+    );
+    console.log(chalk.green('✅ ACL module initialized'));
 
-    // // Initialize required factories
-    // console.log(chalk.blue('🔄 Initializing asset factories...'));
-    // await adminSession.call(op('initialize_asset_base'));
-    // await adminSession.call(op('initialize_underlying_asset_factory'));
-    // await adminSession.call(op('initialize_a_asset_factory'));
-    // await adminSession.call(op('initialize_variable_debt_asset_factory'));
-    // console.log(chalk.green('✅ Asset factories initialized'));
+    // Initialize required factories
+    console.log(chalk.blue('🔄 Initializing asset factories...'));
+    await adminSession.call(op('initialize_asset_base'));
+    await adminSession.call(op('initialize_underlying_asset_factory'));
+    await adminSession.call(op('initialize_a_asset_factory'));
+    await adminSession.call(op('initialize_variable_debt_asset_factory'));
+    console.log(chalk.green('✅ Asset factories initialized'));
 
     // Create fee manager
     await adminSession.call(op('create_fee_collector_account_op'));
@@ -184,7 +184,7 @@ async function initSupply() {
         console.log(chalk.blue('🔄 Performing create lsd asset...'));
 
         await adminSession.call(
-          op('create_lsd_assets', getCHRIdBuffer(), getStCHRIdBuffer(), getAstCHRIdBuffer())
+          op('create_lsd_assets', getCHRIdBuffer(), getStCHRIdBuffer()) // change 2 arg instead 3
         );
         console.log(chalk.green('✅ LSD asset created'));
       }

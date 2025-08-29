@@ -1,38 +1,50 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, CheckCircle, Archive } from 'lucide-react';
+import { Clock, Zap } from 'lucide-react';
 import { Typography } from '@/components/common/typography';
 import { cn } from '@/utils/tailwind';
-import { PendingClaims } from './pending-claims';
-import { ReadyClaims } from './ready-claims';
-import { CompletedClaims } from './completed-claims';
+import { SlowWithdraw } from './slow-withdraw';
+import { QuickWithdraw } from './quick-withdraw';
+import { UserReserveData } from '../../dashboard/types';
 
-type ClaimType = 'pending' | 'ready' | 'completed';
+type WithdrawType = 'slow' | 'quick';
 
-export const ClaimSection: React.FC = () => {
-  const [claimType, setClaimType] = useState<ClaimType>('ready');
+interface UnstakeSectionProps {
+  chrAsset: UserReserveData | undefined;
+  stAsset: UserReserveData | undefined;
+  refetchAssets: () => void;
+  isLoadingAssets: boolean;
+}
+
+export const UnstakeSection: React.FC<UnstakeSectionProps> = ({
+  chrAsset,
+  stAsset,
+  refetchAssets,
+  isLoadingAssets,
+}: UnstakeSectionProps) => {
+  const [withdrawType, setWithdrawType] = useState<WithdrawType>('slow');
 
   return (
     <div>
-      {/* Claim Type Selection */}
+      {/* Withdraw Method Selection */}
       <div className="space-y-2 mb-6">
         <Typography weight="semibold" className="text-lg">
-          Withdrawal Status
+          Withdraw Method
         </Typography>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Ready to Claim Option */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Slow Withdraw Option */}
           <div
             className={cn(
               'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-              claimType === 'ready'
+              withdrawType === 'slow'
                 ? 'border-transparent shadow-lg'
                 : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
             )}
-            onClick={() => setClaimType('ready')}
+            onClick={() => setWithdrawType('slow')}
           >
-            {claimType === 'ready' && (
+            {withdrawType === 'slow' && (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
                 <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
@@ -45,66 +57,7 @@ export const ClaimSection: React.FC = () => {
                 <div
                   className={cn(
                     'p-2 rounded-lg',
-                    claimType === 'ready'
-                      ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
-                      : 'bg-muted'
-                  )}
-                >
-                  <CheckCircle
-                    className={cn(
-                      'w-5 h-5',
-                      claimType === 'ready' ? 'text-black' : 'text-muted-foreground'
-                    )}
-                  />
-                </div>
-                <div>
-                  <Typography
-                    weight="semibold"
-                    className={cn(
-                      claimType === 'ready'
-                        ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
-                        : ''
-                    )}
-                  >
-                    Ready to Claim
-                  </Typography>
-                </div>
-              </div>
-              <div className="flex flex-col space-y-1">
-                <Typography variant="small" className="text-muted-foreground">
-                  Completed withdrawals
-                </Typography>
-                <Typography variant="small" className="text-muted-foreground">
-                  Available to claim
-                </Typography>
-              </div>
-            </div>
-          </div>
-
-          {/* Pending Option */}
-          <div
-            className={cn(
-              'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-              claimType === 'pending'
-                ? 'border-transparent shadow-lg'
-                : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
-            )}
-            onClick={() => setClaimType('pending')}
-          >
-            {claimType === 'pending' && (
-              <>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
-                <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
-                  <div className="bg-background w-full h-full rounded-[10px]" />
-                </div>
-              </>
-            )}
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className={cn(
-                    'p-2 rounded-lg',
-                    claimType === 'pending'
+                    withdrawType === 'slow'
                       ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
                       : 'bg-muted'
                   )}
@@ -112,7 +65,7 @@ export const ClaimSection: React.FC = () => {
                   <Clock
                     className={cn(
                       'w-5 h-5',
-                      claimType === 'pending' ? 'text-black' : 'text-muted-foreground'
+                      withdrawType === 'slow' ? 'text-black' : 'text-muted-foreground'
                     )}
                   />
                 </div>
@@ -120,37 +73,40 @@ export const ClaimSection: React.FC = () => {
                   <Typography
                     weight="semibold"
                     className={cn(
-                      claimType === 'pending'
+                      withdrawType === 'slow'
                         ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
                         : ''
                     )}
                   >
-                    Pending
+                    Slow withdrawal
                   </Typography>
+                  {/* <Typography variant="small" className="text-muted-foreground">
+                    14 days waiting period
+                  </Typography> */}
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <Typography variant="small" className="text-muted-foreground">
-                  Withdrawals in progress
+                  Rate: 1:1
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground">
-                  14-day unbonding period
+                  Waiting time: ~14 days
                 </Typography>
               </div>
             </div>
           </div>
 
-          {/* Completed Option */}
+          {/* Quick Withdraw Option */}
           <div
             className={cn(
               'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-              claimType === 'completed'
+              withdrawType === 'quick'
                 ? 'border-transparent shadow-lg'
                 : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
             )}
-            onClick={() => setClaimType('completed')}
+            onClick={() => setWithdrawType('quick')}
           >
-            {claimType === 'completed' && (
+            {withdrawType === 'quick' && (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
                 <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
@@ -163,15 +119,15 @@ export const ClaimSection: React.FC = () => {
                 <div
                   className={cn(
                     'p-2 rounded-lg',
-                    claimType === 'completed'
+                    withdrawType === 'quick'
                       ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
                       : 'bg-muted'
                   )}
                 >
-                  <Archive
+                  <Zap
                     className={cn(
                       'w-5 h-5',
-                      claimType === 'completed' ? 'text-black' : 'text-muted-foreground'
+                      withdrawType === 'quick' ? 'text-black' : 'text-muted-foreground'
                     )}
                   />
                 </div>
@@ -179,21 +135,24 @@ export const ClaimSection: React.FC = () => {
                   <Typography
                     weight="semibold"
                     className={cn(
-                      claimType === 'completed'
+                      withdrawType === 'quick'
                         ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
                         : ''
                     )}
                   >
-                    Completed
+                    Quick withdrawal
                   </Typography>
+                  {/* <Typography variant="small" className="text-muted-foreground">
+                    Instant withdrawal
+                  </Typography> */}
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <Typography variant="small" className="text-muted-foreground">
-                  Already claimed
+                  Best Rate: 1:0.9950
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground">
-                  Transaction history
+                  Waiting time: Immediately
                 </Typography>
               </div>
             </div>
@@ -201,10 +160,17 @@ export const ClaimSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Conditional Content Based on Claim Type */}
-      {claimType === 'pending' && <PendingClaims />}
-      {claimType === 'ready' && <ReadyClaims />}
-      {claimType === 'completed' && <CompletedClaims />}
+      {/* Conditional Content Based on Withdraw Type */}
+      {withdrawType === 'slow' ? (
+        <SlowWithdraw
+          isLoadingAssets={isLoadingAssets}
+          refetchAssets={refetchAssets}
+          chrAsset={chrAsset}
+          stAsset={stAsset}
+        />
+      ) : (
+        <QuickWithdraw />
+      )}
     </div>
   );
 };

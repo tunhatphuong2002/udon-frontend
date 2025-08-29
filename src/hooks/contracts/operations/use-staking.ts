@@ -50,9 +50,8 @@ export function useStaking({
             op(
               'stake',
               account.id, // from account
-              params.assetId, // CHR asset ID
+              params.assetId, // underlying asset ID
               createAmount(params.amount, params.decimals).value, // amount
-              account.id, // on behalf of account
               Date.now()
             )
           )

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { CircleX, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { CircleX, Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,10 +14,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar'
 import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
 import CountUp from '@/components/common/count-up';
 import { Skeleton } from '@/components/common/skeleton';
-import { useChrWithdraw } from '@/hooks/contracts/operations/use-lsd-chr-withdraw';
-import { useCompletedAssets } from '@/hooks/contracts/queries/use-completed-assets';
+import { useUnstaking } from '@/hooks/contracts/operations/use-untaking';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
-import { useMaxAmount } from '@/hooks/contracts/queries/use-max-amount';
+import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstake';
+import { UserReserveData } from '../../dashboard/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/tooltip';
+
+interface SlowWithdrawSectionProps {
+  chrAsset: UserReserveData | undefined;
+  stAsset: UserReserveData | undefined;
+  refetchAssets: () => void;
+  isLoadingAssets: boolean;
+}
 
 const withdrawFormSchema = z.object({
   amount: z
@@ -36,21 +44,14 @@ const withdrawFormSchema = z.object({
 
 type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
 
-export const SlowWithdraw: React.FC = () => {
+export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
+  chrAsset,
+  stAsset,
+  refetchAssets,
+  isLoadingAssets,
+}: SlowWithdrawSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
-
-  // Fetch all assets to get CHR data
-  const {
-    assets: processedAssets,
-    isLoading: isLoadingAssets,
-    refresh: refetchAssets,
-  } = useCompletedAssets();
-
-  // Find CHR asset from the assets list
-  const chrAsset = useMemo(() => {
-    return processedAssets.find(asset => asset.symbol === 'CHR' || asset.symbol === 'tCHR');
-  }, [processedAssets]);
 
   // Use the asset price hook for real-time price updates
   const {
@@ -60,19 +61,16 @@ export const SlowWithdraw: React.FC = () => {
   } = useAssetPrice(chrAsset?.assetId || Buffer.from(''), isRefetchEnabled && !!chrAsset);
 
   // Fetch max CHR amount that can be withdrawn
-  const { data: maxChrAmount } = useMaxAmount(
+  const { data: maxChrAmount, isLoading: isLoadingMaxChrAmount } = useMaxUnstakedStAssetAmount(
     chrAsset?.assetId || Buffer.from(''),
     chrAsset?.decimals || 6,
-    'get_max_chr_withdraw_amount_query'
+    !!chrAsset && !!chrAsset.assetId
   );
 
-  // Constants
-  const exchangeRate = 1.0; // 1 stCHR = 1 CHR
-
   // Get real data or fallback to defaults
-  const chrPrice = currentPrice || chrAsset?.price || 0.75;
-  const maxStChrBalance = maxChrAmount || 0; // Available staked CHR to withdraw
-  const isLoading = isLoadingAssets || isPriceFetching;
+  const chrPrice = currentPrice || chrAsset?.price || 0;
+  const maxStChrBalance = maxChrAmount !== undefined && maxChrAmount > 0 ? maxChrAmount : 0; // Available staked CHR to withdraw
+  const isLoading = isLoadingAssets || isPriceFetching || isLoadingMaxChrAmount;
 
   const withdrawData = {
     maxAmount: maxStChrBalance,
@@ -86,7 +84,15 @@ export const SlowWithdraw: React.FC = () => {
     },
   });
 
-  const chrWithdraw = useChrWithdraw({
+  // --- Fee and amount calculations ---
+  const amount = Number(form.watch('amount')) || 0;
+  // --- Unstaking Fee (currently 0, adjust if needed) ---
+  const unstakingFeePercent = 0.3; // Set to nonzero if protocol requires
+  const unstakingFee = amount * (unstakingFeePercent / 100);
+  const burnAmount = amount; // For slow withdraw, user burns exactly amount stCHR
+  const receiveAmount = amount - unstakingFee; // User receives CHR after all fees
+
+  const chrWithdraw = useUnstaking({
     onSuccess: (result, params) => {
       console.log('CHR withdraw success:', { result, params });
       toast.success('Successfully initiated slow withdraw');
@@ -149,9 +155,9 @@ export const SlowWithdraw: React.FC = () => {
       setIsSubmitting(true);
 
       await chrWithdraw({
-        assetId: chrAsset?.assetId || Buffer.from(''),
+        assetId: stAsset?.assetId || Buffer.from(''),
         amount: data.amount,
-        decimals: chrAsset?.decimals || 6,
+        decimals: stAsset?.decimals || 6,
         isUserWithdrawMax: Number(data.amount) === withdrawData.maxAmount,
       });
     } catch (error) {
@@ -196,11 +202,11 @@ export const SlowWithdraw: React.FC = () => {
                 </Button>
               )}
               <Avatar className="h-7 w-7">
-                <AvatarImage src="/images/tokens/chr.png" alt="CHR" />
-                <AvatarFallback>CHR</AvatarFallback>
+                <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
+                <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
               </Avatar>
               <Typography weight="medium" className="text-lg">
-                CHR
+                {stAsset?.symbol}
               </Typography>
             </div>
           </div>
@@ -249,83 +255,133 @@ export const SlowWithdraw: React.FC = () => {
           Transaction overview
         </Typography>
 
-        <div className="flex justify-between items-center">
-          <Typography className="flex items-center gap-1">Remaining stCHR</Typography>
-          <CountUp
-            value={withdrawData.maxAmount - Number(form.watch('amount') || 0)}
-            suffix=" stCHR"
-            decimals={6}
-            className="font-medium"
-          />
-        </div>
-
-        <div className="flex justify-between items-center">
-          <Typography className="flex items-center gap-1">Withdraw Amount</Typography>
-          <div className="font-medium text-base flex items-center gap-1">
-            <CountUp
-              value={Number(form.watch('amount') || 0) * exchangeRate}
-              suffix=" CHR"
-              decimals={6}
-            />
-            ~
-            {isPriceFetching ? (
-              <Skeleton className="h-5 w-16 inline-block" />
-            ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <Typography className="flex items-center gap-1">Remaining stCHR</Typography>
+            <div className="flex items-center gap-2">
               <CountUp
-                value={Number(form.watch('amount') || 0) * exchangeRate * chrPrice}
-                prefix="$"
-                decimals={2}
+                value={withdrawData.maxAmount - Number(form.watch('amount') || 0)}
+                suffix={` ${stAsset?.symbol || 'stCHR'}`}
+                decimals={6}
+                className="font-medium"
               />
-            )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <Typography className="flex items-center gap-1">
+              Unstaking Fee
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger type="button">
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Unstaking fee: {unstakingFeePercent}% of withdrawal amount</p>
+                </TooltipContent>
+              </Tooltip>
+            </Typography>
+            <div className="flex items-center gap-2">
+              <CountUp
+                className="font-medium"
+                value={unstakingFee}
+                suffix={` ${chrAsset?.symbol} (${unstakingFeePercent}%)`}
+                prefix="-"
+                decimals={6}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <Typography className="flex items-center gap-1">
+              You will burn
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger type="button">
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Amount of stCHR tokens you will burn for this withdrawal</p>
+                </TooltipContent>
+              </Tooltip>
+            </Typography>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
+                <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
+              </Avatar>
+              <CountUp
+                className="font-medium"
+                value={burnAmount}
+                suffix={` ${stAsset?.symbol || 'stCHR'}`}
+                decimals={6}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <Typography className="flex items-center gap-1">
+              You will receive
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger type="button">
+                  <Info className="h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Net amount of CHR tokens you will receive after fee</p>
+                </TooltipContent>
+              </Tooltip>
+            </Typography>
+            <div className="flex items-center gap-2">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
+              </Avatar>
+              <CountUp
+                className="font-medium"
+                value={receiveAmount}
+                suffix={` ${chrAsset?.symbol || 'CHR'}`}
+                decimals={6}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <Typography className="flex items-center gap-1">Withdraw method</Typography>
-          <Typography weight="medium">Slow Withdraw</Typography>
+        {/* Alert */}
+        <Alert variant="default" className="space-y-2">
+          <AlertTitle>Important Notice</AlertTitle>
+          <AlertDescription>
+            Slow withdraw requires a 14-day unbonding period. Your funds will be locked during this
+            time but you&apos;ll receive full staking rewards.
+          </AlertDescription>
+        </Alert>
+
+        {/* Submit Button */}
+        <div className="mt-6">
+          {isSubmitting ? (
+            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+              Processing...
+            </Button>
+          ) : !chrAsset ? (
+            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+              {isLoadingAssets ? 'Loading assets...' : 'CHR asset not found'}
+            </Button>
+          ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
+            <Button disabled className="w-full text-lg py-6">
+              Enter an amount
+            </Button>
+          ) : maxStChrBalance <= 0 ? (
+            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+              {isLoading ? 'Loading...' : 'No staked CHR available'}
+            </Button>
+          ) : (
+            <Button
+              variant="gradient"
+              type="submit"
+              className="w-full text-lg py-6"
+              disabled={!form.watch('amount')}
+            >
+              Slow Withdraw CHR
+            </Button>
+          )}
         </div>
-
-        <div className="flex justify-between items-center">
-          <Typography className="flex items-center gap-1">Processing time</Typography>
-          <Typography weight="medium">14 days</Typography>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <Typography className="flex items-center gap-1">Exchange rate</Typography>
-          <Typography weight="medium">1 stCHR = {exchangeRate} CHR</Typography>
-        </div>
-      </div>
-
-      {/* Important Warning */}
-      <Alert variant="warning">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Important Notice</AlertTitle>
-        <AlertDescription>
-          Slow withdraw requires a 14-day unbonding period. Your funds will be locked during this
-          time but you&apos;ll receive full staking rewards.
-        </AlertDescription>
-      </Alert>
-
-      {/* Submit Button */}
-      <div className="mt-6">
-        {isSubmitting ? (
-          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-            Processing...
-          </Button>
-        ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
-          <Button disabled className="w-full text-lg py-6">
-            Enter an amount
-          </Button>
-        ) : (
-          <Button
-            variant="gradient"
-            type="submit"
-            className="w-full text-lg py-6"
-            disabled={!form.watch('amount')}
-          >
-            Slow Withdraw CHR
-          </Button>
-        )}
       </div>
     </form>
   );

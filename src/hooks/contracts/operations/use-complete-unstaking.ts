@@ -4,13 +4,13 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
 
-interface CompleteSlowWithdrawParams {
+interface CompleteUnstakingParams {
   positionId: Buffer<ArrayBufferLike>;
   underlyingAssetId: Buffer<ArrayBufferLike>;
   stAssetAmount: number;
 }
 
-interface CompleteSlowWithdrawResult {
+interface CompleteUnstakingResult {
   success: boolean;
   error?: Error;
 }
@@ -20,20 +20,20 @@ interface CompleteSlowWithdrawResult {
  * @param callbacks Optional callbacks for success and error scenarios
  * @returns A function to execute complete slow withdraw operations
  */
-export function useCompleteSlowWithdraw({
+export function useCompleteUnstaking({
   onSuccess,
   onError,
 }: {
-  onSuccess?: (result: CompleteSlowWithdrawResult, params: CompleteSlowWithdrawParams) => void;
-  onError?: (error: Error, params: CompleteSlowWithdrawParams) => void;
+  onSuccess?: (result: CompleteUnstakingResult, params: CompleteUnstakingParams) => void;
+  onError?: (error: Error, params: CompleteUnstakingParams) => void;
 } = {}) {
   const { account } = useChromiaAccount();
   const { data: session } = useFtSession(
     account ? { clientConfig: publicClientConfig, account } : null
   );
 
-  const completeSlowWithdraw = useCallback(
-    async (params: CompleteSlowWithdrawParams): Promise<CompleteSlowWithdrawResult> => {
+  const completeUnstaking = useCallback(
+    async (params: CompleteUnstakingParams): Promise<CompleteUnstakingResult> => {
       if (!session || !account) {
         const error = new Error('Session or account not available');
         onError?.(error, params);
@@ -46,24 +46,17 @@ export function useCompleteSlowWithdraw({
         // Execute complete slow withdraw operation
         const result = await session
           .transactionBuilder()
-          .add(
-            op(
-              'complete_slow_withdraw_operation',
-              params.positionId,
-              params.underlyingAssetId,
-              Date.now()
-            )
-          )
+          .add(op('complete_unstaking', params.positionId, params.underlyingAssetId, Date.now()))
           .buildAndSend();
 
         console.log('Complete slow withdraw operation result:', result);
 
-        const completeSlowWithdrawResult = {
+        const completeUnstakingResult = {
           success: true,
         };
 
-        onSuccess?.(completeSlowWithdrawResult, params);
-        return completeSlowWithdrawResult;
+        onSuccess?.(completeUnstakingResult, params);
+        return completeUnstakingResult;
       } catch (error) {
         console.error('Complete slow withdraw operation failed:', error);
         const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -77,5 +70,5 @@ export function useCompleteSlowWithdraw({
     [session, account, onSuccess, onError]
   );
 
-  return completeSlowWithdraw;
+  return completeUnstaking;
 }

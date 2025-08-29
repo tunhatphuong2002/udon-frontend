@@ -9,38 +9,22 @@ import { Badge } from '@/components/common/badge';
 import CountUp from '@/components/common/count-up';
 import { toast } from 'sonner';
 
-interface WithdrawPosition {
-  id: string;
-  amount: number;
-  type: 'slow' | 'quick';
-  status: 'pending' | 'ready' | 'completed';
-  createdAt: Date;
-  completionDate?: Date;
-  remainingDays?: number;
+import { UnstakingPosition } from '@/app/(protected)/dashboard/types';
+import { UserReserveData } from '@/app/(protected)/dashboard/types';
+
+interface ReadyClaimsProps {
+  positions: UnstakingPosition[];
+  onClaim: (position: UnstakingPosition) => Promise<void>;
+  chrAsset: UserReserveData | undefined;
 }
 
-// Mock data - replace with real data hooks
-const positions: WithdrawPosition[] = [
-  {
-    id: '1',
-    amount: 5.25,
-    type: 'slow',
-    status: 'ready',
-    createdAt: new Date('2024-01-01'),
-    completionDate: new Date('2024-01-15'),
-  },
-];
-
-export const ReadyClaims: React.FC = () => {
+export const ReadyClaims: React.FC<ReadyClaimsProps> = ({ positions, onClaim, chrAsset }) => {
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  const readyPositions = positions.filter(p => p.status === 'ready');
 
-  const handleClaim = async (positionId: string, amount: number) => {
-    setIsProcessing(positionId);
+  const handleClaim = async (position: UnstakingPosition) => {
+    setIsProcessing(position.positionId.toString('hex'));
     try {
-      // Mock claim operation - replace with real claim hook
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success(`Successfully claimed ${amount} CHR`);
+      await onClaim(position);
     } catch {
       toast.error('Failed to claim withdrawal');
     } finally {
@@ -48,16 +32,16 @@ export const ReadyClaims: React.FC = () => {
     }
   };
 
-  if (readyPositions.length === 0) {
+  if (!positions || positions.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="h-8 w-8 text-muted-foreground" />
         </div>
-        <Typography weight="semibold" className="text-xl mb-2">
+        <Typography weight="semibold" className="text-xl mb-2 text-center">
           No withdrawals ready to claim
         </Typography>
-        <Typography className="text-muted-foreground">
+        <Typography className="text-muted-foreground text-center">
           Completed withdrawals that are ready to claim will appear here.
         </Typography>
       </div>
@@ -71,43 +55,53 @@ export const ReadyClaims: React.FC = () => {
           Ready to Claim
         </Typography>
         <Badge variant="secondary" className="text-green-500">
-          {readyPositions.length} ready
+          {positions.length} ready
         </Badge>
       </div>
 
       <div className="space-y-3">
-        {readyPositions.map(position => (
+        {positions.map(position => (
           <div
-            key={position.id}
-            className="bg-card border border-border rounded-xl p-4 hover:border-green-500/30 transition-colors"
+            key={position.positionId.toString('hex')}
+            className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/images/tokens/chr.png" alt="CHR" />
-                  <AvatarFallback>CHR</AvatarFallback>
+                  <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                  <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
                     <CountUp
-                      value={position.amount}
-                      suffix=" CHR"
-                      decimals={2}
+                      value={position.netAmount}
+                      suffix={` ${chrAsset?.symbol}`}
+                      decimals={6}
                       className="font-medium"
                     />
                   </div>
                   <Typography variant="small" className="text-muted-foreground">
-                    Completed: {position.createdAt.toLocaleDateString()}
+                    Available:{' '}
+                    {position.availableAt
+                      ? new Date(position.availableAt).toLocaleString('en-GB', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
+                      : '-'}
                   </Typography>
                 </div>
               </div>
               <Button
                 variant="gradient"
-                onClick={() => handleClaim(position.id, position.amount)}
-                disabled={isProcessing === position.id}
+                onClick={() => handleClaim(position)}
+                disabled={isProcessing === position.positionId.toString('hex')}
                 className="px-6"
               >
-                {isProcessing === position.id ? 'Claiming...' : 'Claim'}
+                {isProcessing === position.positionId.toString('hex') ? 'Claiming...' : 'Claim'}
               </Button>
             </div>
           </div>

@@ -1,37 +1,94 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Clock, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Clock, CheckCircle, Archive } from 'lucide-react';
 import { Typography } from '@/components/common/typography';
 import { cn } from '@/utils/tailwind';
-import { SlowWithdraw } from './slow-withdraw';
-import { QuickWithdraw } from './quick-withdraw';
+import { PendingClaims } from './pending-claims';
+import { ReadyClaims } from './ready-claims';
+import { CompletedClaims } from './completed-claims';
+import { UnstakingStatus, UserReserveData } from '../../dashboard/types';
+import { useUnstakingPositions } from '@/hooks/contracts/queries/use-unstaking-positions';
+import { useCompleteUnstaking } from '@/hooks/contracts/operations/use-complete-unstaking';
+import { toast } from 'sonner';
+import { getTxLink } from '@/utils/get-tx-link';
 
-type WithdrawType = 'slow' | 'quick';
+type WithdrawType = 'pending' | 'ready' | 'completed';
 
-export const WithdrawSection: React.FC = () => {
-  const [withdrawType, setWithdrawType] = useState<WithdrawType>('slow');
+interface UnstakeSectionProps {
+  chrAsset: UserReserveData | undefined;
+  stAsset: UserReserveData | undefined;
+  refetchAssets: () => void;
+  isLoadingAssets: boolean;
+}
+
+export const WithdrawSection: React.FC<UnstakeSectionProps> = ({
+  chrAsset,
+  // stAsset,
+  // refetchAssets,
+  // isLoadingAssets,
+}: UnstakeSectionProps) => {
+  const completeUnstaking = useCompleteUnstaking({
+    onSuccess: () => {
+      toast.success('Withdrawal claimed successfully!');
+      refetchUnstakingPos();
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to claim withdrawal: ${error.message}`);
+    },
+  });
+  const [claimType, setClaimType] = useState<WithdrawType>('ready');
+  const [status, setStatus] = useState<UnstakingStatus>(UnstakingStatus.UNSTAKED);
+  const {
+    data: dataUnstakingPos,
+    // isLoading: isLoading,
+    refetch: refetchUnstakingPos,
+  } = useUnstakingPositions(
+    chrAsset?.assetId || Buffer.from('', 'hex'),
+    chrAsset?.decimals || 0,
+    status,
+    !!chrAsset
+  );
+
+  console.log('dataUnstakingPos', dataUnstakingPos);
+
+  useEffect(() => {
+    switch (claimType) {
+      case 'ready':
+        setStatus(UnstakingStatus.UNSTAKED);
+        break;
+      case 'completed':
+        setStatus(UnstakingStatus.CLAIMED);
+        break;
+      case 'pending':
+        setStatus(UnstakingStatus.PENDING_REQUEST);
+        break;
+      default:
+        setStatus(UnstakingStatus.UNSTAKED);
+        break;
+    }
+  }, [claimType]);
 
   return (
     <div>
-      {/* Withdraw Method Selection */}
+      {/* Claim Type Selection */}
       <div className="space-y-2 mb-6">
         <Typography weight="semibold" className="text-lg">
-          Withdraw Method
+          Withdrawal Status
         </Typography>
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Slow Withdraw Option */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Ready to Claim Option */}
           <div
             className={cn(
               'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-              withdrawType === 'slow'
+              claimType === 'ready'
                 ? 'border-transparent shadow-lg'
                 : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
             )}
-            onClick={() => setWithdrawType('slow')}
+            onClick={() => setClaimType('ready')}
           >
-            {withdrawType === 'slow' && (
+            {claimType === 'ready' && (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
                 <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
@@ -44,7 +101,66 @@ export const WithdrawSection: React.FC = () => {
                 <div
                   className={cn(
                     'p-2 rounded-lg',
-                    withdrawType === 'slow'
+                    claimType === 'ready'
+                      ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
+                      : 'bg-muted'
+                  )}
+                >
+                  <CheckCircle
+                    className={cn(
+                      'w-5 h-5',
+                      claimType === 'ready' ? 'text-black' : 'text-muted-foreground'
+                    )}
+                  />
+                </div>
+                <div>
+                  <Typography
+                    weight="semibold"
+                    className={cn(
+                      claimType === 'ready'
+                        ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
+                        : ''
+                    )}
+                  >
+                    Ready to Claim
+                  </Typography>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Typography variant="small" className="text-muted-foreground">
+                  Completed withdrawals
+                </Typography>
+                <Typography variant="small" className="text-muted-foreground">
+                  Available to claim
+                </Typography>
+              </div>
+            </div>
+          </div>
+
+          {/* Pending Option */}
+          <div
+            className={cn(
+              'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
+              claimType === 'pending'
+                ? 'border-transparent shadow-lg'
+                : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
+            )}
+            onClick={() => setClaimType('pending')}
+          >
+            {claimType === 'pending' && (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
+                <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
+                  <div className="bg-background w-full h-full rounded-[10px]" />
+                </div>
+              </>
+            )}
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className={cn(
+                    'p-2 rounded-lg',
+                    claimType === 'pending'
                       ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
                       : 'bg-muted'
                   )}
@@ -52,7 +168,7 @@ export const WithdrawSection: React.FC = () => {
                   <Clock
                     className={cn(
                       'w-5 h-5',
-                      withdrawType === 'slow' ? 'text-black' : 'text-muted-foreground'
+                      claimType === 'pending' ? 'text-black' : 'text-muted-foreground'
                     )}
                   />
                 </div>
@@ -60,40 +176,37 @@ export const WithdrawSection: React.FC = () => {
                   <Typography
                     weight="semibold"
                     className={cn(
-                      withdrawType === 'slow'
+                      claimType === 'pending'
                         ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
                         : ''
                     )}
                   >
-                    Slow withdrawal
+                    Pending
                   </Typography>
-                  {/* <Typography variant="small" className="text-muted-foreground">
-                    14 days waiting period
-                  </Typography> */}
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <Typography variant="small" className="text-muted-foreground">
-                  Rate: 1:1
+                  Withdrawals in progress
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground">
-                  Waiting time: ~14 days
+                  14-day unbonding period
                 </Typography>
               </div>
             </div>
           </div>
 
-          {/* Quick Withdraw Option */}
+          {/* Completed Option */}
           <div
             className={cn(
               'bg-card relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 border-2',
-              withdrawType === 'quick'
+              claimType === 'completed'
                 ? 'border-transparent shadow-lg'
                 : 'border-border hover:border-muted-foreground/30 hover:shadow-md'
             )}
-            onClick={() => setWithdrawType('quick')}
+            onClick={() => setClaimType('completed')}
           >
-            {withdrawType === 'quick' && (
+            {claimType === 'completed' && (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] opacity-10" />
                 <div className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-xl p-[2px]">
@@ -106,15 +219,15 @@ export const WithdrawSection: React.FC = () => {
                 <div
                   className={cn(
                     'p-2 rounded-lg',
-                    withdrawType === 'quick'
+                    claimType === 'completed'
                       ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF]'
                       : 'bg-muted'
                   )}
                 >
-                  <Zap
+                  <Archive
                     className={cn(
                       'w-5 h-5',
-                      withdrawType === 'quick' ? 'text-black' : 'text-muted-foreground'
+                      claimType === 'completed' ? 'text-black' : 'text-muted-foreground'
                     )}
                   />
                 </div>
@@ -122,24 +235,21 @@ export const WithdrawSection: React.FC = () => {
                   <Typography
                     weight="semibold"
                     className={cn(
-                      withdrawType === 'quick'
+                      claimType === 'completed'
                         ? 'bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] bg-clip-text text-transparent'
                         : ''
                     )}
                   >
-                    Quick withdrawal
+                    Completed
                   </Typography>
-                  {/* <Typography variant="small" className="text-muted-foreground">
-                    Instant withdrawal
-                  </Typography> */}
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <Typography variant="small" className="text-muted-foreground">
-                  Best Rate: 1:0.9950
+                  Already claimed
                 </Typography>
                 <Typography variant="small" className="text-muted-foreground">
-                  Waiting time: Immediately
+                  Transaction history
                 </Typography>
               </div>
             </div>
@@ -147,8 +257,40 @@ export const WithdrawSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Conditional Content Based on Withdraw Type */}
-      {withdrawType === 'slow' ? <SlowWithdraw /> : <QuickWithdraw />}
+      {/* Conditional Content Based on Claim Type */}
+      {claimType === 'pending' && (
+        <PendingClaims dataUnstakingPos={dataUnstakingPos || []} chrAsset={chrAsset} />
+      )}
+      {claimType === 'ready' && (
+        <ReadyClaims
+          positions={dataUnstakingPos || []}
+          onClaim={async position => {
+            if (!chrAsset) {
+              toast.error('CHR asset not found');
+              return;
+            }
+            await completeUnstaking({
+              positionId: position.positionId,
+              underlyingAssetId: position.underlyingAssetId,
+              stAssetAmount: position.netAmount,
+            });
+          }}
+          chrAsset={chrAsset}
+        />
+      )}
+      {claimType === 'completed' && (
+        <CompletedClaims
+          chrAsset={chrAsset}
+          positions={dataUnstakingPos || []}
+          onViewTx={position => {
+            if (!position.txUnstaking) {
+              toast.error('No transaction hash found');
+              return;
+            }
+            window.open(getTxLink(position.txUnstaking), '_blank');
+          }}
+        />
+      )}
     </div>
   );
 };

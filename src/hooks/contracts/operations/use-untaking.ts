@@ -4,14 +4,14 @@ import { useChromiaAccount } from '@/hooks/configs/chromia-hooks';
 import { publicClientConfig } from '@/configs/client';
 import { useFtSession } from '@chromia/react';
 
-interface ChrWithdrawParams {
+interface UnstakingParams {
   assetId: string | Buffer;
   amount: number | string;
   decimals: number;
   isUserWithdrawMax?: boolean;
 }
 
-interface ChrWithdrawResult {
+interface UnstakingResult {
   success: boolean;
   error?: Error;
 }
@@ -21,12 +21,12 @@ interface ChrWithdrawResult {
  * @param callbacks Optional callbacks for success and error scenarios
  * @returns A function to execute CHR withdraw operations
  */
-export function useChrWithdraw({
+export function useUnstaking({
   onSuccess,
   onError,
 }: {
-  onSuccess?: (result: ChrWithdrawResult, params: ChrWithdrawParams) => void;
-  onError?: (error: Error, params: ChrWithdrawParams) => void;
+  onSuccess?: (result: UnstakingResult, params: UnstakingParams) => void;
+  onError?: (error: Error, params: UnstakingParams) => void;
 } = {}) {
   const { account, client } = useChromiaAccount();
   const { data: session } = useFtSession(
@@ -34,7 +34,7 @@ export function useChrWithdraw({
   );
 
   const withdrawChr = useCallback(
-    async (params: ChrWithdrawParams): Promise<ChrWithdrawResult> => {
+    async (params: UnstakingParams): Promise<UnstakingResult> => {
       if (!session || !account) {
         const error = new Error('Session or account not available');
         onError?.(error, params);
@@ -44,21 +44,21 @@ export function useChrWithdraw({
       try {
         console.log('Starting CHR withdraw operation:', params);
 
-        let amountValue;
+        // let amountValue;
         // Signal for rell to recognize we want to withdraw with max amount
-        if (params.isUserWithdrawMax) {
-          if (!client) {
-            throw new Error('Client not available');
-          }
-          amountValue = await client.query('get_u256_max_query', {});
-        } else {
-          amountValue = createAmount(params.amount, params.decimals).value;
-        }
+        // if (params.isUserWithdrawMax) {
+        //   if (!client) {
+        //     throw new Error('Client not available');
+        //   }
+        //   amountValue = await client.query('get_u256_max_query', {});
+        // } else {
+        const amountValue = createAmount(params.amount, params.decimals).value;
+        // }
 
         // Execute CHR withdraw operation
         const result = await session
           .transactionBuilder()
-          .add(op('withdraw_chr', params.assetId, amountValue))
+          .add(op('unstake', account.id, params.assetId, amountValue, Date.now()))
           .buildAndSend();
 
         console.log('CHR withdraw transaction result:', result);
