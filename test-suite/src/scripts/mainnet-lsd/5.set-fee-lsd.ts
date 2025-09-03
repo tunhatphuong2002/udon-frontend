@@ -1,4 +1,4 @@
-import { admin_udon_testnet_kp } from '../../configs/key-pair';
+import { admin_kp } from '../../configs/key-pair';
 // import { registerAccountOpen } from '../common/operations/accounts';
 import { getClient } from '../../clients';
 import chalk from 'chalk';
@@ -6,6 +6,7 @@ import chalk from 'chalk';
 // import { TOKENS_MAINNET } from '../../configs/tokens';
 import { getSessionOrRegister } from '../../helpers';
 import { createAmount, op } from '@chromia/ft4';
+import { getCHRIdBuffer } from '../../helpers/crypto.mainnet';
 
 async function initSupply() {
   try {
@@ -14,33 +15,15 @@ async function initSupply() {
     // Get client and setup sessions
     console.log(chalk.blue('🔄 Setting up client and sessions...'));
     const client = await getClient();
-    const adminSession = await getSessionOrRegister(client, admin_udon_testnet_kp);
+    const adminSession = await getSessionOrRegister(client, admin_kp);
 
     // testFeeSession can not withdraw fee?
-    await adminSession.call(
-      op(
-        'set_staking_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
-        30n
-      )
-    );
+    await adminSession.call(op('set_staking_fee', getCHRIdBuffer(), 30n));
 
     // testFeeSession can not withdraw fee?
-    await adminSession.call(
-      op(
-        'set_unstaking_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
-        30n
-      )
-    );
+    await adminSession.call(op('set_unstaking_fee', getCHRIdBuffer(), 30n));
 
-    await adminSession.call(
-      op(
-        'set_creation_ec_fee',
-        Buffer.from('9EF73A786A66F435B3B40E72F5E9D85A4B09815997E087C809913E1E7EC686B4', 'hex'),
-        createAmount(10, 6).value
-      )
-    );
+    await adminSession.call(op('set_creation_ec_fee', getCHRIdBuffer(), createAmount(10, 6).value));
   } catch (error) {
     console.error(chalk.bold.red('❌❌❌ ERROR IN INIT SUPPLY ❌❌❌'));
     console.error(chalk.red(error));

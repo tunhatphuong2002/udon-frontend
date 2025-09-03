@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useChromiaAccount } from '../../configs/chromia-hooks';
-import { normalizeBN, valueToBigNumber } from '@/utils/bignumber';
+import { normalizeBN } from '@/utils/bignumber';
 
 /**
  * Hook to fetch the max stCHR withdraw amount based on a known CHR amount
@@ -35,11 +35,14 @@ export function useMaxUnstakedStAssetAmount(
         underlying_asset_id: assetId,
       })) as unknown as bigint;
 
+      console.log('account?.id', account?.id);
+      console.log('assetId', assetId.toString('hex'));
+
       console.log('maxStchrRaw', maxStchrRaw);
 
       // Convert to human readable number
-      const result = normalizeBN(valueToBigNumber(maxStchrRaw.toString()), decimals);
-      console.log('useMaxStchrAmountWithChr - result:', result);
+      const result = Number(normalizeBN(maxStchrRaw.toString(), decimals));
+      console.log('useMaxStchrAmountWithChr - result:', result.toString());
       return result;
     },
     enabled: !!client && !!account?.id && !!assetId && assetId.length > 0 && enabled,
