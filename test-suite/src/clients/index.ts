@@ -1,4 +1,4 @@
-import { createClient } from 'postchain-client';
+import { createClient, IClient } from 'postchain-client';
 import { testEnv } from '../configs';
 
 export async function getClient() {
@@ -7,7 +7,7 @@ export async function getClient() {
   if (!nodeUrl) {
     throw new Error('NODE_URL environment variable is required');
   }
-  let client;
+  let client: IClient;
   if (testEnv.network === 'local') {
     client = await createClient({
       nodeUrlPool: nodeUrl,

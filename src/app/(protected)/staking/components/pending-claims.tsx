@@ -58,51 +58,58 @@ export const PendingClaims: React.FC<PendingClaimProps> = ({ dataUnstakingPos, c
                   <div className="flex items-center gap-2">
                     <CountUp
                       value={Number(position.netAmount)}
-                      suffix={chrAsset?.symbol}
+                      suffix={` ${chrAsset?.symbol}`}
                       decimals={2}
                       className="font-medium"
                     />
                   </div>
-                  <Typography variant="small" className="text-muted-foreground">
-                    Create: {new Date(Number(position.requestedAt)).toLocaleString()}
-                  </Typography>
+                  {position.requestedAt === 0 ? (
+                    <Typography variant="small" className="text-yellow-500">
+                      Pending request
+                    </Typography>
+                  ) : (
+                    <Typography variant="small" className="text-muted-foreground">
+                      Create: {new Date(Number(position.requestedAt)).toLocaleString()}
+                    </Typography>
+                  )}
                 </div>
               </div>
               <div className="text-right">
-                {(() => {
-                  // Use bigint or number for requestedAt/availableAt
-                  const req = Number(position.requestedAt);
-                  const avail = Number(position.availableAt);
-                  // If timestamp is in seconds, convert to ms
-                  const now = Date.now();
-                  const isSec = req < 1e12;
-                  const requestedAt = isSec ? req * 1000 : req;
-                  const availableAt = avail
-                    ? avail < 1e12
-                      ? avail * 1000
-                      : avail
-                    : requestedAt + 14 * 24 * 60 * 60 * 1000;
-                  const totalMs = availableAt - requestedAt;
-                  const leftMs = Math.max(0, availableAt - now);
-                  const daysLeft = Math.ceil(leftMs / (24 * 60 * 60 * 1000));
-                  const progressPercent = Math.min(
-                    100,
-                    Math.max(0, ((now - requestedAt) / totalMs) * 100)
-                  );
-                  return (
-                    <>
-                      <Typography variant="small" className="text-muted-foreground">
-                        {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
-                      </Typography>
-                      <div className="w-24 h-2 bg-muted rounded-full mt-1">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-full transition-all"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-                    </>
-                  );
-                })()}
+                {position.availableAt !== 0 &&
+                  (() => {
+                    // Use bigint or number for requestedAt/availableAt
+                    const req = Number(position.requestedAt);
+                    const avail = Number(position.availableAt);
+                    // If timestamp is in seconds, convert to ms
+                    const now = Date.now();
+                    const isSec = req < 1e12;
+                    const requestedAt = isSec ? req * 1000 : req;
+                    const availableAt = avail
+                      ? avail < 1e12
+                        ? avail * 1000
+                        : avail
+                      : requestedAt + 14 * 24 * 60 * 60 * 1000;
+                    const totalMs = availableAt - requestedAt;
+                    const leftMs = Math.max(0, availableAt - now);
+                    const daysLeft = Math.ceil(leftMs / (24 * 60 * 60 * 1000));
+                    const progressPercent = Math.min(
+                      100,
+                      Math.max(0, ((now - requestedAt) / totalMs) * 100)
+                    );
+                    return (
+                      <>
+                        <Typography variant="small" className="text-muted-foreground">
+                          {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                        </Typography>
+                        <div className="w-24 h-2 bg-muted rounded-full mt-1">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#52E5FF] via-[#36B1FF] to-[#E4F5FF] rounded-full transition-all"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
               </div>
             </div>
           </div>

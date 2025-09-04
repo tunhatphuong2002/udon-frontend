@@ -61,7 +61,11 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
   } = useAssetPrice(chrAsset?.assetId || Buffer.from(''), isRefetchEnabled && !!chrAsset);
 
   // Fetch max CHR amount that can be withdrawn
-  const { data: maxChrAmount, isLoading: isLoadingMaxChrAmount } = useMaxUnstakedStAssetAmount(
+  const {
+    data: maxChrAmount,
+    isLoading: isLoadingMaxChrAmount,
+    refetch: refetchMaxUnstakedAmount,
+  } = useMaxUnstakedStAssetAmount(
     chrAsset?.assetId || Buffer.from(''),
     chrAsset?.decimals || 6,
     !!chrAsset && !!chrAsset.assetId
@@ -165,6 +169,7 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
       toast.error('Failed to submit withdraw transaction');
     } finally {
       setIsSubmitting(false);
+      refetchMaxUnstakedAmount();
     }
   };
 

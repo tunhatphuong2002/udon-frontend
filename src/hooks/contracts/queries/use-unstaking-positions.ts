@@ -22,14 +22,14 @@ export function useUnstakingPositions(
         throw new Error('Missing client or account');
       }
 
-      console.log('Fetching quick withdraw positions for user:', account.id);
+      console.log('Fetching unstaking positions for user:', account.id);
 
       // query get_staking_positions_by_status(user_id: byte_array, underlying_asset_id: byte_array, staking_status: staking_status): list«staking_position_query> {
       // Fetch all quick withdraw positions for the user
       const positionsResult = await client.query('get_unstaking_positions_by_status', {
         user_id: account.id,
         underlying_asset_id: assetId,
-        unstaking_status: status,
+        status: status,
       });
 
       console.log('positions raw results:', positionsResult, status);
