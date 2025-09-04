@@ -71,8 +71,8 @@ export const ClaimHistorySection = ({ chrAsset }: ClaimHistorySectionProps) => {
                   <div className="flex items-center gap-2">
                     <CountUp
                       value={history.rewardAmount}
-                      suffix={chrAsset?.symbol}
-                      decimals={2}
+                      suffix={` ${chrAsset?.symbol}`}
+                      decimals={6}
                       className="font-medium"
                     />
                   </div>
