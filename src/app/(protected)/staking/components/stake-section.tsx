@@ -18,6 +18,7 @@ import { useStaking } from '@/hooks/contracts/operations/use-staking';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
 import { useGetStakingUser } from '@/hooks/contracts/queries/use-get-staking-user';
 import { UserReserveData } from '../../dashboard/types';
+import { StakingDialog } from './staking-dialog';
 
 interface StakeSectionProps {
   chrAsset: UserReserveData | undefined;
@@ -64,6 +65,7 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
 }: StakeSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Constants - TODO: Replace with real data from hooks
   const stakingAPY = 3; // Staking APY percentage
@@ -97,11 +99,13 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
   const staking = useStaking({
     onSuccess: (result, params) => {
       console.log('Staking success:', { result, params });
-      toast.success(`Successfully staked ${params.amount} CHR`);
+      toast.success(`Successfully received ${params.amount} CHR. Please wailt for staking`);
       form.reset();
       refetchAssets(); // Refresh assets after successful staking
     },
     onError: (error, params) => {
+      // close dialog
+      setDialogOpen(false);
       console.error('Staking error:', { error, params });
       toast.error(`Failed to stake: ${error.message}`);
     },
@@ -130,6 +134,10 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
       setIsRefetchEnabled(true);
       fetchPrice();
     }
+  };
+
+  const handleOpenStakingDialog = () => {
+    setDialogOpen(true);
   };
 
   const handleMaxAmount = () => {
@@ -161,11 +169,7 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
 
       setIsSubmitting(true);
 
-      await staking({
-        assetId: chrAsset.assetId,
-        amount: data.amount,
-        decimals: chrAsset.decimals,
-      });
+      handleOpenStakingDialog();
     } catch (error) {
       console.error('Error submitting stake:', error);
       toast.error('Failed to submit stake transaction');
@@ -499,6 +503,22 @@ export const StakeSection: React.FC<StakeSectionProps> = ({
           </div>
         </div>
       </form>
+
+      {dialogOpen && (
+        <StakingDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          amount={Number(form.watch('amount'))}
+          chrAsset={chrAsset}
+          staking={async ({ assetId, amount, decimals }) => {
+            await staking({
+              assetId,
+              amount,
+              decimals,
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

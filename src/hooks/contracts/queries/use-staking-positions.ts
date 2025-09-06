@@ -11,6 +11,7 @@ export function useStakingPositions(
   assetId: Buffer<ArrayBufferLike>,
   decimals: number,
   status: StakingStatus,
+  timeStaked: number,
   enabled: boolean = true
 ) {
   const { client, account } = useChromiaAccount();
@@ -32,23 +33,32 @@ export function useStakingPositions(
         staking_status: status,
       });
 
-      console.log('positions raw results:', positionsResult);
+      console.log('positions raw results get_staking_positions_by_status:', positionsResult);
 
       const rawPositions = (Array.isArray(positionsResult) ? positionsResult : []).map(p =>
         keysToCamelCase(p)
       ) as StakingPosition[];
 
       // Format positions with proper number conversion
-      const positions = rawPositions.map(p => ({
-        ...p,
-        expectedAmount: Number(normalizeBN(p.expectedAmount.toString(), decimals)),
-        netAmount: Number(normalizeBN(p.netAmount.toString(), decimals)),
-      }));
+      const timeStakedBigInt = BigInt(timeStaked);
 
-      console.log('Stake Unstake positions:', positions);
+      const positions = rawPositions
+        .filter(p => p.createdAt >= timeStakedBigInt)
+        .map(p => ({
+          ...p,
+          expectedAmount: Number(normalizeBN(p.expectedAmount.toString(), decimals)),
+          netAmount: Number(normalizeBN(p.netAmount.toString(), decimals)),
+        }));
+
+      console.log(
+        'Stake Unstake positions get_staking_positions_by_status: with timeStaked',
+        timeStaked,
+        positions
+      );
 
       return positions;
     },
+    refetchInterval: 3000, // refetch 3s
     enabled: enabled && !!client && !!account?.id,
     retry: 2,
   });
