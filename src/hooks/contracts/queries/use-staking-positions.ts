@@ -41,14 +41,16 @@ export function useStakingPositions(
 
       // Format positions with proper number conversion
       const timeStakedBigInt = BigInt(timeStaked);
+      console.log('timeStakedBigInt', timeStakedBigInt);
 
-      const positions = rawPositions
-        .filter(p => p.createdAt >= timeStakedBigInt)
-        .map(p => ({
-          ...p,
-          expectedAmount: Number(normalizeBN(p.expectedAmount.toString(), decimals)),
-          netAmount: Number(normalizeBN(p.netAmount.toString(), decimals)),
-        }));
+      const positionsFilter = rawPositions.filter(p => p.completedAt >= timeStakedBigInt);
+
+      console.log('positionsFilter', positionsFilter);
+      const positions = positionsFilter.map(p => ({
+        ...p,
+        expectedAmount: Number(normalizeBN(p.expectedAmount.toString(), decimals)),
+        netAmount: Number(normalizeBN(p.netAmount.toString(), decimals)),
+      }));
 
       console.log(
         'Stake Unstake positions get_staking_positions_by_status: with timeStaked',
