@@ -13,7 +13,7 @@ const quickWithdrawPools = [
     id: 'color-pool',
     name: 'Color Pool DEX',
     shortName: 'CP',
-    rate: '~ 0.9950 APT',
+    rate: '~ 0.9950 CHR',
     tvl: '$4,852,187',
     action: 'Go to Color Pool DEX',
     gradient: 'from-purple-500 to-purple-600',
