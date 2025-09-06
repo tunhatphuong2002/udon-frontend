@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CircleX, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,18 +28,7 @@ interface SlowWithdrawSectionProps {
 }
 
 const withdrawFormSchema = z.object({
-  amount: z
-    .string()
-    .min(1, 'Amount is required!')
-    .refine(
-      val => {
-        const num = Number(val);
-        return !isNaN(num) && num > 0;
-      },
-      {
-        message: 'Please enter a valid positive number',
-      }
-    ),
+  amount: z.string().min(1, 'Amount is required!'), // No need refine, input is readonly with default
 });
 
 type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
@@ -53,13 +42,6 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefetchEnabled, setIsRefetchEnabled] = useState(false);
 
-  // Use the asset price hook for real-time price updates
-  const {
-    data: currentPrice,
-    isLoading: isPriceFetching,
-    refetch: fetchPrice,
-  } = useAssetPrice(chrAsset?.assetId || Buffer.from(''), isRefetchEnabled && !!chrAsset);
-
   // Fetch max CHR amount that can be withdrawn
   const {
     data: maxChrAmount,
@@ -69,6 +51,12 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
     chrAsset?.assetId || Buffer.from(''),
     chrAsset?.decimals || 6,
     !!chrAsset && !!chrAsset.assetId
+  );
+
+  // Use the asset price hook for real-time price updates
+  const { data: currentPrice, isLoading: isPriceFetching } = useAssetPrice(
+    chrAsset?.assetId || Buffer.from(''),
+    isRefetchEnabled && !!chrAsset
   );
 
   // Get real data or fallback to defaults
@@ -81,27 +69,29 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
     healthFactor: 2.5,
   };
 
+  // Initialize form with default amount = maxStChrBalance.toString()
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
-      amount: '',
+      amount: maxStChrBalance ? maxStChrBalance.toString() : '',
     },
   });
 
   // --- Fee and amount calculations ---
   const amount = Number(form.watch('amount')) || 0;
-  // --- Unstaking Fee (currently 0, adjust if needed) ---
-  const unstakingFeePercent = 0.3; // Set to nonzero if protocol requires
+  // Unstaking Fee (0.3%)
+  const unstakingFeePercent = 0.3;
   const unstakingFee = amount * (unstakingFeePercent / 100);
-  const burnAmount = amount; // For slow withdraw, user burns exactly amount stCHR
-  const receiveAmount = amount - unstakingFee; // User receives CHR after all fees
+  const burnAmount = amount;
+  const receiveAmount = amount - unstakingFee;
 
   const chrWithdraw = useUnstaking({
     onSuccess: (result, params) => {
       console.log('CHR withdraw success:', { result, params });
       toast.success('Successfully initiated slow withdraw');
-      form.reset();
+      form.reset({ amount: maxStChrBalance ? maxStChrBalance.toString() : '' });
       refetchAssets();
+      setIsRefetchEnabled(false);
     },
     onError: (error, params) => {
       console.error('CHR withdraw error:', { error, params });
@@ -109,45 +99,15 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
     },
   });
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const regex = /^$|^[0-9]+\.?[0-9]*$/;
-    if (!regex.test(value)) {
-      form.setValue('amount', '0');
-      return;
-    }
+  // No handleAmountChange needed, input is readonly
 
-    // Don't allow value > maxStChrBalance
-    const valueWithBalance = Number(value) > Number(maxStChrBalance) ? maxStChrBalance : value;
-    const needToChangeValue = valueWithBalance !== value;
-
-    if (needToChangeValue) {
-      form.setValue('amount', valueWithBalance.toString());
-    } else {
-      form.setValue('amount', value);
-    }
-
-    // Trigger price refetch if there's an amount and we have asset
-    if (valueWithBalance && parseFloat(valueWithBalance.toString()) > 0 && chrAsset) {
-      setIsRefetchEnabled(true);
-      fetchPrice();
-    }
-  };
-
-  const handleMaxAmount = () => {
-    form.setValue('amount', maxStChrBalance.toString());
-    if (chrAsset) {
-      setIsRefetchEnabled(true);
-      fetchPrice();
-    }
-  };
-
+  // On submit handler
   const onSubmit = async (data: WithdrawFormValues) => {
     try {
       const amount = Number(data.amount);
 
       if (isNaN(amount) || amount <= 0) {
-        toast.error('Please enter a valid positive number');
+        toast.error('Invalid amount to withdraw');
         return;
       }
 
@@ -187,25 +147,17 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
               {...form.register('amount')}
               autoComplete="off"
               placeholder="0.00"
-              className="p-0 text-xl font-medium placeholder:text-muted-foreground focus-visible:ring-transparent focus-visible:outline-none focus-visible:ring-0 w-[60%] bg-transparent border-none"
+              readOnly
+              // Disabled onChange and no clear button because user cannot edit
+              className="p-0 text-xl font-medium placeholder:text-muted-foreground focus-visible:ring-transparent focus-visible:outline-none focus-visible:ring-0 w-[60%] bg-transparent border-none cursor-not-allowed"
               inputMode="decimal"
               pattern="[0-9]*[.]?[0-9]*"
               min={0.0}
               max={withdrawData.maxAmount}
               step="any"
-              onChange={handleAmountChange}
             />
             <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
-              {form.watch('amount') && (
-                <Button
-                  variant="none"
-                  size="icon"
-                  onClick={() => form.setValue('amount', '')}
-                  className="hover:opacity-70"
-                >
-                  <CircleX className="h-6 w-6 text-muted-foreground" />
-                </Button>
-              )}
+              {/* Remove clear button because user cannot clear */}
               <Avatar className="h-7 w-7">
                 <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
                 <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
@@ -218,24 +170,18 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
 
           <div className="flex justify-between items-center text-base mt-2">
             <div>
-              {Number(form.watch('amount')) > 0 ? (
+              {amount > 0 ? (
                 isPriceFetching ? (
                   <Skeleton className="h-5 w-16" />
                 ) : (
-                  <CountUp
-                    value={Number(form.watch('amount')) * chrPrice}
-                    prefix="$"
-                    decimals={2}
-                  />
+                  <CountUp value={amount * chrPrice} prefix="$" decimals={2} />
                 )
               ) : (
                 <Typography className="text-muted-foreground">$0.00</Typography>
               )}
             </div>
-            <div
-              className="flex items-center gap-1 text-primary cursor-pointer hover:text-primary/80"
-              onClick={handleMaxAmount}
-            >
+            {/* Remove MAX clickable label since user cannot change amount */}
+            <div className="flex items-center gap-1 text-primary">
               <Typography>Available: </Typography>
               {isLoading ? (
                 <Skeleton className="h-5 w-16" />
@@ -265,7 +211,7 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
             <Typography className="flex items-center gap-1">Remaining stCHR</Typography>
             <div className="flex items-center gap-2">
               <CountUp
-                value={withdrawData.maxAmount - Number(form.watch('amount') || 0)}
+                value={withdrawData.maxAmount - amount}
                 suffix={` ${stAsset?.symbol || 'stCHR'}`}
                 decimals={6}
                 className="font-medium"
@@ -348,45 +294,45 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Alert */}
-        <Alert variant="default" className="space-y-2">
-          <AlertTitle>Important Notice</AlertTitle>
-          <AlertDescription>
-            Slow withdraw requires a 14-day unbonding period. Your funds will be locked during this
-            time but you&apos;ll receive full staking rewards.
-          </AlertDescription>
-        </Alert>
+      {/* Alert */}
+      <Alert variant="default" className="space-y-2">
+        <AlertTitle>Important Notice</AlertTitle>
+        <AlertDescription>
+          Slow withdraw requires a 14-day unbonding period. Your funds will be locked during this
+          time but you&apos;ll receive full staking rewards.
+        </AlertDescription>
+      </Alert>
 
-        {/* Submit Button */}
-        <div className="mt-6">
-          {isSubmitting ? (
-            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-              Processing...
-            </Button>
-          ) : !chrAsset ? (
-            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-              {isLoadingAssets ? 'Loading assets...' : 'CHR asset not found'}
-            </Button>
-          ) : !form.watch('amount') || parseFloat(form.watch('amount')) === 0 ? (
-            <Button disabled className="w-full text-lg py-6">
-              Enter an amount
-            </Button>
-          ) : maxStChrBalance <= 0 ? (
-            <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
-              {isLoading ? 'Loading...' : 'No staked CHR available'}
-            </Button>
-          ) : (
-            <Button
-              variant="gradient"
-              type="submit"
-              className="w-full text-lg py-6"
-              disabled={!form.watch('amount')}
-            >
-              Slow Withdraw CHR
-            </Button>
-          )}
-        </div>
+      {/* Submit Button */}
+      <div className="mt-6">
+        {isSubmitting ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+            Processing...
+          </Button>
+        ) : !chrAsset ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+            {isLoadingAssets ? 'Loading assets...' : 'CHR asset not found'}
+          </Button>
+        ) : amount <= 0 ? (
+          <Button disabled className="w-full text-lg py-6">
+            No amount to withdraw
+          </Button>
+        ) : maxStChrBalance <= 0 ? (
+          <Button disabled className="w-full bg-muted text-muted-foreground text-lg py-6">
+            {isLoading ? 'Loading...' : 'No staked CHR available'}
+          </Button>
+        ) : (
+          <Button
+            variant="gradient"
+            type="submit"
+            className="w-full text-lg py-6"
+            disabled={amount <= 0}
+          >
+            Slow Withdraw CHR
+          </Button>
+        )}
       </div>
     </form>
   );
