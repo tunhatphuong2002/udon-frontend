@@ -103,6 +103,10 @@ export const StakingDialog: React.FC<StakingDialogProps> = ({
       if (stepStatus === 'staked' && stakedPositions && stakedPositions.length > 0) {
         console.log('at staked staked');
         setStepStatus('completed');
+        // close dialog after 3 seconds
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 3000);
       }
     };
 
@@ -123,7 +127,15 @@ export const StakingDialog: React.FC<StakingDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] rounded-xl">
+      <DialogContent
+        // Prevent user click outside
+        onInteractOutside={e => e.preventDefault()}
+        // Prevent user press ESC to close
+        onEscapeKeyDown={e => e.preventDefault()}
+        // Prevent close button custom
+        showCloseButton={false}
+        className="sm:max-w-[425px] rounded-xl"
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">Staking Status</DialogTitle>
         </DialogHeader>

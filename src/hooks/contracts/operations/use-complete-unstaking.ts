@@ -51,6 +51,9 @@ export function useCompleteUnstaking({
 
         console.log('Complete slow withdraw operation result:', result);
 
+        // update
+        op('update_tx_admin_to_user', params.positionId, result.receipt.transactionRid);
+
         const completeUnstakingResult = {
           success: true,
         };
