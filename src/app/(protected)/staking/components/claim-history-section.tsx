@@ -41,32 +41,30 @@ export const ClaimHistorySection = ({ chrAsset }: ClaimHistorySectionProps) => {
           <Typography weight="semibold" className="text-lg">
             Upcoming rewards
           </Typography>
-          <div className="space-y-3">
-            <div className="bg-card border border-border rounded-xl p-4">
-              {isLoadingRewardInfo ? (
+          <div className="bg-card border border-border rounded-xl p-4">
+            {isLoadingRewardInfo ? (
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <Skeleton className="h-6 w-32" />
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
-                      <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center gap-2">
-                      <CountUp
-                        value={rewardInfo?.upcommingRewards || 0}
-                        suffix={` ${chrAsset?.symbol}`}
-                        decimals={8}
-                        className="font-medium"
-                      />
-                    </div>
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                    <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2">
+                    <CountUp
+                      value={rewardInfo?.upcommingRewards || 0}
+                      suffix={` ${chrAsset?.symbol}`}
+                      decimals={8}
+                      className="font-medium"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -75,32 +73,30 @@ export const ClaimHistorySection = ({ chrAsset }: ClaimHistorySectionProps) => {
           <Typography weight="semibold" className="text-lg">
             Accumulated rewards
           </Typography>
-          <div className="space-y-3">
-            <div className="bg-card border border-border rounded-xl p-4">
-              {isLoadingRewardInfo ? (
+          <div className="bg-card border border-border rounded-xl p-4">
+            {isLoadingRewardInfo ? (
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <Skeleton className="h-6 w-32" />
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
-                      <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center gap-2">
-                      <CountUp
-                        value={rewardInfo?.accumulatedRewards || 0}
-                        suffix={` ${chrAsset?.symbol}`}
-                        decimals={8}
-                        className="font-medium"
-                      />
-                    </div>
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={chrAsset?.iconUrl} alt={chrAsset?.symbol} />
+                    <AvatarFallback>{chrAsset?.symbol}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex items-center gap-2">
+                    <CountUp
+                      value={rewardInfo?.accumulatedRewards || 0}
+                      suffix={` ${chrAsset?.symbol}`}
+                      decimals={8}
+                      className="font-medium"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -118,11 +114,11 @@ export const ClaimHistorySection = ({ chrAsset }: ClaimHistorySectionProps) => {
           </Typography>
         </div>
       ) : (
-        <div>
-          {/* Claim Section */}
+        <div className="space-y-4">
+          {/* Claim History */}
           <div className="flex items-center justify-between">
             <Typography weight="semibold" className="text-lg">
-              Claim Section
+              Claim History
             </Typography>
             <Badge variant="secondary" className="text-primary-foreground">
               {claimHistory?.length || 0} completed
