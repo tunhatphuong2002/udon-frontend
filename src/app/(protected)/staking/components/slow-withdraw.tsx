@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -11,9 +11,9 @@ import { Button } from '@/components/common/button';
 import { Typography } from '@/components/common/typography';
 import { Input } from '@/components/common/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/avatar';
-import { Alert, AlertDescription, AlertTitle } from '@/components/common/alert';
-import CountUp from '@/components/common/count-up';
+import { Alert, AlertTitle, AlertDescription } from '@/components/common/alert';
 import { Skeleton } from '@/components/common/skeleton';
+import CountUp from '@/components/common/count-up';
 import { useUnstaking } from '@/hooks/contracts/operations/use-untaking';
 import { useAssetPrice } from '@/hooks/contracts/queries/use-asset-price';
 import { useMaxUnstakedStAssetAmount } from '@/hooks/contracts/queries/use-max-unstake';
@@ -28,7 +28,7 @@ interface SlowWithdrawSectionProps {
 }
 
 const withdrawFormSchema = z.object({
-  amount: z.string().min(1, 'Amount is required!'), // No need refine, input is readonly with default
+  amount: z.string().min(1, 'Amount is required!'),
 });
 
 type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
@@ -61,21 +61,25 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
 
   // Get real data or fallback to defaults
   const chrPrice = currentPrice || chrAsset?.price || 0;
-  const maxStChrBalance = maxChrAmount !== undefined && maxChrAmount > 0 ? maxChrAmount : 0; // Available staked CHR to withdraw
+  const maxStChrBalance = maxChrAmount && maxChrAmount > 0 ? maxChrAmount : 0; // Fixed logic
   const isLoading = isLoadingAssets || isPriceFetching || isLoadingMaxChrAmount;
 
-  const withdrawData = {
-    maxAmount: maxStChrBalance,
-    healthFactor: 2.5,
-  };
-
-  // Initialize form with default amount = maxStChrBalance.toString()
+  // Initialize form
   const form = useForm<WithdrawFormValues>({
     resolver: zodResolver(withdrawFormSchema),
     defaultValues: {
-      amount: maxStChrBalance ? maxStChrBalance.toString() : '',
+      amount: '',
     },
   });
+
+  // Update form value when maxChrAmount changes
+  useEffect(() => {
+    if (maxChrAmount !== undefined && maxChrAmount > 0) {
+      form.setValue('amount', maxChrAmount.toString(), { shouldValidate: true });
+    } else {
+      form.setValue('amount', '', { shouldValidate: true });
+    }
+  }, [maxChrAmount, form]);
 
   // --- Fee and amount calculations ---
   const amount = Number(form.watch('amount')) || 0;
@@ -99,8 +103,6 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
     },
   });
 
-  // No handleAmountChange needed, input is readonly
-
   // On submit handler
   const onSubmit = async (data: WithdrawFormValues) => {
     try {
@@ -111,8 +113,8 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
         return;
       }
 
-      if (amount > withdrawData.maxAmount) {
-        toast.error(`Amount exceeds your balance of ${withdrawData.maxAmount} CHR`);
+      if (amount > maxChrAmount) {
+        toast.error(`Amount exceeds your balance of ${maxChrAmount} CHR`);
         return;
       }
 
@@ -122,7 +124,7 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
         assetId: stAsset?.assetId || Buffer.from(''),
         amount: data.amount,
         decimals: stAsset?.decimals || 6,
-        isUserWithdrawMax: Number(data.amount) === withdrawData.maxAmount,
+        isUserWithdrawMax: Number(data.amount) === maxChrAmount,
       });
     } catch (error) {
       console.error('Error submitting withdraw:', error);
@@ -143,21 +145,23 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
 
         <div className="px-4 py-3 rounded-xl bg-card border border-border">
           <div className="relative">
-            <Input
-              {...form.register('amount')}
-              autoComplete="off"
-              placeholder="0.00"
-              readOnly
-              // Disabled onChange and no clear button because user cannot edit
-              className="p-0 text-xl font-medium placeholder:text-muted-foreground focus-visible:ring-transparent focus-visible:outline-none focus-visible:ring-0 w-[60%] bg-transparent border-none cursor-not-allowed"
-              inputMode="decimal"
-              pattern="[0-9]*[.]?[0-9]*"
-              min={0.0}
-              max={withdrawData.maxAmount}
-              step="any"
-            />
+            {isLoadingMaxChrAmount ? (
+              <Skeleton className="h-8 w-[60%]" />
+            ) : (
+              <Input
+                {...form.register('amount')}
+                autoComplete="off"
+                placeholder="0.00"
+                readOnly
+                className="p-0 text-xl font-medium placeholder:text-muted-foreground focus-visible:ring-transparent focus-visible:outline-none focus-visible:ring-0 w-[60%] bg-transparent border-none cursor-not-allowed"
+                inputMode="decimal"
+                pattern="[0-9]*[.]?[0-9]*"
+                min={0.0}
+                max={maxChrAmount}
+                step="any"
+              />
+            )}
             <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
-              {/* Remove clear button because user cannot clear */}
               <Avatar className="h-7 w-7">
                 <AvatarImage src={stAsset?.iconUrl} alt={stAsset?.symbol} />
                 <AvatarFallback>{stAsset?.symbol}</AvatarFallback>
@@ -180,13 +184,12 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
                 <Typography className="text-muted-foreground">$0.00</Typography>
               )}
             </div>
-            {/* Remove MAX clickable label since user cannot change amount */}
             <div className="flex items-center gap-1 text-primary">
               <Typography>Available: </Typography>
               {isLoading ? (
                 <Skeleton className="h-5 w-16" />
               ) : (
-                <Typography className="font-bold">{withdrawData.maxAmount}</Typography>
+                <Typography className="font-bold">{maxChrAmount || 0}</Typography>
               )}
               <Typography className="font-bold text-primary">MAX</Typography>
             </div>
@@ -211,7 +214,7 @@ export const SlowWithdraw: React.FC<SlowWithdrawSectionProps> = ({
             <Typography className="flex items-center gap-1">Remaining stCHR</Typography>
             <div className="flex items-center gap-2">
               <CountUp
-                value={withdrawData.maxAmount - amount}
+                value={maxChrAmount - amount}
                 suffix={` ${stAsset?.symbol || 'stCHR'}`}
                 decimals={6}
                 className="font-medium"
